@@ -1,0 +1,340 @@
+
+<!--
+ * Copyright (C) 2009 Sun Microsystems, Inc.
+
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <head>
+        <title>VirtualBox Web-Interface</title>
+        <!-- Meta fields. -->
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+        <meta http-equiv="Expires" content="0"/>
+        <meta http-equiv="Cache-Control" content ="no-cache"/>
+        <meta http-equiv="Cache-Control" content ="no-store, must-revalidate, max-age=0"/>
+        <meta http-equiv="Cache-Control" content ="post-check=0, pre-check=0"/>
+        <meta http-equiv="Pragma" content="no-cache"/>
+        <!-- Icon. -->
+        <link rel="shortcut icon" href="/static/images/favicon.ico">
+        <!-- Layout. -->
+        <link rel="stylesheet" type="text/css" href="/static/css/layout-default.css"/>
+        <!-- Themes. -->
+        <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/jquery-ui-1.7.2.custom.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.core.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.tabs.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.all.css"/>
+        <!-- JavaScript detection. -->
+        <noscript>
+            JavaScript is turned off in your web browser. Turn it on to take full advantage of this site, then refresh the page.
+        </noscript>
+        <!-- RDP scripts. -->
+        <script type="text/javascript" src="/static/js/webclient.js"></script>
+        <script type="text/javascript" src="/static/js/swfobject.js"></script>
+        <!-- jQuery -->
+        <!-- @todo add debug switch for including non-minimized versions. -->
+        <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/static/js/jquery.layout.min.js"></script>
+        <!-- Prototype -->
+        <script type="text/javascript" src="/static/js/prototype.js"></script>
+        <!-- UI scripts. -->
+        <script type="text/javascript" src="/static/js/ui/ui.core.js"></script> <!-- Must always come first. -->
+        <script type="text/javascript" src="/static/js/ui/ui.dialog.js"></script>
+        <script type="text/javascript" src="/static/js/ui/ui.selectable.js"></script>
+        <script type="text/javascript" src="/static/js/ui/ui.sortable.js"></script>
+        <script type="text/javascript" src="/static/js/ui/ui.tabs.js"></script>
+        <!-- Utility stuff. -->
+        <script type="text/javascript" src="/static/js/vboxHelper.js"></script>
+        <!-- Main-like classes. -->
+        <script type="text/javascript" src="/static/js/main/vboxMachineImpl.js"></script>
+        <script type="text/javascript" src="/static/js/main/vboxVirtualBoxImpl.js"></script>
+        <!-- COM-like classes. -->
+        <script type="text/javascript" src="/static/js/vboxConfig.js"></script>
+        <script type="text/javascript" src="/static/js/vboxVirtualBox.js"></script>
+        <script type="text/javascript" src="/static/js/vboxGlobal.js"></script>
+        <!-- UI classes. -->
+        <script type="text/javascript" src="/static/js/vboxVMListView.js"></script>
+        <script type="text/javascript" src="/static/js/vboxTabWidget.js"></script>
+        <script type="text/javascript" src="/static/js/vboxSelectorWnd.js"></script>
+        <!-- Inline code. -->
+        <script type="text/javascript">
+
+            var vbGlobal;
+            var vmListView;
+            var vmTabView;
+            var vmSelWnd;
+
+            var OuterLayout, layoutTabRDP, InboxLayout;
+            var vmTabWidget;
+
+            function onDocumentLoad()
+            {
+            }
+
+            function resizeTabLayout ()
+            {
+                if (!vmTabWidget)
+                    return; /* Make sure tabs are initialized. */
+
+                var selected = vmTabWidget.tabs('option', 'selected');
+                if (selected == 1)  // first tab
+                {
+                    /* Resize the tab-panel height because it is a 'layout container'.
+                       I'm now tired of moving around these code bits for having random results,
+                       so just substract 10px from the height to ensure it fits (sigh) ... */
+                    jQuery("#tabs-center-rdp").height( jQuery("#TabPanelsContainer").height() - 10);
+
+                    var pageHeight = jQuery("#tabs-center-rdp").height();
+                    var pageTop = jQuery("#tabs-center-rdp").offset().top;
+                    var rdpOffset = jQuery("#FlashRDP").offset().top - pageTop;
+                    var newHeight = pageHeight - rdpOffset;
+                    jQuery("#FlashRDP").height(newHeight);
+
+                    /*console.log("resizeTabLayout: pageTop: %d, pageHeight: %d, rdpOffset: %d, newHeight: %d",
+                        pageTop, pageHeight, rdpOffset, newHeight);*/
+
+                    /* HACK: Resize the RDP window to fit the screen. Needs proper binding with jQuery later. */
+                    vmTabView.onResize(0);
+                }
+            }
+
+            jQuery(document).ready(onDocumentReady);
+            function onDocumentReady()
+            {
+                /* Use different outer-layout classNames to simplify/clarify CSS. */
+                OuterLayout = jQuery('body').layout({
+                        north__paneSelector:            ".outer-layout-north"
+                    ,   north__resizable:               false
+                    ,   north__slidable:                false
+                    ,   north__togglerLength_open:      0
+                    ,   north__togglerLength_close:    -1
+
+                    ,   west__paneSelector:             ".outer-layout-west"
+                    ,   west__slidable:                 false
+                    ,   west__onresize:                 function () { jQuery("#vmList").selectable('resize'); }
+                    ,   center__paneSelector:           ".outer-layout-center"
+                    ,   center__onresize:               resizeTabLayout
+                });
+
+                /* Best to create the tabs first, because it's the container
+                   for the tab-layout (tabs-center-details). */
+                vmTabWidget = jQuery("#vmTab").tabs({
+                    show: resizeTabLayout /* Resize the layout when it becomes 'visible' */
+                });
+
+                OuterLayout.resizeAll();
+
+                /* Then init the VM list. */
+                jQuery('#vmList').selectable({
+                    selected: function(event, ui) {
+                        vmListView.selectionChanged(event, ui);
+                        vmTabView.selectionChanged();
+                    }
+                });
+
+                vbGlobal = new vboxGlobal();
+                vmListView = new vboxVMListView();
+                vmTabView = new vboxTabWidget();
+                vmSelWnd = new vboxSelectorWnd(vmListView, vmTabView);
+                vbGlobal.setSelectorWnd(vmSelWnd);
+
+                jQuery('#vmTab').bind('tabsselect', function(event, ui) {
+                    return vmTabView.onTabChange(event, ui);
+                });
+
+                jQuery(window).resize(vmSelWnd.onResize); /* On Mozilla, *only* the window itself has a resize event! */
+
+                var flashvars = {};
+                var params = {};
+                params.wmode="opaque";
+                params.menu="false";
+                params.bgcolor="#FFFFFF";
+                params.quality="low";
+                params.allowScriptAccess="always";
+
+                var attributes = {};
+                swfobject.createCSS("#FlashRDP", "margin:0; padding:10px; border:0;");
+                swfobject.embedSWF("/static/RDPClientUI.swf", "FlashRDP", "100%", "100%", "9.0.0",
+                                   "", flashvars, params, attributes, FlashRDPStatus);
+
+            } /* onDocumentReady */
+
+            /*
+             * RDP client event handlers.
+             * They will be called when the flash movie is ready and some event occurs.
+             * Note: the function name must be the "flash_id" + "event name".
+             */
+            function FlashRDPStatus(e)
+            {
+                /* Enable for debugging. */
+                return vmTabView.rdpStatus(e);
+            }
+
+            function FlashRDPLoaded(flash)
+            {
+                return vmTabView.rdpLoaded(flash);
+            }
+
+            function FlashRDPUnloaded(flash)
+            {
+                return vmTabView.rdpUnloaded(flash);
+            }
+
+            function FlashRDPConnected(flash)
+            {
+                return vmTabView.rdpConnected(flash);
+            }
+
+            function FlashRDPServerRedirect(flash)
+            {
+                return vmTabView.rdpRedirect(flash);
+            }
+
+            function FlashRDPDisconnected(flash)
+            {
+                return vmTabView.rdpDisconnected(flash);
+            }
+
+            function FlashRDPGetProperty(name)
+            {
+                var value = "";
+                var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);
+                if (flash)
+                    value = flash.getProperty(name);
+                return value;
+            }
+
+        </script>
+    </head>
+    <body font="Verdana" onload="onDocumentLoad()">
+
+        <div class="outer-layout-north" style="display: none;">
+            <b>VirtualBox Web Console</b>
+        </div>
+
+        <ol id="vmList" class="outer-layout-west" style="display: none; list-style-type: none;"></ol>
+
+        <div id="vmTab" class="outer-layout-center" style="display: none;">
+
+            <ul>
+                <li><a href="#tabs-center-details"><span><img src="/images/settings_16px.png" class="tabs-center-page-icon"/>Details</span></a></li>
+                <li><a href="#tabs-center-rdp"><span><img src="/images/vrdp_16px.png" class="tabs-center-page-icon"/>Console</span></a></li>
+                <li><a href="#tabs-center-desc"><span><img src="/images/description_16px.png" class="tabs-center-page-icon"/>Description</span></a></li>
+            </ul>
+
+            <!-- wrap tab-panels in ui-layout-content div -->
+            <div id="TabPanelsContainer" class="ui-layout-content">
+
+                <!-- Tab page for VM details. -->
+                <div id="tabs-center-details" class="tabs-center-page">
+                    <div class="tab-sections">
+                        <div id="tab-details-sec-vm-general" class="tab-section">
+                            <div id="tab-details-hdr-general" class="tab-section-header">
+                                <img class="tab-section-hdr-icon" alt="Machine" src="/images/machine_16px.png"/>
+                                <span class="tab-section-hdr-text">General</span>
+                            </div>
+                            <div id="tab-details-vm-general-name">Name: <span id="tab-details-vm-general-name-val"/></div>
+                            <div id="tab-details-vm-general-osname">OS Type: <span id="tab-details-vm-general-osname-val"/></div>
+                        </div>
+
+                        <div class="tab-section" id="tab-details-sec-vm-system">
+                            <div id="tab-details-hdr-system" class="tab-section-header">
+                                <img class="tab-section-hdr-icon" alt="Chipset" src="/images/chipset_16px.png"/>
+                                <span class="tab-section-hdr-text">System</span>
+                            </div>
+                            <div id="tab-details-vm-system-ram">Base Memory: <span id="tab-details-vm-system-ram-val"/></div>
+                            <div id="tab-details-vm-system-cpu">Processor(s): <span id="tab-details-vm-system-cpu-val"/></div>
+                            <div id="tab-details-vm-system-bootorder">Boot Order: <span id="tab-details-vm-system-bootorder-val"/></div>
+                            <div id="tab-details-vm-system-hwvirt">VT-x/AMD-V: <span id="tab-details-vm-system-hwvirt-val"/></div>
+                            <div id="tab-details-vm-system-nestedp">Nested Paging: <span id="tab-details-vm-system-nestedp-val"/></div>
+                        </div>
+
+                        <div class="tab-section" id="tab-details-sec-vm-display">
+                            <div id="tab-details-hdr-display" class="tab-section-header">
+                                <img class="tab-section-hdr-icon" alt="VRDP" src="/images/vrdp_16px.png"/>
+                                <span class="tab-section-hdr-text">Display</span>
+                            </div>
+                            <div id="tab-details-vm-display-videomem">Video Memory: <span id="tab-details-vm-display-videomem-val"/></div>
+                            <div id="tab-details-vm-display-3daccel">3D Acceleration: <span id="tab-details-vm-display-3daccel-val"/></div>
+                            <div id="tab-details-vm-display-rdpport">Remote Display Server Port: <span id="tab-details-vm-display-rdpport-val"/></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab page for RDP. -->
+                <div id="tabs-center-rdp" class="tabs-center-page">
+                    <div id="tab-rdp-header"><p class="tab-section-header">Remote View</p></div>
+                    <div class="tab-sections">
+                        <div class="tab-section" id="tab-rdp-sec-desc">
+                            <div id="tab-rdp-desc">Status: <span id="tab-rdp-desc-val"/></div>
+                        </div>
+                        <div class="tab-section" id="tab-rdp-sec-conn">
+                            <div id="tab-rdp-sec-auth">
+                                <form id="tab-rdp-form-connect" action="">
+                                    <p/>
+                                    <div id="tab-rdp-auth-user">
+                                        <label for="tab-rdp-auth-user-val" id="tab-rdp-auth-user-lbl">User name:</label>
+                                        <input id="tab-rdp-auth-user-val" name="rdpViewLogonUsername" type="text" size="20" value=""/>
+                                    </div>
+                                    <p id="tab-rdp-auth-pwd">
+                                        <label for="tab-rdp-auth-pwd-val" id="tab-rdp-auth-pwd-lbl">Password:</label>
+                                        <input id="tab-rdp-auth-pwd-val" name="rdpViewLogonPassword" type="password" size="20" value=""/>
+                                    </p>
+                                    <p id="tab-rdp-auth-pwd">
+                                        <input id="tab-rdp-auth-btnconn" type="button" onclick="return vmTabView.rdpHandleConnect();" value="Connect"/>
+                                    </p>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="tab-section" id="tab-rdp-sec-applet">
+                            <div id="FlashRDP">
+                                <div id="myAlternativeContent">
+                                    <h1>Alternative content</h1>
+                                    <p><a href="http://www.adobe.com/go/getflashplayer"><img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash player"/></a></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-section" id="tab-rdp-sec-footer"></div>
+                    </div>
+                </div>
+
+                <!-- Tab page for VM description. -->
+                <div id="tabs-center-desc" class="tabs-center-page">
+                    <div id="tab-desc-header"><p class="tab-section-header">Description</p></div>
+                    <div class="tab-sections">
+                        <div class="tab-section" id="tab-desc-sec-desc">
+                            <div id="tab-desc-desc"><span id="tab-desc-desc-val"/></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- ui-layout-content -->
+
+        </div>
+
+        <iframe style="height:0px;width:0px;visibility:hidden" src="about:blank">
+            This frame prevents back forward cache in Safari.
+        </iframe>
+
+    </body>
+    <head><meta http-equiv="Pragma" content="no-cache"/></head>
+</html>

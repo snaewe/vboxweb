@@ -1,0 +1,151 @@
+
+/* Copyright (C) 2009 Sun Microsystems, Inc.
+
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+body {
+    font-family: Verdana, Arial;
+    font-size: 0.85em;
+    }
+
+/* Global application layout panes. */
+
+/* Header. */
+.outer-layout-north {
+    background: #5889AB;
+    color: #FFFFFF;
+    padding: 5px 5px;
+    }
+
+/* VM List. */
+.outer-layout-west {
+    padding: 0 !important;
+    overflow: auto !important; /* Respect footer - don't overdraw it. */
+    }
+
+/* Center. */
+.outer-layout-center {
+    padding: 0px;
+    overflow: auto; /* Override layout default 'auto'. */
+    }
+
+/* Layout togglers (gripper bars). */
+.ui-layout-toggler {
+    color: #666;
+    border: 1px solid #BBB; /* Match pane-border. */
+    background-color: #999;
+    }
+    .ui-layout-toggler:hover {
+        background-color: #FC6;
+    }
+    .ui-layout-toggler-west ,
+    .ui-layout-toggler-east {
+        border-width: 1px 0;
+    }
+    /* Hide the toggler-button when the pane is 'slid open'. */
+    .ui-layout-resizer-sliding  ui-layout-toggler {
+        display: none;
+    }
+
+/* The VM list entries. */
+#vmList li { /* The element itself. */
+    border: 0;
+    border-bottom: 1px solid;
+    margin: 3px;
+    }
+
+#vmList .ui-selecting { /* Element in selecting state (hover). */
+    background: #5889AB;
+    }
+
+#vmList .ui-selected { /* Element is selected. */
+    background: #47789A; color: white;
+    }
+
+#vmList .vmlist-entry-osicon {
+    padding: 5px;
+    border: 0px;
+    width: 32px;
+    height=32px;
+    }
+
+#vmList.vmlist-entry-stateicon {
+    padding: 5px;
+    border: 0px;
+    width: 16px;
+    height=16px;
+    }
+
+/* The tab pages container. */
+#TabPanelsContainer {
+    padding: 10px;
+    overflow: auto; /* Override Layout default 'auto' */
+    }
+
+/* Our tab pages in outer-layout-center. */
+.tabs-center-page {
+    overflow: hidden;
+    border:	0px;
+    }
+
+/* The icon on the tab header. */
+.tabs-center-page-icon {
+    border: 0px;
+    padding-top: 4px;
+    padding-right: 5px;
+    }
+
+/* Tab Page. */
+.tab-section {
+    margin-bottom: 15px;
+    }
+
+.tab-section-header {
+    border: 0px;
+    font-weight: bolder;
+    margin-bottom: 5px;
+    }
+
+.tab-section-hdr-text {
+    vertical-align: middle;
+    }
+
+.tab-section-hdr-icon {
+    border: 0;
+    vertical-align: middle;
+    }
+
+/* Specific pages. */
+#tabs-center-rdp {
+    padding: 0;	/* Override tab-theme, needed for no vertical scrollbars. */
+    }
+    
+#tab-rdp-form-connect { 
+    width: 500px; 
+    }  
+    
+#tab-rdp-form-connect label { 
+    float: left;
+    width: 100px; 
+    }
+
