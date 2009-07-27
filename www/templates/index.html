@@ -122,17 +122,17 @@
             {
                 /* Use different outer-layout classNames to simplify/clarify CSS. */
                 OuterLayout = jQuery('body').layout({
-                        north__paneSelector:            ".outer-layout-north"
-                    ,   north__resizable:               false
-                    ,   north__slidable:                false
-                    ,   north__togglerLength_open:      0
-                    ,   north__togglerLength_close:    -1
+                        north__paneSelector:                ".outer-layout-north"
+                    ,   north__resizable:                   false
+                    ,   north__slidable:                    false
+                    ,   north__togglerLength_open:          0
+                    ,   north__togglerLength_close:        -1
 
-                    ,   west__paneSelector:             ".outer-layout-west"
-                    ,   west__slidable:                 false
-                    ,   west__onresize:                 function () { jQuery("#vmList").selectable('resize'); }
-                    ,   center__paneSelector:           ".outer-layout-center"
-                    ,   center__onresize:               resizeTabLayout
+                    ,   west__paneSelector:                ".outer-layout-west"
+                    ,   west__slidable:                    false
+                    ,   west__onresize:                    function () { jQuery("#vmList").selectable('resize'); }
+                    ,   center__paneSelector:              ".outer-layout-center"
+                    ,   center__onresize:                  resizeTabLayout
                 });
 
                 /* Best to create the tabs first, because it's the container

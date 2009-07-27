@@ -43,3 +43,23 @@ if (window.console == undefined /* add more check here when using "console.*" fu
             window.console[names[i]] = function() {}
         }
 }
+
+/* Extend jQuery with context function to handle callbacks correctly.
+   Example: error: jQuery.context(this).callback('rdpNotFound') */
+jQuery.extend(
+{
+    context: function (context)
+    {
+        var co =
+        {
+            callback: function (method)
+            {
+                if (typeof method == 'string')
+                    method = context[method];
+                var cb = function () { method.apply(context, arguments); }
+                return cb;
+            }
+        };
+        return co;
+    }
+});
