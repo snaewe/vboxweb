@@ -64,7 +64,7 @@ var vboxGlobal = Class.create(
 
     vmStateIcon: function (state)
     {
-        var strBasePath = "/images/";
+        var strBasePath = "/images/vbox/";
         var strIcon = "state_powered_off_16px.png";
 
         switch (state)
@@ -177,7 +177,7 @@ var vboxGlobal = Class.create(
 
     vmGuestOSTypeIcon: function (osTypeId)
     {
-        var strBasePath = "/images/";
+        var strBasePath = "/images/vbox/";
         var strIcon = "os_linux_other.png";
         switch (osTypeId)
         {

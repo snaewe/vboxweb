@@ -180,7 +180,7 @@ def main(argv):
             'tools.staticdir.dir': 'www/static'},
         '/images': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': '../VirtualBox/images'}}
+            'tools.staticdir.dir': 'www/static/images'}}
         )
 
 if __name__ == '__main__':
