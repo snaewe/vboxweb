@@ -28,7 +28,11 @@ import socket
 import traceback
 import cherrypy
 import cgi
-import json
+
+if sys.version_info < (2, 6):
+    import simplejson as json
+else:
+    import json
 
 from cherrypy.lib.static import serve_file
 
