@@ -123,12 +123,20 @@ var vboxTabWidget = Class.create(
 
     invalidatePageDetails: function(curItem, pageSelected)
     {
+        var bootOrder = curItem.machine().getBootOrder()
+        var strBootOrder = vbGlobal.deviceType(bootOrder[0])
+        for(i=1; i<bootOrder.length; i++) {
+            if(bootOrder[i] > 0){
+                strBootOrder = strBootOrder + ", " + vbGlobal.deviceType(bootOrder[i]);
+            }
+        }
+      
         jQuery("#tab-details-vm-general-name-val").text(curItem.name());
         jQuery("#tab-details-vm-general-osname-val").text(vbGlobal.vmGuestOSTypeDescription(curItem.machine().getOSType()));
 
         jQuery("#tab-details-vm-system-ram-val").text(curItem.machine().getMemorySize() + tr(" MB"));
         jQuery("#tab-details-vm-system-cpu-val").text(curItem.machine().getCPUCount());
-        jQuery("#tab-details-vm-system-bootorder-val").text(curItem.machine().getBootOrder());
+        jQuery("#tab-details-vm-system-bootorder-val").text(strBootOrder);
         jQuery("#tab-details-vm-system-hwvirt-val").text(curItem.machine().getHWVirtExEnabled() ? tr("Enabled") : tr("Disabled"));
         jQuery("#tab-details-vm-system-nestedp-val").text(curItem.machine().getHWVirtExNestedPagingEnabled() ? tr("Enabled") : tr("Disabled"));
 

@@ -62,6 +62,27 @@ var vboxGlobal = Class.create(
         return (swfobject.hasFlashPlayerVersion("9.0.0")) ? true : false;
     },
 
+    deviceType: function(device)
+    {
+        var strDevice = tr("Unknown");
+
+        switch (device)
+        {
+            case 0: strDevice = tr("None"); break;
+            case 1: strDevice = tr("Floppy"); break;
+            case 2: strDevice = tr("CD/DVD-ROM"); break;
+            case 3: strDevice = tr("Hard Disk"); break;
+            case 4: strDevice = tr("Network"); break;
+            case 5: strDevice = tr("USB"); break;
+            case 6: strDevice = tr("Shared Folder"); break;
+
+            default:
+                break;
+        }
+
+        return strDevice;
+    },
+
     vmStateIcon: function (state)
     {
         var strBasePath = "/images/vbox/";

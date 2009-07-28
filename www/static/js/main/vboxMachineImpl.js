@@ -78,6 +78,7 @@ var vboxMachineImpl = Class.create(
         this.mId = "";
         this.mOSType = "";
         this.mCPUCount = 0;
+        this.mBootOrder = "";
         this.mMemorySize = 0;
         this.mVRAMSize = 0;
         this.mAccelerate3DEnabled = false;
@@ -96,6 +97,7 @@ var vboxMachineImpl = Class.create(
         this.mId = jsonObject.id;
         this.mOSType = jsonObject.ostype;
         this.mCPUCount = jsonObject.CPUCount;
+        this.mBootOrder = jsonObject.bootOrder;
         this.mMemorySize = jsonObject.memorySize;
         this.mVRAMSize = jsonObject.VRAMSize;
         this.mAccelerate3DEnabled = jsonObject.accelerate3DEnabled ? true : false;
@@ -108,7 +110,7 @@ var vboxMachineImpl = Class.create(
 
     getBootOrder: function(position)
     {
-        return "";
+        return this.mBootOrder;
     },
 
     /* Public attributes. */

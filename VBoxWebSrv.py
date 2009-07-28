@@ -81,6 +81,7 @@ class jsMachine:
         self.id = machine.id
         self.ostype = machine.OSTypeId
         self.CPUCount = machine.CPUCount
+        self.bootOrder = []
         self.memorySize = machine.memorySize
         self.VRAMSize = machine.VRAMSize
         self.accelerate3DEnabled = machine.accelerate3DEnabled
@@ -89,6 +90,10 @@ class jsMachine:
         self.VRDPServer = jsVRDPServer(ctx, machine)
         self.state = machine.state
         self.sessState = machine.sessionState
+
+        maxBootPosition = ctx['vb'].systemProperties.maxBootPosition
+        for i in range(1, maxBootPosition + 1):
+            self.bootOrder.append(machine.getBootOrder(i))
 
 class VBoxPage:
     def __init__(self, ctx):
@@ -112,7 +117,7 @@ class Root(VBoxPage):
             return ""
 
         arr=[]
-        vboxVMList=self.ctx['global'].getArray(self.vbox, 'machines')
+        vboxVMList=self.ctx['global'].getArray(self.ctx['vb'], 'machines')
 
         arr.append(jsHeader(self.ctx, vboxVMList)) # Append header
         for m in vboxVMList: # Append all machines
@@ -128,9 +133,7 @@ class Root(VBoxPage):
                 # Get the "real" VBox interface from the stream created in the class constructor above
                 import win32com
                 i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
-                self.vbox = win32com.client.Dispatch(i)
-            else:
-                self.vbox = self.ctx['vb']
+                self.ctx['vb'] = win32com.client.Dispatch(i)
             self.init = True
 
         file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/templates/index.html')
