@@ -125,10 +125,12 @@ class Root(VBoxPage):
 
         if self.init is False:
             if sys.platform == 'win32':
-                # What we're trying to do here?
+                # Get the "real" VBox interface from the stream created in the class constructor above
                 import win32com
                 i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
                 self.vbox = win32com.client.Dispatch(i)
+            else:
+                self.vbox = self.ctx['vb']
             self.init = True
 
         file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/templates/index.html')
