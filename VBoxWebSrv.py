@@ -73,13 +73,26 @@ class jsVRDPServer:
         self.allowMultiConnection = machine.VRDPServer.allowMultiConnection;
         self.reuseSingleConnection = machine.VRDPServer.reuseSingleConnection;
 
+class jsGuestOSType:
+    def __init__(self, ctx, guestOSType):
+        self.familyId = guestOSType.familyId
+        self.familyDescription = guestOSType.familyDescription
+        self.id = guestOSType.id
+        self.description = guestOSType.description
+        self.is64Bit = guestOSType.is64Bit
+        self.recommendedIOAPIC = guestOSType.recommendedIOAPIC
+        self.recommendedVirtEx = guestOSType.recommendedVirtEx
+        self.recommendedRAM = guestOSType.recommendedRAM
+        self.recommendedVRAM = guestOSType.recommendedVRAM
+        self.recommendedHDD = guestOSType.recommendedHDD
+
 class jsMachine:
     def __init__(self, ctx, machine):
         self.accessible = machine.accessible
         self.name = machine.name
         self.desc = machine.description
         self.id = machine.id
-        self.ostype = machine.OSTypeId
+        self.ostype = jsGuestOSType(ctx, ctx['vb'].getGuestOSType(machine.OSTypeId))
         self.CPUCount = machine.CPUCount
         self.bootOrder = []
         self.memorySize = machine.memorySize

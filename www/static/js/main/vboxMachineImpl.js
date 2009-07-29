@@ -134,9 +134,14 @@ var vboxMachineImpl = Class.create(
         return this.mId;
     },
 
-    getOSType: function()
+    getOSTypeID: function()
     {
-        return this.mOSType;
+        return this.mOSType.id;
+    },
+
+    getOSTypeDescription: function()
+    {
+        return this.mOSType.description;
     },
 
     getCPUCount: function()

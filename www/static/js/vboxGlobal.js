@@ -271,16 +271,4 @@ var vboxGlobal = Class.create(
         return strBasePath + strIcon;
     },
 
-    vmGuestOSTypeDescription: function (osTypeId)
-    {
-        var strOS = osTypeId;
-        switch (osTypeId)
-        {
-            /** @todo translate ID name to something more beautiful. */
-
-            default:
-                break;
-        }
-        return strOS;
-    }
 });

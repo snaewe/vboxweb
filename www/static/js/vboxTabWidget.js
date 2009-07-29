@@ -132,7 +132,7 @@ var vboxTabWidget = Class.create(
         }
       
         jQuery("#tab-details-vm-general-name-val").text(curItem.name());
-        jQuery("#tab-details-vm-general-osname-val").text(vbGlobal.vmGuestOSTypeDescription(curItem.machine().getOSType()));
+        jQuery("#tab-details-vm-general-osname-val").text(curItem.machine().getOSTypeDescription());
 
         jQuery("#tab-details-vm-system-ram-val").text(curItem.machine().getMemorySize() + tr(" MB"));
         jQuery("#tab-details-vm-system-cpu-val").text(curItem.machine().getCPUCount());
