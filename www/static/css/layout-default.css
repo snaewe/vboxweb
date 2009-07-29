@@ -63,7 +63,7 @@ body {
         border-width: 1px 0;
     }
     /* Hide the toggler-button when the pane is 'slid open'. */
-    .ui-layout-resizer-sliding  ui-layout-toggler {
+    .ui-layout-resizer-sliding .ui-layout-toggler {
         display: none;
     }
 
@@ -86,14 +86,14 @@ body {
     padding: 5px;
     border: 0px;
     width: 32px;
-    height=32px;
+    height: 32px;
     }
 
 #vmList.vmlist-entry-stateicon {
     padding: 5px;
     border: 0px;
     width: 16px;
-    height=16px;
+    height: 16px;
     }
 
 /* The tab pages container. */
