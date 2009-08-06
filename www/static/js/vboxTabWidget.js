@@ -130,7 +130,7 @@ var vboxTabWidget = Class.create(
                 strBootOrder = strBootOrder + ", " + vbGlobal.deviceType(bootOrder[i]);
             }
         }
-      
+
         jQuery("#tab-details-vm-general-name-val").text(curItem.name());
         jQuery("#tab-details-vm-general-osname-val").text(curItem.machine().getOSTypeDescription());
 
@@ -143,6 +143,38 @@ var vboxTabWidget = Class.create(
         jQuery("#tab-details-vm-display-videomem-val").text(curItem.machine().getVRAMSize() + tr(" MB"));
         jQuery("#tab-details-vm-display-3daccel-val").text(curItem.machine().getAccelerate3DEnabled() ? tr("Enabled") : tr("Disabled"));
         jQuery("#tab-details-vm-display-rdpport-val").text(curItem.machine().getVRDPServer().getPort());
+
+        jQuery("li.harddisks-list-item").remove();
+        var hardDiskAttachments = curItem.machine().getHardDiskAttachments();
+        for(i=0; i<hardDiskAttachments.length; i++)
+        {
+            attachment = hardDiskAttachments[i];
+            hardDisk = attachment.getHardDisk();
+            if (attachment.getController() === 'IDE')
+            {
+                port = (attachment.getPort() === 0) ? tr('Primary') : tr('Secondary');
+                device = (attachment.getDevice() === 0) ? tr('Master') : tr('Slave');
+            }
+            else if (attachment.getController() === 'SATA')
+            {
+                port = 'Port ' + attachment.getPort();
+                device = '';
+            }
+            else
+            {
+                port = attachment.getPort();
+                device = attachment.getDevice();
+            }
+            strHardDisk = hardDisk.getName() + ' (' + vbGlobal.hardDiskType(hardDisk.getType()) + ', ' + hardDisk.getLogicalSizeGB() + ' GB)';
+            strListItem = attachment.getController() + ' ' + port + ' ' + device + ' - ' + strHardDisk;
+            jQuery("#tab-details-vm-harddisks-list").append("<li class='harddisks-list-item'>" + strListItem + "</li>");
+        }
+
+        if (hardDiskAttachments.length <= 0)
+        {
+            jQuery("#tab-details-vm-harddisks-list").
+                append("<li class='harddisks-list-item'>" + tr("No hard disks attached") + "</li>");
+        }
     },
 
     invalidatePageRDP: function(curItem, pageSelected)

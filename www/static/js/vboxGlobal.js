@@ -271,4 +271,30 @@ var vboxGlobal = Class.create(
         return strBasePath + strIcon;
     },
 
+    hardDiskType: function (type)
+    {
+        var strType = 'Unkown'
+        switch (type)
+        {
+            case 0: strType = 'Normal'; break;
+            case 1: strType = 'Immutable'; break;
+            case 2: strType = 'Writethrough'; break;
+
+            default: break;
+        }
+        return strType;
+    },
+
+    vmGuestOSTypeDescription: function (osTypeId)
+    {
+        var strOS = osTypeId;
+        switch (osTypeId)
+        {
+            /** @todo translate ID name to something more beautiful. */
+
+            default:
+                break;
+        }
+        return strOS;
+    }
 });

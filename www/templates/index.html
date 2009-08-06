@@ -65,8 +65,11 @@
         <!-- Utility stuff. -->
         <script type="text/javascript" src="/static/js/vboxHelper.js"></script>
         <!-- Main-like classes. -->
+        <script type="text/javascript" src="/static/js/main/vboxHardDiskImpl.js"></script>
+        <script type="text/javascript" src="/static/js/main/vboxHardDiskAttachmentImpl.js"></script>
         <script type="text/javascript" src="/static/js/main/vboxMachineImpl.js"></script>
         <script type="text/javascript" src="/static/js/main/vboxVirtualBoxImpl.js"></script>
+        <script type="text/javascript" src="/static/js/main/vboxVRDPServerImpl.js"></script>
         <!-- COM-like classes. -->
         <script type="text/javascript" src="/static/js/vboxConfig.js"></script>
         <script type="text/javascript" src="/static/js/vboxVirtualBox.js"></script>
@@ -277,6 +280,15 @@
                             <div id="tab-details-vm-display-3daccel">3D Acceleration: <span id="tab-details-vm-display-3daccel-val"/></div>
                             <div id="tab-details-vm-display-rdpport">Remote Display Server Port: <span id="tab-details-vm-display-rdpport-val"/></div>
                         </div>
+
+                        <div class="tab-section" id="tab-details-sec-vm-harddisks">
+                            <div id="tab-details-hdr-harddisks" class="tab-section-header">
+                                <img class="tab-section-hdr-icon" alt="Hard Disks" src="/images/vbox/hd_16px.png"/>
+                                <span class="tab-section-hdr-text">Hard Disks</span>
+                            </div>
+                            <ul id="tab-details-vm-harddisks-list"></ul>
+                        </div>
+
                     </div>
                 </div>
 

@@ -86,6 +86,20 @@ class jsGuestOSType:
         self.recommendedVRAM = guestOSType.recommendedVRAM
         self.recommendedHDD = guestOSType.recommendedHDD
 
+class jsHardDiskAttachment:
+    def __init__(self, attachment):
+        self.hardDisk = jsHardDisk(attachment.hardDisk)
+        self.controller = attachment.controller
+        self.port = attachment.port
+        self.device = attachment.device
+
+class jsHardDisk:
+    def __init__(self, hardDisk):
+        self.id = hardDisk.id
+        self.name = hardDisk.name
+        self.type = hardDisk.type
+        self.logicalSize = hardDisk.logicalSize
+
 class jsMachine:
     def __init__(self, ctx, machine):
         self.accessible = machine.accessible
@@ -103,6 +117,10 @@ class jsMachine:
         self.VRDPServer = jsVRDPServer(ctx, machine)
         self.state = machine.state
         self.sessState = machine.sessionState
+
+        self.hardDiskAttachments = []
+        for i in ctx['global'].getArray(machine, 'hardDiskAttachments'):
+            self.hardDiskAttachments.append(jsHardDiskAttachment(i))
 
         maxBootPosition = ctx['vb'].systemProperties.maxBootPosition
         for i in range(1, maxBootPosition + 1):

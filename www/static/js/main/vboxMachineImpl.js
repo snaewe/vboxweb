@@ -23,51 +23,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-var vboxMachineVRDPServer = Class.create(
-{
-    initialize: function()
-    {
-        this.mEnabled = false;
-        this.mPort = 0;
-        this.mAddress = "";
-        this.mAuthType = "";
-    },
-
-    loadSettingsJSON: function(jsonObject, arrIndex)
-    {
-        this.mEnabled = jsonObject.enabled == "1" ? true : false;
-        this.mPort = jsonObject.port;
-        this.mAddress = jsonObject.netAddress;
-        this.mAuthType = jsonObject.authType;
-    },
-
-    getEnabled: function()
-    {
-        return this.mEnabled;
-    },
-
-    getPort: function()
-    {
-        if ((this.mPort == "") || (this.mPort == "0"))
-            return "3389";
-        return this.mPort;
-    },
-
-    getNetAddress: function()
-    {
-        if (this.mAddress == "")
-            return tr("127.0.0.1");
-        return this.mAddress;
-    },
-
-    getAuthType: function()
-    {
-        if (this.mAuthType == "")
-            return "0";
-        return this.mAuthType;
-    }
-});
-
 var vboxMachineImpl = Class.create(
 {
     initialize: function()
@@ -87,6 +42,7 @@ var vboxMachineImpl = Class.create(
         this.mVRDPServer = new vboxMachineVRDPServer();
         this.mSessionState =  -1;
         this.mState =  -1;
+        this.mHardDiskAttachments = [];
     },
 
     loadSettingsJSON: function(jsonObject)
@@ -106,6 +62,13 @@ var vboxMachineImpl = Class.create(
         this.mVRDPServer.loadSettingsJSON(jsonObject.VRDPServer);
         this.mState = jsonObject.state;
         this.mSessionState = jsonObject.sessState;
+
+        for(i=0; i<jsonObject.hardDiskAttachments.length; i++) 
+        {
+            attachment = new vboxHardDiskAttachment();
+            attachment.loadSettingsJSON(jsonObject.hardDiskAttachments[i]);
+            this.mHardDiskAttachments.push(attachment);
+        }
     },
 
     getBootOrder: function(position)
@@ -187,5 +150,10 @@ var vboxMachineImpl = Class.create(
     getSessionState: function()
     {
         return this.mSessionState;
+    },
+
+    getHardDiskAttachments: function()
+    {
+        return this.mHardDiskAttachments;
     }
 });
