@@ -52,9 +52,9 @@ var vboxVirtualBox = Class.create(
         this.checkForUpdates();
 
         var scope = this; /* Save scope. */
-        /*this.perExec = new PeriodicalExecuter(
+        this.perExec = new PeriodicalExecuter(
                 scope.checkForUpdates.bind(scope), 10
-            ); /* Search for updates every minute. */
+            ); /* Search for updates periodically. */
     },
 
     refresh: function()
@@ -95,21 +95,39 @@ var vboxVirtualBox = Class.create(
             if ((res[0].magic != "jsVBxWb") || (res[0].ver != "1"))
                 throw "Invalid header!";
 
-            var n = res[0].numMach;
+            var numUpdates = res[0].numMach;
+            var updateType = res[0].updateType;
             switch (res[0].__class__)
             {
                 case "jsHeader":
 
-                    if (n > 0)
+                    if (numUpdates > 0)
                     {
                         var newMach;
-                        console.log("vboxVirtualBox::updateProcess: Updates for %d machines ...", n);
-                        this.clearMachines(); /** @todo don't clear all machines later! */
-                        for (var i=0; i<n; i++)
+                        console.log("vboxVirtualBox::updateProcess: Updates for %d machine(s) ...", numUpdates);
+
+                        /* On full update type (0) wipe existing machines. */
+                        if (updateType == 0)
+                            this.clearMachines();
+
+                        /* Add new or update existing machines. */
+                        for (var i=0; i<numUpdates; i++)
                         {
+                            arrJSON = res[i+1];
                             newMach = new vboxMachineImpl();
-                            newMach.loadSettingsJSON(res[i+1]);
-                            this.addMachine(newMach);
+                            newMach.loadSettingsJSON(arrJSON);
+
+                            curMach = this.getMachineById(newMach.getId());
+                            if (curMach == undefined)
+                            {
+                                console.log("vboxVirtualBox::updateProcess: Adding new machine: %s", newMach.getName());
+                                this.addMachine(newMach);
+                            }
+                            else
+                            {
+                                console.log("vboxVirtualBox::updateProcess: Updating machine: %s", curMach.getName());
+                                curMach.loadSettingsJSON(arrJSON);
+                            }
                         }
 
                         var sel = vbGlobal.selectorWnd();
@@ -148,7 +166,7 @@ var vboxVirtualBox = Class.create(
             this.dispatchException(e);
             return false;
         }
-        
+
         return true;
     },
 
@@ -157,6 +175,11 @@ var vboxVirtualBox = Class.create(
         /** @todo Search for machine first before adding. */
         console.log("vboxVirtualBox::addMachine: Name = %s", vboxMachineImpl.getName());
         this.mArrMachines[this.mArrMachines.length] = vboxMachineImpl;
+    },
+
+    removeMachine: function(id)
+    {
+
     },
 
     clearMachines: function()
@@ -178,7 +201,7 @@ var vboxVirtualBox = Class.create(
     {
         if (   (this.mArrMachines < 0)
             || (this.mArrMachines >= this.mArrMachines.length))
-            return None;
+            return undefined;
         return this.mArrMachines[index];
     },
 
@@ -192,6 +215,6 @@ var vboxVirtualBox = Class.create(
                 return this.mArrMachines[i];
         }
 
-        return null;
+        return undefined;
     }
 });

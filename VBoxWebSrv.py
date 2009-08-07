@@ -23,11 +23,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-import sys, os
-import socket
-import traceback
-import cherrypy
 import cgi
+import cherrypy
+import os
+import socket
+import sys
+import time
+import traceback
 
 if sys.version_info < (2, 6):
     import simplejson as json
@@ -49,11 +51,13 @@ def convertObjToJSON(obj):
     return d
 
 class jsHeader:
-    def __init__(self, ctx, vmList):
+    def __init__(self, ctx, arrMach, type):
         self.magic = "jsVBxWb"
         self.ver = 1
 
-        self.numMach = len(vmList)
+        self.sessionID = cherrypy.session.id
+        self.numMach = len(arrMach)
+        self.updateType = type
 #
 # @todo write autowrapper for attributes main-like classes below.
 #       Currently this involves too much copying around.
@@ -62,16 +66,16 @@ class jsVRDPServer:
     def __init__(self, ctx, machine):
         global g_serverAddress
 
-        self.enabled = machine.VRDPServer.enabled;
-        self.port = machine.VRDPServer.port;
+        self.enabled = machine.VRDPServer.enabled
+        self.port = machine.VRDPServer.port
 
         self.netAddress = machine.VRDPServer.netAddress
         if not self.netAddress:
             self.netAddress = ctx['serverAdr']
 
-        self.authType = machine.VRDPServer.authType;
-        self.allowMultiConnection = machine.VRDPServer.allowMultiConnection;
-        self.reuseSingleConnection = machine.VRDPServer.reuseSingleConnection;
+        self.authType = machine.VRDPServer.authType
+        self.allowMultiConnection = machine.VRDPServer.allowMultiConnection
+        self.reuseSingleConnection = machine.VRDPServer.reuseSingleConnection
 
 class jsGuestOSType:
     def __init__(self, ctx, guestOSType):
@@ -119,58 +123,269 @@ class jsMachine:
         self.sessState = machine.sessionState
 
         self.hardDiskAttachments = []
-        for i in ctx['global'].getArray(machine, 'hardDiskAttachments'):
+        arrAtt = ctx['global'].getArray(machine, 'hardDiskAttachments')
+        for i in arrAtt:
             self.hardDiskAttachments.append(jsHardDiskAttachment(i))
 
         maxBootPosition = ctx['vb'].systemProperties.maxBootPosition
         for i in range(1, maxBootPosition + 1):
             self.bootOrder.append(machine.getBootOrder(i))
 
+# Implementation of IConsoleCallback
+class GuestMonitor:
+    def __init__(self, mach):
+        self.mach = mach
+
+    def onMousePointerShapeChange(self, visible, alpha, xHot, yHot, width, height, shape):
+        print  "%s: onMousePointerShapeChange: visible=%d" %(self.mach.name, visible)
+
+    def onMouseCapabilityChange(self, supportsAbsolute, needsHostCursor):
+        print  "%s: onMouseCapabilityChange: needsHostCursor=%d" %(self.mach.name, needsHostCursor)
+
+    def onKeyboardLedsChange(self, numLock, capsLock, scrollLock):
+        print  "%s: onKeyboardLedsChange capsLock=%d"  %(self.mach.name, capsLock)
+
+    def onStateChange(self, state):
+        print  "%s: onStateChange state=%d" %(self.mach.name, state)
+
+    def onAdditionsStateChange(self):
+        print  "%s: onAdditionsStateChange" %(self.mach.name)
+
+    def onDVDDriveChange(self):
+        print  "%s: onDVDDriveChange" %(self.mach.name)
+
+    def onFloppyDriveChange(self):
+        print  "%s: onFloppyDriveChange" %(self.mach.name)
+
+    def onNetworkAdapterChange(self, adapter):
+        print  "%s: onNetworkAdapterChange" %(self.mach.name)
+
+    def onSerialPortChange(self, port):
+        print  "%s: onSerialPortChange" %(self.mach.name)
+
+    def onParallelPortChange(self, port):
+        print  "%s: onParallelPortChange" %(self.mach.name)
+
+    def onStorageControllerChange(self):
+        print  "%s: onStorageControllerChange" %(self.mach.name)
+
+    def onVRDPServerChange(self):
+        print  "%s: onVRDPServerChange" %(self.mach.name)
+
+    def onUSBControllerChange(self):
+        print  "%s: onUSBControllerChange" %(self.mach.name)
+
+    def onUSBDeviceStateChange(self, device, attached, error):
+        print  "%s: onUSBDeviceStateChange" %(self.mach.name)
+
+    def onSharedFolderChange(self, scope):
+        print  "%s: onSharedFolderChange" %(self.mach.name)
+
+    def onRuntimeError(self, fatal, id, message):
+        print  "%s: onRuntimeError fatal=%d message=%s" %(self.mach.name, fatal, message)
+
+    def onCanShowWindow(self):
+        print  "%s: onCanShowWindow" %(self.mach.name)
+        return True
+
+    def onShowWindow(self, winId):
+        print  "%s: onShowWindow: %d" %(self.mach.name, winId)
+
+# Implementation of IVirtualBoxCallback, simply re-routes to page object (parent)
+class VBoxMonitor:
+    def __init__(self, parent):
+        self.parent = parent
+
+    def onMachineStateChange(self, id, state):
+        print "onMachineStateChange: %s %d" %(id, state)
+        self.parent.onMachineStateChange(id, state)
+
+    def onMachineDataChange(self,id):
+        print "onMachineDataChange: %s" %(id)
+        self.parent.onMachineDataChange(id)
+
+    def onExtraDataCanChange(self, id, key, value):
+        print "onExtraDataCanChange: %s %s=>%s" %(id, key, value)
+        #bRet = self.parent.onExtraDataCanChange(id, key, value)
+        bRet = True
+
+        # Witty COM bridge thinks if someone wishes to return tuple, hresult
+        # is one of values we want to return
+        if sys.platform == 'win32':
+            return "", 0, bRet
+
+        return bRet, ""
+
+    def onExtraDataChange(self, id, key, value):
+        print "onExtraDataChange: %s %s=>%s" %(id, key, value)
+        self.parent.onExtraDataChange(id, key, value)
+
+    def onMediaRegistered(self, id, type, registred):
+        print "onMediaRegistred: %s" %(id)
+        self.parent.onMediaRegistered(id, type, registred)
+
+    def onMachineRegistered(self, id, registred):
+        print "onMachineRegistred: %s" %(id)
+        self.parent.onMachineRegistered(id, registred)
+
+    def onSessionStateChange(self, id, state):
+        print "onSessionStateChange: %s %d" %(id, state)
+        self.parent.onSessionStateChange(id, state)
+
+    def onSnapshotTaken(self, mach, id):
+        print "onSnapshotTaken: %s %s" %(mach, id)
+        self.parent.onSnapshotTaken(mach, id)
+
+    def onSnapshotDiscarded(self, mach, id):
+        print "onSnapshotDiscarded: %s %s" %(mach, id)
+        self.parent.onSnapshotDiscarded(mach, id)
+
+    def onSnapshotChange(self, mach, id):
+        print "onSnapshotChange: %s %s" %(mach, id)
+        self.parent.onSnapshotChange(mach, id)
+
+    def onGuestPropertyChange(self, id, name, newValue, flags):
+        print "onGuestPropertyChange: %s: %s=%s" %(id, name, newValue)
+        self.parent.onGuestPropertyChange(id, name, newValue, flags)
+
+class VBoxMachine:
+    def __init__(self, mach):
+        self.mach = mach
+        self.isDirty = True
+
 class VBoxPage:
     def __init__(self, ctx):
         self.ctx = ctx
+        self.forceUpdate = False
+        self.init = False
         if sys.platform == 'win32':
             self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vb'])
-        self.init = False
 
         # Init JSON printer
-        self.printer = None
+        self.jsonPrinter = None
         if hasattr(json, "dumps"):
-            self.printer = json.dumps
+            self.jsonPrinter = json.dumps
         elif hasattr(json, "write"):
-            self.printer = json.write
+            self.jsonPrinter = json.write
+        self.arrMach = []
+
+    def populateVMList(self):
+        vboxVMList=self.ctx['global'].getArray(self.ctx['vb'], 'machines')
+        self.arrMach = []
+        for m in vboxVMList: # Append all machines
+            self.arrMach.append(VBoxMachine(m))
+
+    def getMachine(self, id):
+        for m in self.arrMach: # @todo slow, speed this up
+            if cmp(m.mach.id, id) == 0:
+                return m
+        return None
+
+    def machineSetDirty(self, id):
+        m = self.getMachine(id)
+        if m <> None:
+            m.isDirty = True
+
+    def onMachineStateChange(self, id, state):
+        self.machineSetDirty(id)
+
+    def onMachineDataChange(self,id):
+        self.machineSetDirty(id)
+
+    def onExtraDataCanChange(self, id, key, value):
+        # Allow all at the moment
+        return True
+
+    def onExtraDataChange(self, id, key, value):
+        self.machineSetDirty(id)
+
+    def onMediaRegistered(self, id, type, registred):
+        self.machineSetDirty(id)
+
+    def onMachineRegistered(self, id, registered):
+        self.populateVMList() # Just re-build internal list from scratch
+
+    def onSessionStateChange(self, id, state):
+        self.machineSetDirty(id)
+
+    def onSnapshotTaken(self, mach, id):
+        self.machineSetDirty(id)
+
+    def onSnapshotDiscarded(self, mach, id):
+        self.machineSetDirty(id)
+
+    def onSnapshotChange(self, mach, id):
+        self.machineSetDirty(id)
+
+    def onGuestPropertyChange(self, id, name, newValue, flags):
+        # Don't react on this event - generated too much unused traffic atm
+        pass
 
 class Root(VBoxPage):
 
-    @cherrypy.expose
-    def vboxGetUpdates (self):
-        if self.init is False:
-            return ""
-
-        arr=[]
-        vboxVMList=self.ctx['global'].getArray(self.ctx['vb'], 'machines')
-
-        arr.append(jsHeader(self.ctx, vboxVMList)) # Append header
-        for m in vboxVMList: # Append all machines
-            arr.append(jsMachine(self.ctx, m))
-
-        return self.printer(arr, default=convertObjToJSON)
-
-    @cherrypy.expose
-    def index(self):
-
+    def initPage(self):
         if self.init is False:
             if sys.platform == 'win32':
                 # Get the "real" VBox interface from the stream created in the class constructor above
                 import win32com
                 i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
                 self.ctx['vb'] = win32com.client.Dispatch(i)
+
+            # We're done now
             self.init = True
+
+    @cherrypy.expose
+    def vboxGetUpdates(self):
+
+        arrJSON = []
+        arrMach = []
+
+        # Add all machines that have changed (are dirty) to arrMach
+        for m in self.arrMach:
+            if (m.isDirty is True) or (self.forceUpdate is True):
+                arrMach.append(m)
+                m.isDirty = False
+
+        if len(arrMach) is len(self.arrMach):
+            updateType = 0 # Full
+        else:
+            updateType = 1 # Differential
+
+        # Add header
+        arrJSON.append(jsHeader(self.ctx, arrMach, updateType))
+
+        # Add arrMach to the final JSON array
+        for m in arrMach:
+            arrJSON.append(jsMachine(self.ctx, m.mach))
+
+        self.forceUpdate = False
+
+        print "type %d, %d machines modified" %(updateType, len(arrMach))
+        return self.jsonPrinter(arrJSON, default=convertObjToJSON)
+
+    @cherrypy.expose
+    def index(self):
+
+        self.initPage()
+
+        # Register IVirtualBox (global) callback
+        self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
+        self.ctx['vb'].registerCallback(self.callbackVBox)
+
+        self.populateVMList()
+        self.forceUpdate = True
 
         file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/templates/index.html')
         return serve_file(file, content_type='text/html')
 
 g_virtualBoxManager = vboxapi.VirtualBoxManager(None, None)
+g_threadPool = {}
+g_logLevel = 99
+g_sessionNum = 0
+
+def log(level, str):
+    if g_logLevel >= level:
+        print str
 
 def perThreadInit(threadIndex):
     g_virtualBoxManager.initPerThread()
@@ -184,7 +399,7 @@ def main(argv):
     cherrypy.engine.subscribe('start_thread', perThreadInit)
     cherrypy.engine.subscribe('stop_thread',  perThreadDeinit)
 
-    print "VirtualBox Version:", g_virtualBoxManager.vbox.version[:3];
+    print "VirtualBox Version:", g_virtualBoxManager.vbox.version[:3]
 
     fileConfig = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'VBoxWeb.conf')
     print "Using config file:", fileConfig
@@ -222,6 +437,8 @@ def main(argv):
             'tools.staticdir.on': True,
             'tools.staticdir.dir': 'www/static/images'}}
         )
+
+    # Shut down
 
 if __name__ == '__main__':
     main(sys.argv)

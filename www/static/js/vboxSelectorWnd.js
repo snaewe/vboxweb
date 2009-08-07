@@ -75,10 +75,10 @@ var vboxSelectorWnd = Class.create(
 
     refreshVMList: function()
     {
-        console.log("vboxSelectorWnd::refreshVMList");
-
         var vbox = vbGlobal.virtualBox();
         var numMachines = vbox.getMachineCount();
+
+        console.log("vboxSelectorWnd::refreshVMList: %d machines", numMachines);
 
         this.mVMModel.clear();
         for (var i = 0; i < numMachines; i++)

@@ -124,7 +124,7 @@ var vboxVMModel = Class.create(
     initialize: function(vboxVMListView)
     {
         this.mVMListView = vboxVMListView;
-        this.mArrItems =  new Array();
+        this.mArrItems = new Array();
     },
 
     addItem: function(vboxVMListItem)
