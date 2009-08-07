@@ -407,6 +407,100 @@ def perThreadInit(threadIndex):
 def perThreadDeinit(threadIndex):
     g_virtualBoxManager.deinitPerThread()
 
+def rdpWebControlDownloadCallback(blocks, blockSize, size):
+    percentage = (blockSize * blocks * 100) / size
+    if percentage > 100:
+        percentage = 100
+    print "Status: %d%%" % (percentage)
+
+def rdpWebControlDownload(forceUpdate = False, url = None, dest = None, proxies = None):
+
+    import zipfile
+    if sys.version_info < (3, 0):
+        import urllib
+        url_open = urllib.urlopen
+    else:
+        import urllib.request
+        import urllib.error
+        url_open = urllib2.urlopen
+
+    try:
+
+        # @todo add local/remote version comparison to update to a newer version
+        #       if necessary.
+
+        fhFileLocal = None
+        fhFileVer = None
+        ret = False
+
+        # Set default URL
+        if url is None:
+            url = "http://download.virtualbox.org/virtualbox/rdpweb/"
+
+        if dest is None:
+            dest = os.path.abspath(os.path.dirname(__file__)) + "/www/static/"
+
+        # Check for already installed object
+        bRDPInstalled = os.path.isfile(dest + "rdpweb.swf")
+        if bRDPInstalled and (forceUpdate is False):
+            return
+
+        # Get latest version information
+        strVersion = ""
+        print "Looking up latest version of Sun RDP Web Control (from %s) ..." %(url)
+        fhFileVer = url_open(url + "LATEST.TXT", None, proxies)
+
+        # Parse version and let the user know
+        strLine = fhFileVer.readline().rstrip("\n")
+        fVersion = float(strLine)
+        if hasattr(fVersion, '__int__'):
+            print "Latest version is: ",fVersion
+        else:
+            raise IOError("No version information found!")
+
+        # Download the ZIP
+        print "Downloading Sun RDP Web Control ..."
+        rdpFile = "rdpweb_" + strLine + ".zip"
+        urllib.urlretrieve(url + rdpFile, dest + rdpFile, rdpWebControlDownloadCallback)
+        print "Download complete."
+
+        # Extract from ZIP
+        print "Extracting Sun RDP Web Control ..."
+        fhFileLocal = zipfile.ZipFile(dest + rdpFile, "r")
+
+        if fhFileLocal.testzip() <> None:
+            raise IOError("File is corrupted!")
+        if fhFileLocal is None:
+            raise IOError("Could not decompress file!")
+
+        for i, name in enumerate(fhFileLocal.namelist()):
+            print "Extracting %s" % name
+            if not name.endswith('/'):
+                outfile = open(os.path.join(dest, name), 'wb')
+                outfile.write(fhFileLocal.read(name))
+                outfile.flush()
+                outfile.close()
+
+        fhFileLocal.close()
+
+        print "Cleaning up ..."
+        os.remove(dest + rdpFile)
+        os.rename(dest + "rdpweb_" + strLine + ".swf", dest + "rdpweb.swf")
+
+        print "Installation successful."
+        ret = True
+
+    except Exception, e:
+        print e
+
+    finally:
+        if fhFileVer <> None:
+            fhFileVer.close()
+        if fhFileLocal <> None:
+            fhFileLocal.close()
+
+        return ret
+
 def main(argv):
 
     # Why subscribe() doesn't take callback argument, having global vboxMgr is a bit ugly
@@ -441,6 +535,9 @@ def main(argv):
            'serverAdr':serverAdr,
            'serverPort':serverPort
            }
+
+    # Download the RDP web control
+    rdpWebControlDownload()
 
     # Run web server
     cherrypy.quickstart(Root(ctx), '/', {

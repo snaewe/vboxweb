@@ -217,7 +217,7 @@ var vboxTabWidget = Class.create(
                     /* Request header to see if SWF file is present. */
                     var bError = false;
                     jQuery.ajax({
-                            url:"/static/RDPClientUI.swf",
+                            url:"/static/rdpweb.swf",
                             type: "HEAD",
                             async: true,
                             global: false,
