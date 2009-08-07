@@ -32,9 +32,11 @@ import time
 import traceback
 
 if sys.version_info < (2, 6):
-    import simplejson as json
+    import simplejson
+    isSimpleJson = True
 else:
     import json
+    isSimpleJson = False
 
 from cherrypy.lib.static import serve_file
 
@@ -50,6 +52,11 @@ def convertObjToJSON(obj):
     d.update(obj.__dict__)
     return d
 
+if isSimpleJson:
+    class ConvertObjToJSONClass(simplejson.JSONEncoder):
+        def default(self, obj):
+            return convertObjToJSON(obj)
+
 class jsHeader:
     def __init__(self, ctx, arrMach, type):
         self.magic = "jsVBxWb"
@@ -58,6 +65,7 @@ class jsHeader:
         self.sessionID = cherrypy.session.id
         self.numMach = len(arrMach)
         self.updateType = type
+
 #
 # @todo write autowrapper for attributes main-like classes below.
 #       Currently this involves too much copying around.
@@ -263,10 +271,13 @@ class VBoxPage:
 
         # Init JSON printer
         self.jsonPrinter = None
-        if hasattr(json, "dumps"):
-            self.jsonPrinter = json.dumps
-        elif hasattr(json, "write"):
-            self.jsonPrinter = json.write
+        if isSimpleJson:
+            self.jsonPrinter = simplejson.dumps
+        else:
+            if hasattr(json, "dumps"):
+                self.jsonPrinter = json.dumps
+            elif hasattr(json, "write"):
+                self.jsonPrinter = json.write
         self.arrMach = []
 
     def populateVMList(self):
@@ -361,7 +372,10 @@ class Root(VBoxPage):
         self.forceUpdate = False
 
         print "type %d, %d machines modified" %(updateType, len(arrMach))
-        return self.jsonPrinter(arrJSON, default=convertObjToJSON)
+        if isSimpleJson:
+            return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
+        else:
+            return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
     @cherrypy.expose
     def index(self):
