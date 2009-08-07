@@ -174,7 +174,7 @@ var vboxVMListView = Class.create(
 
     selectItemByRow: function(row)
     {
-        this.mCurItem = this.mVMModel.itemByRow(0);
+        this.mCurItem = this.mVMModel.itemByRow(row);
         console.log("vboxVMListView::selectItemByRow: Row = %d, mCurItem = %s", row, this.mCurItem.name());
         return this.mCurItem;
     },

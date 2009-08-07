@@ -22,6 +22,22 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+ 
+VMState =
+{
+    PoweredOff: 1,
+    Saved: 2,
+    Aborted: 3,
+    Running: 4,
+    Paused: 5,
+    Stuck: 6,
+    Starting: 7,
+    Stopping: 8,
+    Saving: 9,
+    Restoring: 10,
+    Discarding: 11,
+    SettingUp: 12    
+};
 
 var vboxGlobal = Class.create(
 {
@@ -112,57 +128,46 @@ var vboxGlobal = Class.create(
 
     vmStateDescription: function(state)
     {
+        /** @todo use an array instead of this huge switch statement */
         var strState = tr("Unknown");
         switch(state)
         {
-            case 1:
+            case VMState.PoweredOff:
                 strState = tr("Powered Off");
                 break;
-
-            case 2:
+            case VMState.Saved:
                 strState = tr("Saved");
                 break;
-
-            case 3:
+            case VMState.Aborted:
                 strState = tr("Aborted");
                 break;
-
-            case 4:
+            case VMState.Running:
                 strState = tr("Running");
                 break;
-
-            case 5:
+            case VMState.Paused:
                 strState = tr("Paused");
                 break;
-
-            case 6:
+            case VMState.Stuck:
                 strState = tr("Stuck");
                 break;
-
-            case 7:
+            case VMState.Starting:
                 strState = tr("Starting");
                 break;
-
-            case 8:
+            case VMState.Stopping:
                 strState = tr("Stopping");
                 break;
-
-            case 9:
+            case VMState.Saving:
                 strState = tr("Saving");
                 break;
-
-            case 10:
+            case VMState.Restoring:
                 strState = tr("Restoring");
                 break;
-
-            case 11:
+            case VMState.Discarding:
                 strState = tr("Discarding");
                 break;
-
-            case 12:
+            case VMState.SettingUp:
                 strState = tr("Setting Up");
                 break;
-
             default:
                 break;
         }

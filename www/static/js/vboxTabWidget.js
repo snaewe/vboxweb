@@ -176,7 +176,7 @@ var vboxTabWidget = Class.create(
             strHardDisk = hardDisk.getName() + ' (' + vbGlobal.hardDiskType(hardDisk.getType()) +
                           ', ' + hardDisk.getLogicalSizeGB() + ' GB)';
             strListItem = '<div class="tab-details-vm-attribute">' +
-                          attachment.getController() + ' ' + port + ' ' + device + ':' +
+                          attachment.getController() + ' ' + port + device + ':' +
                           '</div><div class="tab-details-vm-value">' + strHardDisk +
                           '</div><div style="clear: both"></div>';
             jQuery("#tab-details-vm-harddisks-list").append("<li class='harddisks-list-item'>" + strListItem + "</li>");

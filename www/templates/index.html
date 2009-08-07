@@ -75,6 +75,7 @@
         <script type="text/javascript" src="/static/js/vboxVirtualBox.js"></script>
         <script type="text/javascript" src="/static/js/vboxGlobal.js"></script>
         <!-- UI classes. -->
+        <script type="text/javascript" src="/static/js/vboxVMToolbar.js"></script>
         <script type="text/javascript" src="/static/js/vboxVMListView.js"></script>
         <script type="text/javascript" src="/static/js/vboxTabWidget.js"></script>
         <script type="text/javascript" src="/static/js/vboxSelectorWnd.js"></script>
@@ -82,6 +83,7 @@
         <script type="text/javascript">
 
             var vbGlobal;
+            var vmToolbar;
             var vmListView;
             var vmTabView;
             var vmSelWnd;
@@ -128,6 +130,8 @@
                         north__paneSelector:                ".outer-layout-north"
                     ,   north__resizable:                   false
                     ,   north__slidable:                    false
+                    /* unfortunately, Safari does not choose the right width, it becomes 1px */
+                    ,   north__size:                        40
                     ,   north__togglerLength_open:          0
                     ,   north__togglerLength_close:        -1
 
@@ -151,13 +155,15 @@
                     selected: function(event, ui) {
                         vmListView.selectionChanged(event, ui);
                         vmTabView.selectionChanged();
+                        vmToolbar.selectionChanged();
                     }
                 });
 
                 vbGlobal = new vboxGlobal();
+                vmToolbar = new vboxVMToolbar();
                 vmListView = new vboxVMListView();
                 vmTabView = new vboxTabWidget();
-                vmSelWnd = new vboxSelectorWnd(vmListView, vmTabView);
+                vmSelWnd = new vboxSelectorWnd(vmListView, vmTabView, vmToolbar);
                 vbGlobal.setSelectorWnd(vmSelWnd);
 
                 jQuery('#vmTab').bind('tabsselect', function(event, ui) {
@@ -165,6 +171,7 @@
                 });
 
                 jQuery(window).resize(vmSelWnd.onResize); /* On Mozilla, *only* the window itself has a resize event! */
+
 
                 var flashvars = {};
                 var params = {};
@@ -230,8 +237,11 @@
     </head>
     <body font="Verdana" onload="onDocumentLoad()">
 
-        <div class="outer-layout-north" style="display: none;">
-            <b>VirtualBox Web Console</b>
+        <div id="vmToolbar" class="outer-layout-north" style="display: none;">
+            <img src="/images/vbox/vm_new_32px.png"/>
+            <span id="toolbar-button-vm-settings"></span>
+            <span id="toolbar-button-vm-start"></span>
+            <span id="toolbar-button-vm-discard"></span>
         </div>
 
         <ol id="vmList" class="outer-layout-west" style="display: none; list-style-type: none;"></ol>

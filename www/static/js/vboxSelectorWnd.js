@@ -25,12 +25,15 @@
 
 var vboxSelectorWnd = Class.create(
 {
-    initialize: function(vboxVMListView, vboxTabWidget)
+    initialize: function(vboxVMListView, vboxTabWidget, vboxVMToolbar)
     {
+       console.log("vboxSelectorWnd::initialize");
+       this.mVMToolbar = vboxVMToolbar;
        this.mVMListView = vboxVMListView;
        this.mVMModel = new vboxVMModel(this.mVMListView);
        this.mTabWidget = vboxTabWidget;
 
+       this.mVMToolbar.setParent(this);
        this.mVMListView.setParent(this);
        this.mVMListView.setModel(this.mVMModel);
        this.mTabWidget.setParent(this);
@@ -102,6 +105,7 @@ var vboxSelectorWnd = Class.create(
     invalidate: function()
     {
         /* Refresh widgets. */
+        this.mVMToolbar.invalidate();
         this.mVMListView.invalidate();
         this.mTabWidget.invalidate();
 
