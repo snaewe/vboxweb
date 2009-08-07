@@ -146,7 +146,7 @@ var vboxTabWidget = Class.create(
 
         jQuery("li.harddisks-list-item").remove();
         var hardDiskAttachments = curItem.machine().getHardDiskAttachments();
-        for(i=0; i<hardDiskAttachments.length; i++)
+        for (i = 0; i < hardDiskAttachments.length; i++)
         {
             attachment = hardDiskAttachments[i];
             hardDisk = attachment.getHardDisk();
@@ -160,13 +160,25 @@ var vboxTabWidget = Class.create(
                 port = 'Port ' + attachment.getPort();
                 device = '';
             }
+            else if (attachment.getController() === 'SCSI')
+            {
+                port = 'Port ' + attachment.getPort();
+                device = '';
+            }
             else
             {
                 port = attachment.getPort();
                 device = attachment.getDevice();
             }
-            strHardDisk = hardDisk.getName() + ' (' + vbGlobal.hardDiskType(hardDisk.getType()) + ', ' + hardDisk.getLogicalSizeGB() + ' GB)';
-            strListItem = attachment.getController() + ' ' + port + ' ' + device + ' - ' + strHardDisk;
+            
+            if (device != "")
+                device = ' ' + device;
+            strHardDisk = hardDisk.getName() + ' (' + vbGlobal.hardDiskType(hardDisk.getType()) +
+                          ', ' + hardDisk.getLogicalSizeGB() + ' GB)';
+            strListItem = '<div class="tab-details-vm-attribute">' +
+                          attachment.getController() + ' ' + port + ' ' + device + ':' +
+                          '</div><div class="tab-details-vm-value">' + strHardDisk +
+                          '</div><div style="clear: both"></div>';
             jQuery("#tab-details-vm-harddisks-list").append("<li class='harddisks-list-item'>" + strListItem + "</li>");
         }
 
@@ -281,8 +293,8 @@ var vboxTabWidget = Class.create(
     invalidatePageDesc: function(curItem, pageSelected)
     {
         var strDesc = curItem.machine().getDesc();
-        if (strDesc == "")
-            strDesc = tr("This machine has no description.");
+        if (strDesc == null || strDesc == "")
+            strDesc = tr("No description available.");
         jQuery("#tab-desc-desc-val").text(strDesc);
     },
 

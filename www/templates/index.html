@@ -26,7 +26,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
     <head>
-        <title>VirtualBox Web-Interface</title>
+        <title>VirtualBox Web Console</title>
         <!-- Meta fields. -->
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
         <meta http-equiv="Expires" content="0"/>
@@ -176,7 +176,7 @@
 
                 var attributes = {};
                 swfobject.createCSS("#FlashRDP", "margin:0; padding:10px; border:0;");
-                swfobject.embedSWF("/static/RDPClientUI.swf", "FlashRDP", "100%", "100%", "9.0.0",
+                swfobject.embedSWF("/static/rdpweb_1.0.swf", "FlashRDP", "100%", "100%", "9.0.0",
                                    "", flashvars, params, attributes, FlashRDPStatus);
 
             } /* onDocumentReady */
@@ -255,20 +255,49 @@
                                 <img class="tab-section-hdr-icon" alt="Machine" src="/images/vbox/machine_16px.png"/>
                                 <span class="tab-section-hdr-text">General</span>
                             </div>
-                            <div id="tab-details-vm-general-name">Name: <span id="tab-details-vm-general-name-val"/></div>
-                            <div id="tab-details-vm-general-osname">OS Type: <span id="tab-details-vm-general-osname-val"/></div>
+                            <div id="tab-details-vm-general-name">
+                                <div class="tab-details-vm-attribute">Name:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-general-name-val"></div>
+                                <div style="clear: both"></div>
+                            </div>
+                            <div id="tab-details-vm-general-osname">
+                                <div class="tab-details-vm-attribute">OS Type:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-general-osname-val"></div>
+                                <div style="clear: both"></div>
+                            </div>
                         </div>
+
 
                         <div class="tab-section" id="tab-details-sec-vm-system">
                             <div id="tab-details-hdr-system" class="tab-section-header">
                                 <img class="tab-section-hdr-icon" alt="Chipset" src="/images/vbox/chipset_16px.png"/>
                                 <span class="tab-section-hdr-text">System</span>
                             </div>
-                            <div id="tab-details-vm-system-ram">Base Memory: <span id="tab-details-vm-system-ram-val"/></div>
-                            <div id="tab-details-vm-system-cpu">Processor(s): <span id="tab-details-vm-system-cpu-val"/></div>
-                            <div id="tab-details-vm-system-bootorder">Boot Order: <span id="tab-details-vm-system-bootorder-val"/></div>
-                            <div id="tab-details-vm-system-hwvirt">VT-x/AMD-V: <span id="tab-details-vm-system-hwvirt-val"/></div>
-                            <div id="tab-details-vm-system-nestedp">Nested Paging: <span id="tab-details-vm-system-nestedp-val"/></div>
+                            <div id="tab-details-vm-system-ram">
+                                <div class="tab-details-vm-attribute">Base Memory:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-system-ram-val"></div>
+                                <div style="clear: both"></div>
+                            </div>
+                            <div id="tab-details-vm-system-cpu">
+                                <div class="tab-details-vm-attribute">Processor(s):</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-system-cpu-val"></div>
+                                <div style="clear: both"></div>
+                            </div>
+                            <div id="tab-details-vm-system-bootorder">
+                                <div class="tab-details-vm-attribute">Boot Order:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-system-bootorder-val"></div>
+                                <div style="clear: both"></div>
+                            </div>
+                            <div id="tab-details-vm-system-hwvirt">
+                                <div class="tab-details-vm-attribute">VT-x/AMD-V:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-system-hwvirt-val"></div>
+                                <div style="clear: both"></div>
+                            </div>
+                            <div id="tab-details-vm-system-nestedp">
+                                <div class="tab-details-vm-attribute">Nested Paging:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-system-nestedp-val"></div>
+                                <div style="clear: both"></div>
+                            </div>
                         </div>
 
                         <div class="tab-section" id="tab-details-sec-vm-display">
@@ -276,9 +305,21 @@
                                 <img class="tab-section-hdr-icon" alt="VRDP" src="/images/vbox/vrdp_16px.png"/>
                                 <span class="tab-section-hdr-text">Display</span>
                             </div>
-                            <div id="tab-details-vm-display-videomem">Video Memory: <span id="tab-details-vm-display-videomem-val"/></div>
-                            <div id="tab-details-vm-display-3daccel">3D Acceleration: <span id="tab-details-vm-display-3daccel-val"/></div>
-                            <div id="tab-details-vm-display-rdpport">Remote Display Server Port: <span id="tab-details-vm-display-rdpport-val"/></div>
+                            <div id="tab-details-vm-display-videomem">
+                                <div class="tab-details-vm-attribute">Video Memory:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-display-videomem-val"/></div>
+                                <div style="clear: both"></div>
+                            </div>
+                            <div id="tab-details-vm-display-3daccel">
+                                <div class="tab-details-vm-attribute">3D:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-display-3daccel-val"/></div>
+                                <div style="clear: both"></div>
+                            </div>
+                            <div id="tab-details-vm-display-rdpport">
+                                <div class="tab-details-vm-attribute">VRDP Port:</div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-display-rdpport-val"/></div>
+                                <div style="clear: both"></div>
+                            </div>
                         </div>
 
                         <div class="tab-section" id="tab-details-sec-vm-harddisks">
@@ -286,7 +327,7 @@
                                 <img class="tab-section-hdr-icon" alt="Hard Disks" src="/images/vbox/hd_16px.png"/>
                                 <span class="tab-section-hdr-text">Hard Disks</span>
                             </div>
-                            <ul id="tab-details-vm-harddisks-list"></ul>
+                            <ul id="tab-details-vm-harddisks-list" class="harddisks-list"></ul>
                         </div>
 
                     </div>
@@ -321,7 +362,9 @@
                             <div id="FlashRDP">
                                 <div id="myAlternativeContent">
                                     <h1>Alternative content</h1>
-                                    <p><a href="http://www.adobe.com/go/getflashplayer"><img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash player"/></a></p>
+                                    <p><a href="http://www.adobe.com/go/getflashplayer">
+                                        <img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash player"/></a>
+                                    </p>
                                 </div>
                             </div>
                         </div>

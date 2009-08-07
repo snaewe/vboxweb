@@ -70,7 +70,6 @@ body {
 /* The VM list entries. */
 #vmList li { /* The element itself. */
     border: 0;
-    border-bottom: 1px solid;
     margin: 3px;
     }
 
@@ -135,17 +134,32 @@ body {
     vertical-align: middle;
     }
 
+.tab-details-vm-attribute {
+    width: 150px;
+    float: left;
+}
+.tab-details-vm-value {
+    float: left;
+}
+
 /* Specific pages. */
 #tabs-center-rdp {
     padding: 0;	/* Override tab-theme, needed for no vertical scrollbars. */
     }
-    
-#tab-rdp-form-connect { 
-    width: 500px; 
-    }  
-    
-#tab-rdp-form-connect label { 
+
+#tab-rdp-form-connect {
+    width: 500px;
+    }
+
+#tab-rdp-form-connect label {
     float: left;
-    width: 100px; 
+    width: 100px;
+    }
+
+.harddisks-list {
+    margin-top:0;
+    list-style-type: none;
+    padding: 0;
+    margin-left: 0;
     }
 
