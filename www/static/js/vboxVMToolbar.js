@@ -27,6 +27,8 @@ var vboxVMToolbar = Class.create(
 {
     initialize: function()
     {
+        /* bind the static new VM toolbar button */
+        jQuery("#toolbar-button-new").bind("click", this.buttonClicked);
     },
 
     setParent: function(parent)
@@ -37,6 +39,32 @@ var vboxVMToolbar = Class.create(
     invalidate: function()
     {
         this.selectionChanged();
+    },
+
+    buttonClicked: function(event)
+    {
+        /* where does it come from? */
+        switch (event.target.id)
+        {
+            case "toolbar-button-new":
+                console.log("New VM not implemented!");
+                break;
+
+            case "toolbar-button-settings":
+                console.log("Change VM settings not implemented!");
+                break;
+
+            case "toolbar-button-start":
+                console.log("start vm!!!");
+                break;
+
+            case "toolbar-button-discard":
+                console.log("Discard VM state not implemented!");
+                break;
+
+            default:
+                console.log("vboxVMToolbar::buttonClicked: unknown source ID: " + event.target.id);
+        }
     },
 
     selectionChanged: function()
@@ -52,23 +80,27 @@ var vboxVMToolbar = Class.create(
         /* settings can only be changed for powered off and aborted VMs */
         if (curItem.state() == VMState.PoweredOff ||
             curItem.state() == VMState.Aborted)
-            jQuery("#toolbar-button-vm-settings").html('<img src="/images/vbox/vm_settings_32px.png"/>');
+            jQuery("#toolbar-button-vm-settings-span").html('<img id="toolbar-button-settings" src="/images/vbox/vm_settings_32px.png"/>');
         else
-            jQuery("#toolbar-button-vm-settings").html('<img src="/images/vbox/vm_settings_disabled_32px.png"/>');
+            jQuery("#toolbar-button-vm-settings-span").html('<img src="/images/vbox/vm_settings_disabled_32px.png"/>');
 
         /* powered off / aborted and saved VMs can be started */
         /** @todo when saved, start means "show" in the Qt GUI, we can go to the RDP console */
         if (curItem.state() == VMState.PoweredOff ||
             curItem.state() == VMState.Aborted ||
             curItem.state() == VMState.Saved)
-            jQuery("#toolbar-button-vm-start").html('<img src="/images/vbox/vm_start_32px.png"/>');
+            jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start" src="/images/vbox/vm_start_32px.png"/">');
         else
-            jQuery("#toolbar-button-vm-start").html('<img src="/images/vbox/vm_start_disabled_32px.png"/>');
+            jQuery("#toolbar-button-vm-start-span").html('<img src="/images/vbox/vm_start_disabled_32px.png"/>');
 
         /* saved VMs can be discarded */
         if (curItem.state() == VMState.Saved)
-            jQuery("#toolbar-button-vm-discard").html('<img src="/images/vbox/vm_discard_32px.png"/>');
+            jQuery("#toolbar-button-vm-discard-span").html('<img id="toolbar-button-discard" src="/images/vbox/vm_discard_32px.png"/>');
         else
-            jQuery("#toolbar-button-vm-discard").html('<img src="/images/vbox/vm_discard_disabled_32px.png"/>');
+            jQuery("#toolbar-button-vm-discard-span").html('<img src="/images/vbox/vm_discard_disabled_32px.png"/>');
+
+        jQuery("#toolbar-button-settings").bind("click", this.buttonClicked);
+        jQuery("#toolbar-button-start").bind("click", this.buttonClicked);
+        jQuery("#toolbar-button-discard").bind("click", this.buttonClicked);
     }
 });
