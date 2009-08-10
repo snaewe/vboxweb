@@ -55,7 +55,8 @@ var vboxVMToolbar = Class.create(
                 break;
 
             case "toolbar-button-start":
-                console.log("start vm!!!");
+                console.log("vboxVMToolbar::buttonClicked: starting VM with uuid " + vmSelWnd.curItem().id());
+                vbGlobal.mVirtualBox.startVM(vmSelWnd.curItem().id());
                 break;
 
             case "toolbar-button-discard":

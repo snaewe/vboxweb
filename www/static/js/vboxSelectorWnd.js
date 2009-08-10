@@ -43,30 +43,6 @@ var vboxSelectorWnd = Class.create(
     {
     },
 
-    vmNew: function()
-    {
-    },
-
-    vmSettings: function(aCategory, aControl, machineId)
-    {
-    },
-
-    vmDelete: function()
-    {
-    },
-
-    vmStart: function()
-    {
-    },
-
-    vmDiscard: function()
-    {
-    },
-
-    vmPause: function()
-    {
-    },
-
     vmRefresh: function(machineId)
     {
         this.refreshVMItem(

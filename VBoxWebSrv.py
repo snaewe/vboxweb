@@ -378,6 +378,22 @@ class Root(VBoxPage):
             return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
     @cherrypy.expose
+    def vboxStartVM(self, uuid):
+        print "vboxStartVM called with uuid " + uuid
+        session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
+        progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
+        # todo we shouldn't wait here, perform asynchronously
+        progress.waitForCompletion(-1)
+        session.close()
+        # todo easier way to return "no updates"?
+        arrJSON = []
+        arrJSON.append(jsHeader(self.ctx, [], 1))
+        if isSimpleJson:
+            return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
+        else:
+            return self.jsonPrinter(arrJSON, default=convertObjToJSON)
+
+    @cherrypy.expose
     def index(self):
 
         self.initPage()

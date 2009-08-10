@@ -216,5 +216,10 @@ var vboxVirtualBox = Class.create(
         }
 
         return undefined;
+    },
+    
+    startVM: function(id)
+    {
+        this.receiveData("/vboxStartVM?uuid=" + id);
     }
 });
