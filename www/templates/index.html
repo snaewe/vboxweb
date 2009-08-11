@@ -62,14 +62,10 @@
         <script type="text/javascript" src="/static/js/ui/ui.selectable.js"></script>
         <script type="text/javascript" src="/static/js/ui/ui.sortable.js"></script>
         <script type="text/javascript" src="/static/js/ui/ui.tabs.js"></script>
+        <!-- Main API -->
+        <script type="text/javascript" src="/static/js/VirtualBox_Main.js"></script>
         <!-- Utility stuff. -->
         <script type="text/javascript" src="/static/js/vboxHelper.js"></script>
-        <!-- Main-like classes. -->
-        <script type="text/javascript" src="/static/js/main/vboxHardDiskImpl.js"></script>
-        <script type="text/javascript" src="/static/js/main/vboxHardDiskAttachmentImpl.js"></script>
-        <script type="text/javascript" src="/static/js/main/vboxMachineImpl.js"></script>
-        <script type="text/javascript" src="/static/js/main/vboxVirtualBoxImpl.js"></script>
-        <script type="text/javascript" src="/static/js/main/vboxVRDPServerImpl.js"></script>
         <!-- COM-like classes. -->
         <script type="text/javascript" src="/static/js/vboxConfig.js"></script>
         <script type="text/javascript" src="/static/js/vboxVirtualBox.js"></script>
@@ -91,6 +87,9 @@
             var OuterLayout, layoutTabRDP, InboxLayout;
             var vmTabWidget;
 
+            /* Set global jQuery handle (instead of using "jQuery(...)" all the time.
+            var $j = jQuery.noConflict();*/
+            
             function onDocumentLoad()
             {
             }

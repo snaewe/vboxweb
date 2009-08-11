@@ -41,7 +41,7 @@ var vboxVMListItem = Class.create(
             this.mId = this.mMachine.getId();
             this.mState = this.mMachine.getState();
             this.mSessionState = this.mMachine.getSessionState();
-            this.mOSTypeId = this.mMachine.getOSTypeID();
+            this.mOSTypeId = this.mMachine.getOSTypeId();
         }
         else
         {

@@ -123,7 +123,8 @@ var vboxTabWidget = Class.create(
 
     invalidatePageDetails: function(curItem, pageSelected)
     {
-        var bootOrder = curItem.machine().getBootOrder()
+        var mach = curItem.machine();
+        var bootOrder = mach.jsonObject.bootOrder; /* A bit hacky, find a better way later! */
         var strBootOrder = vbGlobal.deviceType(bootOrder[0])
         for(i=1; i<bootOrder.length; i++) {
             if(bootOrder[i] > 0){
@@ -131,25 +132,27 @@ var vboxTabWidget = Class.create(
             }
         }
 
+        var vrdpServer = new vboxIVRDPServerImpl(mach.getVRDPServer());
+        var hardDiskAttachments = mach.getHardDiskAttachments();
+
         jQuery("#tab-details-vm-general-name-val").text(curItem.name());
-        jQuery("#tab-details-vm-general-osname-val").text(curItem.machine().getOSTypeDescription());
+        jQuery("#tab-details-vm-general-osname-val").text(mach.getOSTypeId());
 
-        jQuery("#tab-details-vm-system-ram-val").text(curItem.machine().getMemorySize() + tr(" MB"));
-        jQuery("#tab-details-vm-system-cpu-val").text(curItem.machine().getCPUCount());
+        jQuery("#tab-details-vm-system-ram-val").text(mach.getMemorySize() + tr(" MB"));
+        jQuery("#tab-details-vm-system-cpu-val").text(mach.getCPUCount());
         jQuery("#tab-details-vm-system-bootorder-val").text(strBootOrder);
-        jQuery("#tab-details-vm-system-hwvirt-val").text(curItem.machine().getHWVirtExEnabled() ? tr("Enabled") : tr("Disabled"));
-        jQuery("#tab-details-vm-system-nestedp-val").text(curItem.machine().getHWVirtExNestedPagingEnabled() ? tr("Enabled") : tr("Disabled"));
+        jQuery("#tab-details-vm-system-hwvirt-val").text(mach.getHWVirtExEnabled() ? tr("Enabled") : tr("Disabled"));
+        jQuery("#tab-details-vm-system-nestedp-val").text(mach.getHWVirtExNestedPagingEnabled() ? tr("Enabled") : tr("Disabled"));
 
-        jQuery("#tab-details-vm-display-videomem-val").text(curItem.machine().getVRAMSize() + tr(" MB"));
-        jQuery("#tab-details-vm-display-3daccel-val").text(curItem.machine().getAccelerate3DEnabled() ? tr("Enabled") : tr("Disabled"));
-        jQuery("#tab-details-vm-display-rdpport-val").text(curItem.machine().getVRDPServer().getPort());
+        jQuery("#tab-details-vm-display-videomem-val").text(mach.getVRAMSize() + tr(" MB"));
+        jQuery("#tab-details-vm-display-3daccel-val").text(mach.getAccelerate3DEnabled() ? tr("Enabled") : tr("Disabled"));
+        jQuery("#tab-details-vm-display-rdpport-val").text(vrdpServer.getPort());
 
         jQuery("li.harddisks-list-item").remove();
-        var hardDiskAttachments = curItem.machine().getHardDiskAttachments();
         for (i = 0; i < hardDiskAttachments.length; i++)
         {
-            attachment = hardDiskAttachments[i];
-            hardDisk = attachment.getHardDisk();
+            attachment = new vboxIHardDiskAttachmentImpl(hardDiskAttachments[i]);
+            hardDisk = new vboxIHardDiskImpl(attachment.getHardDisk());
             if (attachment.getController() === 'IDE')
             {
                 port = (attachment.getPort() === 0) ? tr('Primary') : tr('Secondary');
@@ -170,11 +173,11 @@ var vboxTabWidget = Class.create(
                 port = attachment.getPort();
                 device = attachment.getDevice();
             }
-            
+
             if (device != "")
                 device = ' ' + device;
             strHardDisk = hardDisk.getName() + ' (' + vbGlobal.hardDiskType(hardDisk.getType()) +
-                          ', ' + hardDisk.getLogicalSizeGB() + ' GB)';
+                          ', ' + (hardDisk.getLogicalSize() / 1024) + ' GB)';
             strListItem = '<div class="tab-details-vm-attribute">' +
                           attachment.getController() + ' ' + port + device + ':' +
                           '</div><div class="tab-details-vm-value">' + strHardDisk +

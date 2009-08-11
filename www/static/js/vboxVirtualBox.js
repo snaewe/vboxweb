@@ -114,8 +114,7 @@ var vboxVirtualBox = Class.create(
                         for (var i=0; i<numUpdates; i++)
                         {
                             arrJSON = res[i+1];
-                            newMach = new vboxMachineImpl();
-                            newMach.loadSettingsJSON(arrJSON);
+                            newMach = new vboxIMachineImpl(arrJSON);
 
                             curMach = this.getMachineById(newMach.getId());
                             if (curMach == undefined)
