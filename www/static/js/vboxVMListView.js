@@ -215,18 +215,39 @@ var vboxVMListView = Class.create(
                 '</li>';
             jQuery(newItem).appendTo('ol#vmList');
         }
+
+        /* Select first item */
+        /* @todo Save old selected item, create list (see above) and select the old
+                 VM again (if still present). Otherwise set first entry. */
+        jQuery("#vmList li:first").toggleClass('ui-selected');
+
+        /* (Re-)connect all handlers */
+        jQuery('ol#vmList li').
+            mouseover(function()
+            {
+                jQuery(this).toggleClass('ui-state-hover');
+            }).
+            mouseout(function()
+            {
+                jQuery(this).toggleClass('ui-state-hover');
+            }).
+            click(function(event, ui)
+            {
+                jQuery(this).
+                    toggleClass('ui-selected').
+                    siblings().removeClass('ui-selected');
+
+                vmListView.selectionChanged(event);
+                vmTabView.selectionChanged();
+                vmToolbar.selectionChanged();
+            });
     },
 
-    selectionChanged: function(event, ui)
+    selectionChanged: function(event)
     {
-        /* The following line works around the bug to use the 'option' -> 'active' getter: jQuery('#vmList').accordion('option', 'active'); */
-        var curIndex = jQuery("#vmList tr").index(jQuery("#vmList tr.ui-selected"));
-        if (curIndex >= 0)
-        {
-            this.mCurItem = this.mVMModel.itemByRow(curIndex);
-            console.log("vboxVMListView::selectionChanged: mCurItem = %s", this.mCurItem.name());
-        }
-        else console.log("vboxVMListView::selectionChanged: Invalid index (%d)!", curIndex);
+        var curIndex = jQuery("#vmList li").index(event.currentTarget);
+        this.mCurItem = this.mVMModel.itemByRow(curIndex);
+        console.log("vboxVMListView::selectionChanged: mCurItem = %s", this.mCurItem.name());
     },
 
     selectedItem: function()

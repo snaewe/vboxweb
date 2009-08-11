@@ -89,7 +89,7 @@
 
             /* Set global jQuery handle (instead of using "jQuery(...)" all the time.
             var $j = jQuery.noConflict();*/
-            
+
             function onDocumentLoad()
             {
             }
@@ -123,7 +123,7 @@
 
             jQuery(document).ready(onDocumentReady);
             function onDocumentReady()
-            {
+            {           
                 /* Use different outer-layout classNames to simplify/clarify CSS. */
                 OuterLayout = jQuery('body').layout({
                         north__paneSelector:                ".outer-layout-north"
@@ -148,15 +148,6 @@
                 });
 
                 OuterLayout.resizeAll();
-
-                /* Then init the VM list. */
-                jQuery('#vmList').selectable({
-                    selected: function(event, ui) {
-                        vmListView.selectionChanged(event, ui);
-                        vmTabView.selectionChanged();
-                        vmToolbar.selectionChanged();
-                    }
-                });
 
                 vbGlobal = new vboxGlobal();
                 vmToolbar = new vboxVMToolbar();

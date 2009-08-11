@@ -71,19 +71,17 @@ class jsHeader:
 #       Currently this involves too much copying around.
 #
 class jsVRDPServer:
-    def __init__(self, ctx, machine):
-        global g_serverAddress
+    def __init__(self, ctx, vrdp):
+        self.enabled = vrdp.enabled
+        self.port = vrdp.port
 
-        self.enabled = machine.VRDPServer.enabled
-        self.port = machine.VRDPServer.port
-
-        self.netAddress = machine.VRDPServer.netAddress
+        self.netAddress = vrdp.netAddress
         if not self.netAddress:
             self.netAddress = ctx['serverAdr']
 
-        self.authType = machine.VRDPServer.authType
-        self.allowMultiConnection = machine.VRDPServer.allowMultiConnection
-        self.reuseSingleConnection = machine.VRDPServer.reuseSingleConnection
+        self.authType = vrdp.authType
+        self.allowMultiConnection = vrdp.allowMultiConnection
+        self.reuseSingleConnection = vrdp.reuseSingleConnection
 
 class jsGuestOSType:
     def __init__(self, guestOSType):
@@ -126,7 +124,7 @@ class jsMachine:
         self.accelerate3DEnabled = machine.accelerate3DEnabled
         self.HWVirtExEnabled = machine.HWVirtExEnabled
         self.HWVirtExNestedPagingEnabled = machine.HWVirtExNestedPagingEnabled
-        self.VRDPServer = jsVRDPServer(ctx, machine)
+        self.VRDPServer = jsVRDPServer(ctx, machine.VRDPServer)
         self.state = machine.state
         self.sessState = machine.sessionState
 
