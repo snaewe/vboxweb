@@ -378,6 +378,50 @@ class Root(VBoxPage):
             return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
     @cherrypy.expose
+    def vboxVMAction(self, operation, uuid):
+        print "vboxVMAction called with operation " + operation + " and uuid " + uuid
+
+        if operation == "startvm":
+            session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
+            progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
+            # todo we shouldn't wait here, perform asynchronously
+            progress.waitForCompletion(-1)
+            session.close()
+
+        # Commands requiring an open session
+        elif (operation == "pausevm" or
+             operation == "resumevm" or
+             operation == "savestatevm" or
+             operation == "poweroff" or
+             operation == "acpipoweroffvm"):
+            session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
+            progress = self.ctx['vb'].openExistingSession(session, uuid)
+            console = session.console;
+            if operation == "pausevm":
+                console.pause()
+            elif operation == "resumevm":
+                console.resume()
+            elif operation == "savestatevm":
+                pass
+            elif operation == "poweroff":
+                console.powerDown()
+            elif operation == "acpipoweroff":
+                console.powerButton()
+
+        elif operation == "discardvm":
+            pass
+        else:
+            print "vboxVMAction: unknown operation"
+
+        # todo easier way to return "no updates"?
+        arrJSON = []
+        arrJSON.append(jsHeader(self.ctx, [], 1))
+        if isSimpleJson:
+            return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
+        else:
+            return self.jsonPrinter(arrJSON, default=convertObjToJSON)
+
+    @cherrypy.expose
     def vboxStartVM(self, uuid):
         print "vboxStartVM called with uuid " + uuid
         session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])

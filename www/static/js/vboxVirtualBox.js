@@ -217,9 +217,39 @@ var vboxVirtualBox = Class.create(
 
         return undefined;
     },
-    
+
     startVM: function(id)
     {
-        this.receiveData("/vboxStartVM?uuid=" + id);
+        this.receiveData("/vboxVMAction?operation=startvm&uuid=" + id)
+    },
+
+    pauseVM: function(id)
+    {
+        this.receiveData("/vboxVMAction?operation=pausevm&uuid=" + id);
+    },
+
+    resumeVM: function(id)
+    {
+        this.receiveData("/vboxVMAction?operation=resumevm&uuid=" + id);
+    },
+
+    discardVM: function(id)
+    {
+        this.receiveData("/vboxVMAction?operation=discardvm&uuid=" + id);
+    },
+
+    poweroffVM: function(id)
+    {
+        this.receiveData("/vboxVMAction?operation=poweroffvm&uuid=" + id);
+    },
+
+    savestateVM: function(id)
+    {
+        this.receiveData("/vboxVMAction?operation=savestatevm&uuid=" + id);
+    },
+
+    acpipoweroffVM: function(id)
+    {
+        this.receiveData("/vboxVMAction?operation=acpipoweroffvm&uuid=" + id);
     }
 });
