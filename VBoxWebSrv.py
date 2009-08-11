@@ -222,7 +222,7 @@ class VBoxMonitor:
         if sys.platform == 'win32':
             return "", 0, bRet
 
-        return bRet, ""
+        return "", bRet
 
     def onExtraDataChange(self, id, key, value):
         print "onExtraDataChange: %s %s=>%s" %(id, key, value)
