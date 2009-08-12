@@ -22,7 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
- 
+
 VMState =
 {
     PoweredOff: 1,
@@ -36,7 +36,7 @@ VMState =
     Saving: 9,
     Restoring: 10,
     Discarding: 11,
-    SettingUp: 12    
+    SettingUp: 12
 };
 
 var vboxGlobal = Class.create(
@@ -288,18 +288,5 @@ var vboxGlobal = Class.create(
             default: break;
         }
         return strType;
-    },
-
-    vmGuestOSTypeDescription: function (osTypeId)
-    {
-        var strOS = osTypeId;
-        switch (osTypeId)
-        {
-            /** @todo translate ID name to something more beautiful. */
-
-            default:
-                break;
-        }
-        return strOS;
     }
 });

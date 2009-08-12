@@ -126,17 +126,18 @@ var vboxTabWidget = Class.create(
         var mach = curItem.machine();
         var bootOrder = mach.jsonObject.bootOrder; /* A bit hacky, find a better way later! */
         var strBootOrder = vbGlobal.deviceType(bootOrder[0])
-        for(i=1; i<bootOrder.length; i++) {
-            if(bootOrder[i] > 0){
+        for (i=1; i<bootOrder.length; i++)
+        {
+            if (bootOrder[i] > 0)
                 strBootOrder = strBootOrder + ", " + vbGlobal.deviceType(bootOrder[i]);
-            }
         }
 
         var vrdpServer = new vboxIVRDPServerImpl(mach.getVRDPServer());
+        var guestOSType = vbGlobal.virtualBox().getGuestOSTypeById(mach.getOSTypeId());
         var hardDiskAttachments = mach.getHardDiskAttachments();
 
         jQuery("#tab-details-vm-general-name-val").text(curItem.name());
-        jQuery("#tab-details-vm-general-osname-val").text(mach.getOSTypeId());
+        jQuery("#tab-details-vm-general-osname-val").text(guestOSType.getDescription());
 
         jQuery("#tab-details-vm-system-ram-val").text(mach.getMemorySize() + tr(" MB"));
         jQuery("#tab-details-vm-system-cpu-val").text(mach.getCPUCount());
@@ -153,20 +154,20 @@ var vboxTabWidget = Class.create(
         {
             attachment = new vboxIHardDiskAttachmentImpl(hardDiskAttachments[i]);
             hardDisk = new vboxIHardDiskImpl(attachment.getHardDisk());
-            if (attachment.getController() === 'IDE')
+            if (attachment.getController() === "IDE")
             {
-                port = (attachment.getPort() === 0) ? tr('Primary') : tr('Secondary');
-                device = (attachment.getDevice() === 0) ? tr('Master') : tr('Slave');
+                port = (attachment.getPort() === 0) ? tr("Primary") : tr("Secondary");
+                device = (attachment.getDevice() === 0) ? tr("Master") : tr("Slave");
             }
-            else if (attachment.getController() === 'SATA')
+            else if (attachment.getController() === "SATA")
             {
-                port = 'Port ' + attachment.getPort();
-                device = '';
+                port = tr("Port ") + attachment.getPort();
+                device = "";
             }
-            else if (attachment.getController() === 'SCSI')
+            else if (attachment.getController() === "SCSI")
             {
-                port = 'Port ' + attachment.getPort();
-                device = '';
+                port = tr("Port ") + attachment.getPort();
+                device = "";
             }
             else
             {
@@ -176,19 +177,19 @@ var vboxTabWidget = Class.create(
 
             if (device != "")
                 device = ' ' + device;
-            strHardDisk = hardDisk.getName() + ' (' + vbGlobal.hardDiskType(hardDisk.getType()) +
-                          ', ' + (hardDisk.getLogicalSize() / 1024) + ' GB)';
+            strHardDisk = hardDisk.getName() + " (" + vbGlobal.hardDiskType(hardDisk.getType()) +
+                          ", " + (hardDisk.getLogicalSize() / 1024) + " GB)";
             strListItem = '<div class="tab-details-vm-attribute">' +
-                          attachment.getController() + ' ' + port + device + ':' +
+                          attachment.getController() + " " + port + device + ":" +
                           '</div><div class="tab-details-vm-value">' + strHardDisk +
                           '</div><div style="clear: both"></div>';
-            jQuery("#tab-details-vm-harddisks-list").append("<li class='harddisks-list-item'>" + strListItem + "</li>");
+            jQuery("#tab-details-vm-harddisks-list").append('<li class="harddisks-list-item">' + strListItem + "</li>");
         }
 
         if (hardDiskAttachments.length <= 0)
         {
             jQuery("#tab-details-vm-harddisks-list").
-                append("<li class='harddisks-list-item'>" + tr("No hard disks attached") + "</li>");
+                append('<li class="harddisks-list-item">' + tr("No hard disks attached") + "</li>");
         }
     },
 
@@ -295,7 +296,7 @@ var vboxTabWidget = Class.create(
 
     invalidatePageDesc: function(curItem, pageSelected)
     {
-        var strDesc = curItem.machine().getDesc();
+        var strDesc = curItem.machine().getDescription();
         if (strDesc == null || strDesc == "")
             strDesc = tr("No description available.");
         jQuery("#tab-desc-desc-val").text(strDesc);

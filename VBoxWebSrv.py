@@ -54,6 +54,10 @@ if isSimpleJson:
         def default(self, obj):
             return convertObjToJSON(obj)
 
+#
+# @todo write autowrapper for attributes main-like classes below.
+#       Currently this involves too much copying around.
+#
 class jsHeader:
     def __init__(self, ctx, arrMach, type, statusMessage = ""):
         self.magic = "jsVBxWb"
@@ -64,10 +68,14 @@ class jsHeader:
         self.updateType = type
         self.statusMessage = statusMessage
 
-#
-# @todo write autowrapper for attributes main-like classes below.
-#       Currently this involves too much copying around.
-#
+class jsVirtualBox:
+    def __init__(self, ctx):
+        arrOSTypes = ctx['global'].getArray(ctx['vb'], 'guestOSTypes')
+        self.arrGuestOSTypes = []
+        for type in arrOSTypes:
+            self.arrGuestOSTypes.append(jsGuestOSType(type))
+        self.numGuestOSTypes = len(self.arrGuestOSTypes)
+
 class jsVRDPServer:
     def __init__(self, ctx, vrdp):
         self.enabled = vrdp.enabled
@@ -114,7 +122,7 @@ class jsMachine:
         self.name = machine.name
         self.desc = machine.description
         self.id = machine.id
-        self.ostype = jsGuestOSType(ctx['vb'].getGuestOSType(machine.OSTypeId))
+        self.OSTypeId = machine.OSTypeId
         self.CPUCount = machine.CPUCount
         self.bootOrder = []
         self.memorySize = machine.memorySize
@@ -260,8 +268,9 @@ class VBoxMachine:
 class VBoxPage:
     def __init__(self, ctx):
         self.ctx = ctx
-        self.forceUpdate = False
-        self.init = False
+
+        # Ugly COM stuff
+        self.initCOM = False
         if sys.platform == 'win32':
             self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vb'])
 
@@ -330,44 +339,50 @@ class VBoxPage:
 
 class Root(VBoxPage):
 
-    def initPage(self):
-        if self.init is False:
+    def registerCallbacks(self):
+        # Register IVirtualBox (global) callback
+        self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
+        self.ctx['vb'].registerCallback(self.callbackVBox)
+
+    def prepareCOM(self):
+        if self.initCOM is False:
             if sys.platform == 'win32':
                 # Get the "real" VBox interface from the stream created in the class constructor above
                 import win32com
                 i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
                 self.ctx['vb'] = win32com.client.Dispatch(i)
-
-            # We're done now
-            self.init = True
+            self.initCOM = True
 
     @cherrypy.expose
     def vboxGetUpdates(self):
+        print "Page: vboxGetUpdates"
 
         arrJSON = []
         arrMach = []
 
         # Add all machines that have changed (are dirty) to arrMach
         for m in self.arrMach:
-            if (m.isDirty is True) or (self.forceUpdate is True):
+            if (m.isDirty is True):
                 arrMach.append(m)
                 m.isDirty = False
 
-        if len(arrMach) is len(self.arrMach):
+        if (len(arrMach) is len(self.arrMach)):
             updateType = 0 # Full
         else:
             updateType = 1 # Differential
 
-        # Add header
+        # Add header (must always come first atm)
         arrJSON.append(jsHeader(self.ctx, arrMach, updateType))
+
+        # Add global VirtualBox object on full update
+        if updateType is 0:
+            arrJSON.append(jsVirtualBox(self.ctx))
 
         # Add arrMach to the final JSON array
         for m in arrMach:
             arrJSON.append(jsMachine(self.ctx, m.mach))
 
-        self.forceUpdate = False
-
-        print "type %d, %d machines modified" %(updateType, len(arrMach))
+        print "Type %d, %d machines modified" %(updateType, len(arrMach))
         if isSimpleJson:
             return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
         else:
@@ -375,8 +390,8 @@ class Root(VBoxPage):
 
     @cherrypy.expose
     def vboxVMAction(self, operation, uuid):
-        print "vboxVMAction called with operation " + operation + " and uuid " + uuid
-
+        print "Page: vboxVMAction called with operation " + operation + " and uuid " + uuid
+        # Close session if opened
         if operation == "startvm":
             session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
             progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
@@ -421,7 +436,7 @@ class Root(VBoxPage):
 
     @cherrypy.expose
     def vboxStartVM(self, uuid):
-        print "vboxStartVM called with uuid " + uuid
+        print "Page: vboxStartVM called with uuid " + uuid
         session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
         progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
         # todo we shouldn't wait here, perform asynchronously
@@ -435,17 +450,14 @@ class Root(VBoxPage):
         else:
             return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
+    # Entry point when browser loads the whole page
     @cherrypy.expose
     def index(self):
+        print "Page: init"
 
-        self.initPage()
-
-        # Register IVirtualBox (global) callback
-        self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
-        self.ctx['vb'].registerCallback(self.callbackVBox)
-
+        self.prepareCOM()
+        self.registerCallbacks()
         self.populateVMList()
-        self.forceUpdate = True
 
         file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/templates/index.html')
         return serve_file(file, content_type='text/html')

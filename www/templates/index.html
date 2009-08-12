@@ -24,6 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
 -->
 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "html-dtd/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
     <head>
         <title>VirtualBox Web Console</title>
@@ -36,7 +37,7 @@
         <meta http-equiv="Cache-Control" content ="post-check=0, pre-check=0"/>
         <meta http-equiv="Pragma" content="no-cache"/>
         <!-- Icon. -->
-        <link rel="shortcut icon" href="/static/images/favicon.ico">
+        <link rel="shortcut icon" href="/static/images/favicon.ico"/>
         <!-- Layout. -->
         <link rel="stylesheet" type="text/css" href="/static/css/layout-default.css"/>
         <!-- Themes. -->
@@ -45,7 +46,7 @@
         <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.tabs.css"/>
         <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.all.css"/>
     </head>
-    <body font="Verdana" onload="onDocumentLoad()">
+    <body onload="onDocumentLoad()">
         <!-- JavaScript detection. -->
         <noscript>
             JavaScript is turned off in your web browser. Turn it on to take full advantage of this site, then refresh the page.
@@ -239,7 +240,7 @@
             <span id="toolbar-button-vm-stop-span"></span>
         </div>
 
-        <ol id="vmList" class="outer-layout-west" style="display: none; list-style-type: none;"></ol>
+        <ol id="vmList" class="outer-layout-west" style="display: none; list-style-type: none;"><li/></ol>
 
         <div id="vmTab" class="outer-layout-center" style="display: none;">
 
@@ -332,7 +333,7 @@
                                 <img class="tab-section-hdr-icon" alt="Hard Disks" src="/images/vbox/hd_16px.png"/>
                                 <span class="tab-section-hdr-text">Hard Disks</span>
                             </div>
-                            <ul id="tab-details-vm-harddisks-list" class="harddisks-list"></ul>
+                            <ul id="tab-details-vm-harddisks-list" class="harddisks-list"><li/></ul>
                         </div>
 
                     </div>
@@ -387,18 +388,12 @@
                     </div>
                 </div>
 
-            </div> <!-- ui-layout-content -->
-
-        </div>
+            </div> <!-- TabPanelsContainer -->
+        </div> <!-- vmTab -->
 
         <div id="vmMessageArea" class="outer-layout-south" style="display: none;">
             <table id="vmMessageTable" width="100%" cellspacing="0">
            </table>
         </div>
-
-        <iframe style="height:0px;width:0px;visibility:hidden" src="about:blank">
-            This frame prevents back forward cache in Safari.
-        </iframe>
-
     </body>
 </html>

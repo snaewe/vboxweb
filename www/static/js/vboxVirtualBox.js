@@ -47,6 +47,7 @@ var vboxVirtualBox = Class.create(
     initialize: function()
     {
         this.mArrMachines = new Array();
+        this.mArrGuestOSTypes = new Array();
         this.XMLHttpCatch = new Abstract.XMLHttpCatch();
 
         this.checkForUpdates();
@@ -84,6 +85,17 @@ var vboxVirtualBox = Class.create(
         this.receiveData("/vboxGetUpdates");
     },
 
+    updateGuestOSTypes: function(res)
+    {
+        var iNumOSTypes = res.numGuestOSTypes;
+        this.mArrGuestOSTypes.clear();
+        for (var i = 0; i < iNumOSTypes; i++)
+        {
+            var guestOS = res.arrGuestOSTypes[i];
+            this.mArrGuestOSTypes[this.mArrGuestOSTypes.length] = new vboxIGuestOSTypeImpl(guestOS);
+        }
+    },
+
     updateProcess: function(response)
     {
         // don't try to parse empty responses
@@ -97,9 +109,12 @@ var vboxVirtualBox = Class.create(
             if ((res[0].magic != "jsVBxWb") || (res[0].ver != "1"))
                 throw "Invalid header!";
 
-            /* did we get a status messsage to display? */
+            /* Did we get a status messsage to display? */
             if (res[0].statusMessage)
                 vbGlobal.mVirtualBox.addMessage(res[0].statusMessage);
+
+            /* @todo Get rid of the res[INDEX] handling! This is very error
+             * prone and leads to confusing as more data will be added. */
 
             var numUpdates = res[0].numMach;
             var updateType = res[0].updateType;
@@ -107,19 +122,23 @@ var vboxVirtualBox = Class.create(
             {
                 case "jsHeader":
 
+                    /* On full update type (0) wipe existing machines. */
+                    if (updateType == 0)
+                    {
+                        this.clearMachines();
+                        this.updateGuestOSTypes(res[1]);
+                    }
+
+                    /* Full or diff update. */
                     if (numUpdates > 0)
                     {
                         var newMach;
                         console.log("vboxVirtualBox::updateProcess: Updates for %d machine(s) ...", numUpdates);
 
-                        /* On full update type (0) wipe existing machines. */
-                        if (updateType == 0)
-                            this.clearMachines();
-
                         /* Add new or update existing machines. */
                         for (var i = 0; i < numUpdates; i++)
                         {
-                            arrJSON = res[i + 1];
+                            arrJSON = (updateType == 0) ? res[i + 2] : res[i + 1];
                             newMach = new vboxIMachineImpl(arrJSON);
 
                             curMach = this.getMachineById(newMach.getId());
@@ -131,6 +150,7 @@ var vboxVirtualBox = Class.create(
                             {
                                 console.log("vboxVirtualBox::updateProcess: Updating machine: %s", curMach.getName());
                                 curMach.loadSettingsJSON(arrJSON);
+
                             }
                         }
 
@@ -190,9 +210,8 @@ var vboxVirtualBox = Class.create(
             hours + ':' + minutes + ':' + seconds;
 
         jQuery("#vmMessageTable").prepend('<tr><td class="message" nowrap="nowrap" style="width:100px">' +
-            dateStr + '</td><td class="message" width="100%">' + message + '</td></tr>')
-
-    },
+            dateStr + '</td><td class="message" width="100%">' + message + '</td></tr>');
+     },
 
     addMachine: function(vboxMachineImpl)
     {
@@ -237,6 +256,19 @@ var vboxVirtualBox = Class.create(
         {
             if (this.mArrMachines[i].getId() == id)
                 return this.mArrMachines[i];
+        }
+
+        return undefined;
+    },
+
+    getGuestOSTypeById: function(id)
+    {
+        /** @todo Slow lookup, improve this! */
+        var l = this.mArrGuestOSTypes.length;
+        for (var i = 0; i < l; i++)
+        {
+            if (this.mArrGuestOSTypes[i].getId() == id)
+                return this.mArrGuestOSTypes[i];
         }
 
         return undefined;
