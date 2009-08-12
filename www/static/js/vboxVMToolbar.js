@@ -50,11 +50,11 @@ var vboxVMToolbar = Class.create(
         switch (event.target.id)
         {
             case "toolbar-button-new":
-                console.log("New VM not implemented!");
+                vbGlobal.mVirtualBox.addMessage("New VM not implemented yet!");
                 break;
 
             case "toolbar-button-settings":
-                console.log("Change VM settings not implemented!");
+                vbGlobal.mVirtualBox.addMessage("Change VM settings not implemented!");
                 break;
 
             case "toolbar-button-start-pause":
@@ -66,19 +66,15 @@ var vboxVMToolbar = Class.create(
                     vbGlobal.mVirtualBox.startVM(id);
                 break;
 
-            case "toolbar-button-discard":
-                console.log("Discard VM state not implemented!");
-                break;
-
             case "toolbar-button-stop-discard":
                 if (state == VMState.Running ||
                     state == VMState.Paused)
                 {
-                    console.log("Stop VM: here will be a dialog in da future!");
+                    vbGlobal.mVirtualBox.addMessage("Stop VM: here will be a dialog in da future!");
                 }
                 else if (state == VMState.Saved)
                 {
-                    console.log("Discard VM not implemented!");
+                    vbGlobal.mVirtualBox.addMessage("Discard VM not implemented!");
                 }
                 break;
 

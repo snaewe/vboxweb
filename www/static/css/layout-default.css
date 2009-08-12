@@ -49,6 +49,11 @@ body {
     overflow: auto; /* Override layout default 'auto'. */
     }
 
+/* south */
+.outer-layout-south {
+    padding: 0px;
+}
+
 /* Layout togglers (gripper bars). */
 .ui-layout-toggler {
     color: #666;
@@ -163,3 +168,16 @@ body {
     margin-left: 0;
     }
 
+/* the message list */
+td.message {
+    border-bottom: 1px #000000 dotted;
+    text-align: left;
+    font-weight: normal;
+    font-size: .7em;
+    color: #404040;
+    background-color: #fafafa;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 8px;
+    padding-right: 0px;
+}

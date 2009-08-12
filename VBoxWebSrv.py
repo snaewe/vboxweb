@@ -23,13 +23,10 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-import cgi
 import cherrypy
 import os
 import socket
 import sys
-import time
-import traceback
 
 if sys.version_info < (2, 6):
     import simplejson
@@ -58,13 +55,14 @@ if isSimpleJson:
             return convertObjToJSON(obj)
 
 class jsHeader:
-    def __init__(self, ctx, arrMach, type):
+    def __init__(self, ctx, arrMach, type, statusMessage = ""):
         self.magic = "jsVBxWb"
         self.ver = 1
 
         self.sessionID = cherrypy.session.id
         self.numMach = len(arrMach)
         self.updateType = type
+        self.statusMessage = statusMessage
 
 #
 # @todo write autowrapper for attributes main-like classes below.
@@ -385,6 +383,7 @@ class Root(VBoxPage):
             # todo we shouldn't wait here, perform asynchronously
             progress.waitForCompletion(-1)
             session.close()
+            statusMessage = "Started VM with ID " + uuid
 
         # Commands requiring an open session
         elif (operation == "pausevm" or
@@ -397,8 +396,10 @@ class Root(VBoxPage):
             console = session.console;
             if operation == "pausevm":
                 console.pause()
+                statusMessage = "Paused VM with ID " + uuid
             elif operation == "resumevm":
                 console.resume()
+                statusMessage = "Resumed VM with ID " + uuid
             elif operation == "savestatevm":
                 pass
             elif operation == "poweroff":
@@ -411,9 +412,8 @@ class Root(VBoxPage):
         else:
             print "vboxVMAction: unknown operation"
 
-        # todo easier way to return "no updates"?
         arrJSON = []
-        arrJSON.append(jsHeader(self.ctx, [], 1))
+        arrJSON.append(jsHeader(self.ctx, [], 1, statusMessage))
         if isSimpleJson:
             return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
         else:
@@ -504,7 +504,6 @@ def rdpWebControlDownload(forceUpdate = False, url = None, dest = None, proxies 
             return
 
         # Get latest version information
-        strVersion = ""
         print "Looking up latest version of Sun RDP Web Control (from %s) ..." %(url)
         fhFileVer = url_open(url + "LATEST.TXT", None, proxies)
 

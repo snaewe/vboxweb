@@ -142,6 +142,10 @@
                     ,   west__onresize:                    function () { jQuery("#vmList").selectable('resize'); }
                     ,   center__paneSelector:              ".outer-layout-center"
                     ,   center__onresize:                  resizeTabLayout
+                    ,   south__paneSelector:               ".outer-layout-south"
+                    ,   south__resizable:                  true
+                    ,   south__slidable:                   true
+                    ,   south__size:                       100
                 });
 
                 /* Best to create the tabs first, because it's the container
@@ -385,6 +389,11 @@
 
             </div> <!-- ui-layout-content -->
 
+        </div>
+
+        <div id="vmMessageArea" class="outer-layout-south" style="display: none;">
+            <table id="vmMessageTable" width="100%" cellspacing="0">
+           </table>
         </div>
 
         <iframe style="height:0px;width:0px;visibility:hidden" src="about:blank">

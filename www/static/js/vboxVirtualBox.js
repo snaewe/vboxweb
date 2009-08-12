@@ -81,12 +81,14 @@ var vboxVirtualBox = Class.create(
 
     checkForUpdates: function()
     {
-        console.log("vboxVirtualBox::checkForUpdates: Called.");
         this.receiveData("/vboxGetUpdates");
     },
 
     updateProcess: function(response)
     {
+        // don't try to parse empty responses
+        if (response.responseText == "")
+            return;
         try
         {
             var res = response.responseText.evalJSON(true);
@@ -94,6 +96,10 @@ var vboxVirtualBox = Class.create(
             /* Index 0 is *always* the header! */
             if ((res[0].magic != "jsVBxWb") || (res[0].ver != "1"))
                 throw "Invalid header!";
+
+            /* did we get a status messsage to display? */
+            if (res[0].statusMessage)
+                vbGlobal.mVirtualBox.addMessage(res[0].statusMessage);
 
             var numUpdates = res[0].numMach;
             var updateType = res[0].updateType;
@@ -111,15 +117,14 @@ var vboxVirtualBox = Class.create(
                             this.clearMachines();
 
                         /* Add new or update existing machines. */
-                        for (var i=0; i<numUpdates; i++)
+                        for (var i = 0; i < numUpdates; i++)
                         {
-                            arrJSON = res[i+1];
+                            arrJSON = res[i + 1];
                             newMach = new vboxIMachineImpl(arrJSON);
 
                             curMach = this.getMachineById(newMach.getId());
                             if (curMach == undefined)
                             {
-                                console.log("vboxVirtualBox::updateProcess: Adding new machine: %s", newMach.getName());
                                 this.addMachine(newMach);
                             }
                             else
@@ -132,11 +137,9 @@ var vboxVirtualBox = Class.create(
                         var sel = vbGlobal.selectorWnd();
                         sel.refreshVMList();
                     }
-                    else console.log("vboxVirtualBox::updateProcess: No updates.");
                     break;
 
                 default:
-
                     throw "Wrong class!"
                     break;
             }
@@ -167,6 +170,28 @@ var vboxVirtualBox = Class.create(
         }
 
         return true;
+    },
+
+    addMessage: function(message)
+    {
+        /* this is ugly business but I couldn't find a better method */
+        date = new Date();
+        month = date.getMonth() + 1;
+        if (month < 10) month = '0' + month;
+        day = date.getDate();
+        if (day < 10) day = '0' + day;
+        hours = date.getHours();
+        if (hours < 10) hours = '0' + hours;
+        minutes = date.getMinutes();
+        if (minutes < 10) minutes = '0' + minutes;
+        seconds = date.getSeconds();
+        if (seconds < 10) seconds = '0' + seconds;
+        dateStr = date.getFullYear() + '-' + month + '-' + day + ' ' +
+            hours + ':' + minutes + ':' + seconds;
+
+        jQuery("#vmMessageTable").prepend('<tr><td class="message" nowrap="nowrap" style="width:100px">' +
+            dateStr + '</td><td class="message" width="100%">' + message + '</td></tr>')
+
     },
 
     addMachine: function(vboxMachineImpl)
@@ -208,7 +233,7 @@ var vboxVirtualBox = Class.create(
     {
         /** @todo Slow lookup, improve this! */
         var l = this.mArrMachines.length;
-        for (var i=0; i<l; i++)
+        for (var i = 0; i < l; i++)
         {
             if (this.mArrMachines[i].getId() == id)
                 return this.mArrMachines[i];
