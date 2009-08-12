@@ -94,7 +94,7 @@ var vboxVMToolbar = Class.create(
         if (curItem == undefined)
         {
             console.log("vboxVMToolbar::invalidatePage: Current item is undefined.");
-            return false;
+            return;
         }
 
         var state = curItem.state();
@@ -102,30 +102,29 @@ var vboxVMToolbar = Class.create(
         /* settings can only be changed for powered off and aborted VMs */
         if (state == VMState.PoweredOff ||
             state == VMState.Aborted)
-            jQuery("#toolbar-button-vm-settings-span").html('<img id="toolbar-button-settings" src="/images/vbox/vm_settings_32px.png"/>');
+            jQuery("#toolbar-button-vm-settings-span").html('<img id="toolbar-button-settings" src="/images/vbox/vm_settings_32px.png" alt="VM settings"/>');
         else
-            jQuery("#toolbar-button-vm-settings-span").html('<img src="/images/vbox/vm_settings_disabled_32px.png"/>');
+            jQuery("#toolbar-button-vm-settings-span").html('<img src="/images/vbox/vm_settings_disabled_32px.png" alt=""/>');
 
         /* powered off / aborted, paused and saved VMs can be started */
         if (state == VMState.PoweredOff ||
             state == VMState.Aborted ||
             state == VMState.Saved ||
             state == VMState.Paused)
-            jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_start_32px.png"/">');
+            jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_start_32px.png" alt="Start VM"/">');
         else if (state == VMState.Running)
-            jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_pause_32px.png"/>');
+            jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_pause_32px.png" alt="Pause VM"/>');
         else
-            jQuery("#toolbar-button-vm-start-span").html('<img src="/images/vbox/vm_start_disabled_32px.png"/>');
+            jQuery("#toolbar-button-vm-start-span").html('<img src="/images/vbox/vm_start_disabled_32px.png" alt=""/>');
 
         /* saved VMs can be discarded */
         if (state == VMState.Saved)
-            jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_discard_32px.png"/>');
+            jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_discard_32px.png" alt="Discard saved state"/>');
         else if (state == VMState.Running ||
                  state == VMState.Paused)
-            /** @todo get a power off icon */
-            jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_delete_32px.png"/>');
+            jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_poweroff_32px.png" alt="Power off VM"/>');
         else
-            jQuery("#toolbar-button-vm-stop-span").html('<img src="/images/vbox/vm_delete_disabled_32px.png"/>');
+            jQuery("#toolbar-button-vm-stop-span").html('<img src="/images/vbox/vm_poweroff_disabled_32px.png" alt=""/>');
 
         jQuery("#toolbar-button-settings").bind("click", this.buttonClicked);
         jQuery("#toolbar-button-start-pause").bind("click", this.buttonClicked);

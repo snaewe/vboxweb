@@ -28,6 +28,7 @@
     <head>
         <title>VirtualBox Web Console</title>
         <!-- Meta fields. -->
+        <meta http-equiv="Pragma" content="no-cache"/>
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
         <meta http-equiv="Expires" content="0"/>
         <meta http-equiv="Cache-Control" content ="no-cache"/>
@@ -43,6 +44,8 @@
         <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.core.css"/>
         <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.tabs.css"/>
         <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.all.css"/>
+    </head>
+    <body font="Verdana" onload="onDocumentLoad()">
         <!-- JavaScript detection. -->
         <noscript>
             JavaScript is turned off in your web browser. Turn it on to take full advantage of this site, then refresh the page.
@@ -123,7 +126,7 @@
 
             jQuery(document).ready(onDocumentReady);
             function onDocumentReady()
-            {           
+            {
                 /* Use different outer-layout classNames to simplify/clarify CSS. */
                 OuterLayout = jQuery('body').layout({
                         north__paneSelector:                ".outer-layout-north"
@@ -224,11 +227,9 @@
             }
 
         </script>
-    </head>
-    <body font="Verdana" onload="onDocumentLoad()">
 
         <div id="vmToolbar" class="outer-layout-north" style="display: none;">
-            <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png"/>
+            <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png" alt="New VM"/>
             <span id="toolbar-button-vm-settings-span"></span>
             <span id="toolbar-button-vm-start-span"></span>
             <span id="toolbar-button-vm-stop-span"></span>
@@ -239,9 +240,9 @@
         <div id="vmTab" class="outer-layout-center" style="display: none;">
 
             <ul>
-                <li><a href="#tabs-center-details"><span><img src="/images/vbox/settings_16px.png" class="tabs-center-page-icon"/>Details</span></a></li>
-                <li><a href="#tabs-center-rdp"><span><img src="/images/vbox/vrdp_16px.png" class="tabs-center-page-icon"/>Console</span></a></li>
-                <li><a href="#tabs-center-desc"><span><img src="/images/vbox/description_16px.png" class="tabs-center-page-icon"/>Description</span></a></li>
+                <li><a href="#tabs-center-details"><span><img src="/images/vbox/settings_16px.png" class="tabs-center-page-icon" alt=""/>Details</span></a></li>
+                <li><a href="#tabs-center-rdp"><span><img src="/images/vbox/vrdp_16px.png" class="tabs-center-page-icon" alt=""/>Console</span></a></li>
+                <li><a href="#tabs-center-desc"><span><img src="/images/vbox/description_16px.png" class="tabs-center-page-icon" alt=""/>Description</span></a></li>
             </ul>
 
             <!-- wrap tab-panels in ui-layout-content div -->
@@ -307,17 +308,17 @@
                             </div>
                             <div id="tab-details-vm-display-videomem">
                                 <div class="tab-details-vm-attribute">Video Memory:</div>
-                                <div class="tab-details-vm-value" id="tab-details-vm-display-videomem-val"/></div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-display-videomem-val"></div>
                                 <div style="clear: both"></div>
                             </div>
                             <div id="tab-details-vm-display-3daccel">
                                 <div class="tab-details-vm-attribute">3D:</div>
-                                <div class="tab-details-vm-value" id="tab-details-vm-display-3daccel-val"/></div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-display-3daccel-val"></div>
                                 <div style="clear: both"></div>
                             </div>
                             <div id="tab-details-vm-display-rdpport">
                                 <div class="tab-details-vm-attribute">VRDP Port:</div>
-                                <div class="tab-details-vm-value" id="tab-details-vm-display-rdpport-val"/></div>
+                                <div class="tab-details-vm-value" id="tab-details-vm-display-rdpport-val"></div>
                                 <div style="clear: both"></div>
                             </div>
                         </div>
@@ -338,7 +339,7 @@
                     <div id="tab-rdp-header"><p class="tab-section-header">Remote View</p></div>
                     <div class="tab-sections">
                         <div class="tab-section" id="tab-rdp-sec-desc">
-                            <div id="tab-rdp-desc">Status: <span id="tab-rdp-desc-val"/></div>
+                            <div id="tab-rdp-desc">Status: <span id="tab-rdp-desc-val"></span></div>
                         </div>
                         <div class="tab-section" id="tab-rdp-sec-conn">
                             <div id="tab-rdp-sec-auth">
@@ -377,7 +378,7 @@
                     <div id="tab-desc-header"><p class="tab-section-header">Description</p></div>
                     <div class="tab-sections">
                         <div class="tab-section" id="tab-desc-sec-desc">
-                            <div id="tab-desc-desc"><span id="tab-desc-desc-val"/></div>
+                            <div id="tab-desc-desc"><span id="tab-desc-desc-val"></span></div>
                         </div>
                     </div>
                 </div>
@@ -391,5 +392,4 @@
         </iframe>
 
     </body>
-    <head><meta http-equiv="Pragma" content="no-cache"/></head>
 </html>

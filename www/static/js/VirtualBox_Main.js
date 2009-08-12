@@ -644,7 +644,8 @@ var vboxIConsoleImpl = Class.create(
     },
     getDebugger: function()
     {
-        return this.jsonObject.debugger;
+// debugger is a reserved keyword, Safari chokes on it, have to fix the generator
+//         return this.jsonObject.debugger;
     },
     getUSBDevices: function()
     {
