@@ -27,6 +27,8 @@ import cherrypy
 import os
 import socket
 import sys
+import urllib
+import hashlib
 
 if sys.version_info < (2, 6):
     import simplejson
@@ -41,6 +43,20 @@ if sys.platform == 'win32':
     import pythoncom
 
 import vboxapi
+
+SESSION_KEY = '_cp_username'
+
+def require(*conditions):
+    """A decorator that appends conditions to the auth.require config
+    variable."""
+    def decorate(f):
+        if not hasattr(f, '_cp_config'):
+            f._cp_config = dict()
+        if 'auth.require' not in f._cp_config:
+            f._cp_config['auth.require'] = []
+        f._cp_config['auth.require'].extend(conditions)
+        return f
+    return decorate
 
 def convertObjToJSON(obj):
     # print 'default(', repr(obj), ')'
@@ -285,6 +301,91 @@ class VBoxPage:
                 self.jsonPrinter = json.write
         self.arrMach = []
 
+        # Register authentication check handler
+        cherrypy.tools.auth = cherrypy.Tool('before_handler', self.checkAuth)
+
+    def prepareCOM(self):
+        if self.initCOM is False:
+            if sys.platform == 'win32':
+                # Get the "real" VBox interface from the stream created in the class constructor above
+                import win32com
+                i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
+                self.ctx['vb'] = win32com.client.Dispatch(i)
+            self.initCOM = True
+
+    def checkAuth(self, *args, **kwargs):
+        """A tool that looks in config for 'auth.require'. If found and it
+        is not None, a login is required and the entry is evaluated as alist of
+        conditions that the user must fulfill"""
+        conditions = cherrypy.request.config.get('auth.require', None)
+        # format GET params
+        get_parmas = urllib.quote(cherrypy.request.request_line.split()[1])
+        if conditions is not None:
+            username = cherrypy.session.get(SESSION_KEY)
+            if username:
+                cherrypy.request.login = username
+                for condition in conditions:
+                    # A condition is just a callable that returns true orfalse
+                    if not condition():
+                        # Send old page as from_page parameter
+                        raise cherrypy.HTTPRedirect("/login?from_page=%s" % get_parmas)
+            else:
+                # Send old page as from_page parameter
+                raise cherrypy.HTTPRedirect("/login?from_page=%s" %get_parmas)
+
+    def check_credentials(self, username, password):
+        """Verifies credentials for username and password.
+        Returns None on success or a string describing the error on failure"""
+        pwdDigest = self.ctx['vb'].getExtraData("vboxweb/users/" + username)
+        h = hashlib.new('sha1')
+        h.update(password)
+        if h.hexdigest() == pwdDigest:
+            return None
+        else:
+            return u"Incorrect username or password."
+
+    def on_login(self, username):
+        """Called on successful login"""
+
+    def on_logout(self, username):
+        """Called on logout"""
+
+    def get_loginform(self, username, msg="Enter login information", from_page="/"):
+        return """<html><body>
+            <form method="post" action="/login">
+            <input type="hidden" name="from_page" value="%(from_page)s" />
+            %(msg)s<br />
+            Username: <input type="text" name="username" value="%(username)s" /><br />
+            Password: <input type="password" name="password" /><br />
+            <input type="submit" value="Log in" /><p>
+            Use <code>VBoxWebSrv.py adduser myuser mypassword</code> to create user accounts.
+        </body></html>""" % locals()
+
+    @cherrypy.expose
+    def login(self, username=None, password=None, from_page="/"):
+        self.prepareCOM()
+        if username is None or password is None:
+            return self.get_loginform("", from_page=from_page)
+
+        error_msg = self.check_credentials(username, password)
+        if error_msg:
+            return self.get_loginform(username, error_msg, from_page)
+        else:
+            cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
+            self.on_login(username)
+            raise cherrypy.HTTPRedirect(from_page or "/")
+
+    @cherrypy.expose
+    def logout(self, from_page="/"):
+        self.prepareCOM()
+        sess = cherrypy.session
+        username = sess.get(SESSION_KEY, None)
+        sess[SESSION_KEY] = None
+        if username:
+            cherrypy.request.login = None
+            self.on_logout(username)
+        raise cherrypy.HTTPRedirect(from_page or "/")
+
     def populateVMList(self):
         vboxVMList=self.ctx['global'].getArray(self.ctx['vb'], 'machines')
         self.arrMach = []
@@ -344,16 +445,8 @@ class Root(VBoxPage):
         self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
         self.ctx['vb'].registerCallback(self.callbackVBox)
 
-    def prepareCOM(self):
-        if self.initCOM is False:
-            if sys.platform == 'win32':
-                # Get the "real" VBox interface from the stream created in the class constructor above
-                import win32com
-                i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
-                self.ctx['vb'] = win32com.client.Dispatch(i)
-            self.initCOM = True
-
     @cherrypy.expose
+    @require()
     def vboxGetUpdates(self):
         print "Page: vboxGetUpdates"
 
@@ -389,6 +482,7 @@ class Root(VBoxPage):
             return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
     @cherrypy.expose
+    @require()
     def vboxVMAction(self, operation, uuid):
         print "Page: vboxVMAction called with operation " + operation + " and uuid " + uuid
         # Close session if opened
@@ -434,24 +528,9 @@ class Root(VBoxPage):
         else:
             return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
-    @cherrypy.expose
-    def vboxStartVM(self, uuid):
-        print "Page: vboxStartVM called with uuid " + uuid
-        session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-        progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
-        # todo we shouldn't wait here, perform asynchronously
-        progress.waitForCompletion(-1)
-        session.close()
-        # todo easier way to return "no updates"?
-        arrJSON = []
-        arrJSON.append(jsHeader(self.ctx, [], 1))
-        if isSimpleJson:
-            return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
-        else:
-            return self.jsonPrinter(arrJSON, default=convertObjToJSON)
-
     # Entry point when browser loads the whole page
     @cherrypy.expose
+    @require()
     def index(self):
         print "Page: init"
 
@@ -570,13 +649,31 @@ def rdpWebControlDownload(forceUpdate = False, url = None, dest = None, proxies 
 
         return ret
 
-def main(argv):
+def main(argv = sys.argv):
+
+    print "VirtualBox Version:", g_virtualBoxManager.vbox.version
+
+    # Check command line args
+    if len(argv) > 1:
+        if argv[1] == "adduser":
+            if len(argv) <> 4:
+                print "Syntax: " + argv[0] + " adduser <username> <password>"
+                return
+            h = hashlib.new('sha1')
+            h.update(argv[3])
+            g_virtualBoxManager.vbox.setExtraData(
+                "vboxweb/users/" + argv[2], h.hexdigest())
+            return
+        elif argv[1] == "deluser":
+            if len(argv) <> 3:
+                print "Syntax: " + argv[0] + " deluser <username>"
+                return
+            g_virtualBoxManager.vbox.setExtraData("vboxweb/users/" + argv[2], "")
+            return
 
     # Why subscribe() doesn't take callback argument, having global vboxMgr is a bit ugly
     cherrypy.engine.subscribe('start_thread', perThreadInit)
     cherrypy.engine.subscribe('stop_thread',  perThreadDeinit)
-
-    print "VirtualBox Version:", g_virtualBoxManager.vbox.version[:3]
 
     fileConfig = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'VBoxWeb.conf')
     print "Using config file:", fileConfig
