@@ -46,6 +46,7 @@ var vboxVirtualBox = Class.create(
 {
     initialize: function()
     {
+        this.userName = "";
         this.mArrMachines = new Array();
         this.mArrGuestOSTypes = new Array();
         this.XMLHttpCatch = new Abstract.XMLHttpCatch();
@@ -108,6 +109,8 @@ var vboxVirtualBox = Class.create(
             /* Index 0 is *always* the header! */
             if ((res[0].magic != "jsVBxWb") || (res[0].ver != "1"))
                 throw "Invalid header!";
+
+            this.userName = res[0].username;
 
             /* Did we get a status messsage to display? */
             if (res[0].statusMessage)
@@ -211,7 +214,20 @@ var vboxVirtualBox = Class.create(
 
         jQuery("#vmMessageTable").prepend('<tr><td class="message" style="width:120px; white-space: nowrap;">' +
             dateStr + '</td><td class="message" width="100%">' + message + '</td></tr>');
-     },
+    },
+
+    getUserName: function()
+    {
+        return this.userName;
+    },
+
+    logout: function()
+    {
+        this.receiveData("/logout");
+        /* local the main page, that will show the logon dialog */
+        /* note: this might not be clean in case the site does not live on / */
+        window.location = "/";
+    },
 
     addMachine: function(vboxMachineImpl)
     {

@@ -79,6 +79,7 @@ class jsHeader:
         self.magic = "jsVBxWb"
         self.ver = 1
 
+        self.username = cherrypy.request.login
         self.sessionID = cherrypy.session.id
         self.numMach = len(arrMach)
         self.updateType = type
@@ -484,6 +485,7 @@ class Root(VBoxPage):
     @cherrypy.expose
     @require()
     def vboxVMAction(self, operation, uuid):
+        statusMessage = ""
         print "Page: vboxVMAction called with operation " + operation + " and uuid " + uuid
         # Close session if opened
         if operation == "startvm":
@@ -498,7 +500,7 @@ class Root(VBoxPage):
         elif (operation == "pausevm" or
              operation == "resumevm" or
              operation == "savestatevm" or
-             operation == "poweroff" or
+             operation == "poweroffvm" or
              operation == "acpipoweroffvm"):
             session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
             progress = self.ctx['vb'].openExistingSession(session, uuid)
@@ -510,11 +512,14 @@ class Root(VBoxPage):
                 console.resume()
                 statusMessage = "Resumed VM with ID " + uuid
             elif operation == "savestatevm":
-                pass
-            elif operation == "poweroff":
+                console.saveState()
+                statusMessage = "Saving state of VM with ID " + uuid
+            elif operation == "poweroffvm":
                 console.powerDown()
-            elif operation == "acpipoweroff":
+                statusMessage = "Powering off VM with ID " + uuid
+            elif operation == "acpipoweroffvm":
                 console.powerButton()
+                statusMessage = "Sent ACPI power button signal to VM with ID " + uuid
 
         elif operation == "discardvm":
             pass

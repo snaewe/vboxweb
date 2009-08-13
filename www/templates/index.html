@@ -125,6 +125,35 @@
                 }
             }
 
+            jQuery(function() {
+                jQuery("#poweroff-dialog").dialog({
+                    bgiframe: true,
+                    resizable: false,
+                    height:200,
+                    modal: true,
+                    autoOpen: false,
+                    overlay: {
+                        backgroundColor: '#000',
+                        opacity: 0.5
+                    },
+                    buttons: {
+                        Ok: function() {
+                            var poweroffMethod = jQuery("input[@name='poweroff-dialog-selection']:checked").val();
+                            if (poweroffMethod == "savestate")
+                                vbGlobal.mVirtualBox.savestateVM(vmSelWnd.curItem().id());
+                            else if (poweroffMethod == "acpipoweroff")
+                                vbGlobal.mVirtualBox.acpipoweroffVM(vmSelWnd.curItem().id());
+                            else
+                                vbGlobal.mVirtualBox.poweroffVM(vmSelWnd.curItem().id());
+                            jQuery(this).dialog('close');
+                        },
+                        Cancel: function() {
+                            jQuery(this).dialog('close');
+                        }
+                    }
+                });
+            });
+
             jQuery(document).ready(onDocumentReady);
             function onDocumentReady()
             {
@@ -234,10 +263,20 @@
         </script>
 
         <div id="vmToolbar" class="outer-layout-north" style="display: none;">
-            <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png" alt="New VM"/>
-            <span id="toolbar-button-vm-settings-span"></span>
-            <span id="toolbar-button-vm-start-span"></span>
-            <span id="toolbar-button-vm-stop-span"></span>
+            <table width="100%"cellspacing="0">
+                <tr>
+                    <td align="left">
+                        <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png" alt="New VM"/>
+                        <span id="toolbar-button-vm-settings-span"></span>
+                        <span id="toolbar-button-vm-start-span"></span>
+                        <span id="toolbar-button-vm-stop-span"></span>
+                    </td>
+                    <td align="right">
+                        <span id="toolbar-username-span"  style="display:inline-block; vertical-align:top"></span>
+                        <img id="toolbar-button-logout" src="/images/vbox/vm_poweroff_32px.png" alt="Logout"/>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <ol id="vmList" class="outer-layout-west" style="display: none; list-style-type: none;"><li/></ol>
@@ -394,6 +433,24 @@
         <div id="vmMessageArea" class="outer-layout-south" style="display: none;">
             <table id="vmMessageTable" width="100%" cellspacing="0">
            </table>
+        </div>
+
+        <!-- VM power off dialog, initially hidden, displayed using jQuery -->
+        <div id="poweroff-dialog" title="Close virtual machine" style="display: none;">
+            <table width="100%" cellspacing="0">
+                <tr>
+                    <td><img src="/images/vbox/state_saved_16px.png" alt=""/></td>
+                    <td><input type="radio" name="poweroff-dialog-selection" value="savestate" checked="checked">Save the machine state</input></td>
+                </tr>
+                <tr>
+                    <td><img src="/images/vbox/state_powered_off_16px.png" alt=""/></td>
+                    <td><input type="radio" name="poweroff-dialog-selection" value="acpipoweroff">Send the shutdown signal</input></td>
+                </tr>
+                <tr>
+                    <td><img src="/images/vbox/poweroff_16px.png" alt=""/></td>
+                    <td><input type="radio" name="poweroff-dialog-selection" value="poweroff">Power off the machine</input></td>
+                </tr>
+            </table>
         </div>
     </body>
 </html>

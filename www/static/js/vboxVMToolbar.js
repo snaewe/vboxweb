@@ -27,8 +27,9 @@ var vboxVMToolbar = Class.create(
 {
     initialize: function()
     {
-        /* bind the static new VM toolbar button */
+        /* bind the static toolbar buttons */
         jQuery("#toolbar-button-new").bind("click", this.buttonClicked);
+        jQuery("#toolbar-button-logout").bind("click", this.buttonClicked);
     },
 
     setParent: function(parent)
@@ -38,6 +39,7 @@ var vboxVMToolbar = Class.create(
 
     invalidate: function()
     {
+        jQuery("#toolbar-username-span").text(vbGlobal.mVirtualBox.getUserName());
         this.selectionChanged();
     },
 
@@ -70,12 +72,16 @@ var vboxVMToolbar = Class.create(
                 if (state == VMState.Running ||
                     state == VMState.Paused)
                 {
-                    vbGlobal.mVirtualBox.addMessage("Stop VM: here will be a dialog in da future!");
+                    jQuery('#poweroff-dialog').dialog('open');
                 }
                 else if (state == VMState.Saved)
                 {
                     vbGlobal.mVirtualBox.addMessage("Discard VM not implemented!");
                 }
+                break;
+
+            case "toolbar-button-logout":
+                vbGlobal.mVirtualBox.logout();
                 break;
 
             default:
