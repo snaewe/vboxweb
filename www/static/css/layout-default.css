@@ -24,9 +24,9 @@
  */
 
 body {
-    font-family: Verdana, Arial;
-    font-size: 0.85em;
-    }
+    font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
+    font-size: 80%;
+}
 
 /* Global application layout panes. */
 
@@ -35,19 +35,19 @@ body {
     background: #5889AB;
     color: #FFFFFF;
     padding: 5px 10px;
-    }
+}
 
 /* VM List. */
 .outer-layout-west {
     padding: 0 !important;
     overflow: auto !important; /* Respect footer - don't overdraw it. */
-    }
+}
 
 /* Center. */
 .outer-layout-center {
     padding: 0px;
     overflow: auto; /* Override layout default 'auto'. */
-    }
+}
 
 /* south */
 .outer-layout-south {
@@ -59,90 +59,93 @@ body {
     color: #666;
     border: 1px solid #BBB; /* Match pane-border. */
     background-color: #999;
-    }
-    .ui-layout-toggler:hover {
+}
+
+.ui-layout-toggler:hover {
         background-color: #FC6;
-    }
-    .ui-layout-toggler-west ,
-    .ui-layout-toggler-east {
+}
+
+.ui-layout-toggler-west ,
+.ui-layout-toggler-east {
         border-width: 1px 0;
-    }
+}
     /* Hide the toggler-button when the pane is 'slid open'. */
-    .ui-layout-resizer-sliding .ui-layout-toggler {
+.ui-layout-resizer-sliding .ui-layout-toggler {
         display: none;
-    }
+}
 
 /* The VM list entries. */
 #vmList li { /* The element itself. */
     border: 0;
     margin: 3px;
-    }
+}
 
 #vmList .ui-selecting { /* Element in selecting state (hover). */
     background: #5889AB;
-    }
+}
 
 #vmList .ui-selected { /* Element is selected. */
     background: #47789A; color: white;
-    }
+}
 
 #vmList .vmlist-entry-osicon {
     padding: 5px;
     border: 0px;
     width: 32px;
     height: 32px;
-    }
+}
 
 #vmList.vmlist-entry-stateicon {
     padding: 5px;
     border: 0px;
     width: 16px;
     height: 16px;
-    }
+}
 
 /* The tab pages container. */
 #TabPanelsContainer {
     padding: 10px;
     overflow: auto; /* Override Layout default 'auto' */
-    }
+}
 
 /* Our tab pages in outer-layout-center. */
 .tabs-center-page {
     overflow: hidden;
     border:	0px;
-    }
+}
 
 /* The icon on the tab header. */
 .tabs-center-page-icon {
     border: 0px;
     padding-top: 4px;
     padding-right: 5px;
-    }
+}
 
 /* Tab Page. */
 .tab-section {
     margin-bottom: 15px;
-    }
+}
 
 .tab-section-header {
     border: 0px;
     font-weight: bolder;
     margin-bottom: 5px;
-    }
+}
 
 .tab-section-hdr-text {
     vertical-align: middle;
-    }
+}
 
 .tab-section-hdr-icon {
     border: 0;
     vertical-align: middle;
-    }
+ }
 
 .tab-details-vm-attribute {
-    width: 150px;
+    width: 170px;
     float: left;
 }
+
 .tab-details-vm-value {
     float: left;
 }
@@ -150,23 +153,23 @@ body {
 /* Specific pages. */
 #tabs-center-rdp {
     padding: 0;	/* Override tab-theme, needed for no vertical scrollbars. */
-    }
+}
 
 #tab-rdp-form-connect {
     width: 500px;
-    }
+}
 
 #tab-rdp-form-connect label {
     float: left;
     width: 100px;
-    }
+}
 
 .harddisks-list {
     margin-top:0;
     list-style-type: none;
     padding: 0;
     margin-left: 0;
-    }
+}
 
 /* the message list */
 td.message {

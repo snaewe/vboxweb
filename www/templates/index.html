@@ -267,20 +267,27 @@
             <table width="100%"cellspacing="0">
                 <tr>
                     <td align="left">
-                        <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png" alt="New VM"/>
+                        <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png" alt=""/>
                         <span id="toolbar-button-vm-settings-span"></span>
                         <span id="toolbar-button-vm-start-span"></span>
                         <span id="toolbar-button-vm-stop-span"></span>
                     </td>
                     <td align="right">
-                        <span id="toolbar-username-span"  style="display:inline-block; vertical-align:top"></span>
-                        <img id="toolbar-button-logout" src="/images/vbox/vm_poweroff_32px.png" alt="Logout"/>
+                        <table>
+                            <tr>
+                                <td><span id="toolbar-username-span"  style="display:inline-block; vertical-align:center"></span></td>
+                                <td><img id="toolbar-button-logout" src="/images/vbox/logout_32px.png" alt=""/></td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
         </div>
 
-        <ol id="vmList" class="outer-layout-west" style="display: none; list-style-type: none;"><li/></ol>
+        <div class="outer-layout-west" style="display: none;">
+            <!-- this table represents the list of VMs -->
+            <table id="vmList" cellspacing="0"></table>
+        </div>
 
         <div id="vmTab" class="outer-layout-center" style="display: none;">
 
@@ -298,7 +305,7 @@
                     <div class="tab-sections">
                         <div id="tab-details-sec-vm-general" class="tab-section">
                             <div id="tab-details-hdr-general" class="tab-section-header">
-                                <img class="tab-section-hdr-icon" alt="Machine" src="/images/vbox/machine_16px.png"/>
+                                <img class="tab-section-hdr-icon" alt="" src="/images/vbox/machine_16px.png"/>
                                 <span class="tab-section-hdr-text">General</span>
                             </div>
                             <div id="tab-details-vm-general-name">
@@ -316,7 +323,7 @@
 
                         <div class="tab-section" id="tab-details-sec-vm-system">
                             <div id="tab-details-hdr-system" class="tab-section-header">
-                                <img class="tab-section-hdr-icon" alt="Chipset" src="/images/vbox/chipset_16px.png"/>
+                                <img class="tab-section-hdr-icon" alt="" src="/images/vbox/chipset_16px.png"/>
                                 <span class="tab-section-hdr-text">System</span>
                             </div>
                             <div id="tab-details-vm-system-ram">
@@ -348,7 +355,7 @@
 
                         <div class="tab-section" id="tab-details-sec-vm-display">
                             <div id="tab-details-hdr-display" class="tab-section-header">
-                                <img class="tab-section-hdr-icon" alt="VRDP" src="/images/vbox/vrdp_16px.png"/>
+                                <img class="tab-section-hdr-icon" alt="" src="/images/vbox/vrdp_16px.png"/>
                                 <span class="tab-section-hdr-text">Display</span>
                             </div>
                             <div id="tab-details-vm-display-videomem">
@@ -357,12 +364,12 @@
                                 <div style="clear: both"></div>
                             </div>
                             <div id="tab-details-vm-display-3daccel">
-                                <div class="tab-details-vm-attribute">3D:</div>
+                                <div class="tab-details-vm-attribute">3D Acceleration:</div>
                                 <div class="tab-details-vm-value" id="tab-details-vm-display-3daccel-val"></div>
                                 <div style="clear: both"></div>
                             </div>
                             <div id="tab-details-vm-display-rdpport">
-                                <div class="tab-details-vm-attribute">VRDP Port:</div>
+                                <div class="tab-details-vm-attribute">Remote Display Server:</div>
                                 <div class="tab-details-vm-value" id="tab-details-vm-display-rdpport-val"></div>
                                 <div style="clear: both"></div>
                             </div>
@@ -370,7 +377,7 @@
 
                         <div class="tab-section" id="tab-details-sec-vm-harddisks">
                             <div id="tab-details-hdr-harddisks" class="tab-section-header">
-                                <img class="tab-section-hdr-icon" alt="Hard Disks" src="/images/vbox/hd_16px.png"/>
+                                <img class="tab-section-hdr-icon" alt="" src="/images/vbox/hd_16px.png"/>
                                 <span class="tab-section-hdr-text">Hard Disks</span>
                             </div>
                             <ul id="tab-details-vm-harddisks-list" class="harddisks-list"><li/></ul>

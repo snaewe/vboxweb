@@ -203,37 +203,38 @@ var vboxVMListView = Class.create(
         var numItems = this.mVMModel.getCount();
         var newItems = "";
         console.log("vboxVMListView::invalidate: Item count: %d", numItems);
-        jQuery("#vmList li").remove(); /* Remove all existing elements (also from DOM?) */
+        /* empty table */
+        jQuery("#vmList").html("");
         for (var i = 0; i < numItems; i++)
         {
             /** @todo Needs cleanup! Maybe put this into a template? */
             var curItem = this.mVMModel.itemByRow(i);
             var newItemData = '';
             var newItem =
-                '<li class="ui-widget-content">' +
-                    '<table>'+
+                '<tr class="vmlist-entry-row"><td>' +
+                    '<table class="vmlist-entry-table" width="100%">'+
                         '<tr>'+
                             '<td>'+
                                 '<img alt="" class="vmlist-entry-osicon" src="' + curItem.osIcon() + '"/>' +
                             '</td>'+
-                            '<td nowrap="nowrap">'+
-                                curItem.name() + '<br/>' +
+                            '<td width="100%" nowrap="nowrap" class="vmlist-entry-vmname">'+
+                                '<b>' + curItem.name() + '</b><br/>' +
                                 '<img alt="" class="vmlist-entry-stateicon" src="' + vbGlobal.vmStateIcon(curItem.state()) + '"/>&nbsp;' +
                                 vbGlobal.vmStateDescription(curItem.state()) +
                             '</td>'+
                         '</tr>'+
                     '</table>'+
-                '</li>';
-            jQuery(newItem).appendTo('ol#vmList');
+                '</td></tr>';
+            jQuery("#vmList").append(newItem);
         }
 
         /* Select first item */
         /* @todo Save old selected item, create list (see above) and select the old
                  VM again (if still present). Otherwise set first entry. */
-        jQuery("#vmList li:first").toggleClass('ui-selected');
+        jQuery("#vmList .vmlist-entry-row:first").toggleClass('ui-selected');
 
         /* (Re-)connect all handlers */
-        jQuery('ol#vmList li').
+        jQuery('#vmList .vmlist-entry-row').
             mouseover(function()
             {
                 jQuery(this).toggleClass('ui-state-hover');
@@ -256,7 +257,7 @@ var vboxVMListView = Class.create(
 
     selectionChanged: function(event)
     {
-        var curIndex = jQuery("#vmList li").index(event.currentTarget);
+        var curIndex = jQuery("#vmList .vmlist-entry-row").index(event.currentTarget);
         this.mCurItem = this.mVMModel.itemByRow(curIndex);
         console.log("vboxVMListView::selectionChanged: mCurItem = %s", this.mCurItem.name());
     },
