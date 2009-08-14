@@ -206,10 +206,10 @@ var vboxTabWidget = Class.create(
                 throw(tr("Please install at least Flash Player 9 first!"));
 
             if (curItem.state() < 4)
-                throw(tr("No remote view available because virtual machine is not running."));
+                throw(tr("The remote view is not available because the virtual machine is not running"));
 
-            if (!rdpServ.getEnabled())
-                throw(tr("Virtual machine is running but RDP server not enabled."));
+            if (!rdpServ.enabled)
+                throw(tr("The VRDP server of the VM is not enabled."));
 
             switch (this.mFlashRDPStatus)
             {
@@ -262,7 +262,7 @@ var vboxTabWidget = Class.create(
                     rdpStatus = tr("Not connected.");
                     this.rdpInvalidateConnBtn(tr("Connect"), false);
                     jQuery("#tab-rdp-sec-conn").show();
-                    if (rdpServ.getAuthType() != 0)
+                    if (rdpServ.authType != 0)
                     {
                         jQuery("#tab-rdp-auth-user").show();
                         jQuery("#tab-rdp-auth-pwd").show();
@@ -382,22 +382,24 @@ var vboxTabWidget = Class.create(
 
     rdpConnect: function()
     {
-        console.log("vboxTabWidget::rdpConnect");
-
         if (this.mFlashRDPStatus >= RDPState.Connecting)
         {
             var curItem = this.mParent.curItem();
             var rdpServ = curItem.machine().getVRDPServer();
+
+            vbGlobal.mVirtualBox.addMessage("Establishing RDP connection to IP " + rdpServ.netAddress +
+                " on port " + rdpServ.port + " for VM with ID " + curItem.id());
+
             var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);
-            flash.setProperty("serverAddress", rdpServ.getNetAddress());
+            flash.setProperty("serverAddress", rdpServ.netAddress);
 
             console.log("vboxTabWidget::rdpConnect: Connecting to %s:%d (auth type=%d)",
-                rdpServ.getNetAddress(), rdpServ.getPort(), rdpServ.getAuthType());
+                rdpServ.netAddress, rdpServ.port, rdpServ.authType);
 
-            if (rdpServ.getPort() > 0)
-                flash.setProperty("serverPort", rdpServ.getPort());
+            if (rdpServ.port > 0)
+                flash.setProperty("serverPort", rdpServ.port);
 
-            if (rdpServ.getAuthType() > 0)
+            if (rdpServ.authType > 0)
             {
                 var strUser = jQuery("#tab-rdp-auth-user-val").val();
                 var strPwd = jQuery("#tab-rdp-auth-pwd-val").val();

@@ -68,6 +68,8 @@ var vboxSelectorWnd = Class.create(
 
         if (numMachines > 0)
         {
+            /* we want the VMs to appear in alphabetic order */
+            this.mVMModel.sortByName();
             /* Select first item in list. */
             this.mVMListView.selectItemByRow(0);
             this.invalidate();

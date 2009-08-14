@@ -29,7 +29,18 @@ var vboxVMToolbar = Class.create(
     {
         /* bind the static toolbar buttons */
         jQuery("#toolbar-button-new").bind("click", this.buttonClicked);
+        jQuery("#toolbar-button-new").qtip({ content: 'Create new virtual machine' });
+
         jQuery("#toolbar-button-logout").bind("click", this.buttonClicked);
+        jQuery("#toolbar-button-logout").qtip({
+            content: 'Logout and return to the login page',
+            position: {
+                corner: {
+                    target: 'bottomLeft',
+                    tooltip: 'topRight'
+                }
+            }
+        });
     },
 
     setParent: function(parent)
@@ -104,7 +115,10 @@ var vboxVMToolbar = Class.create(
         /* settings can only be changed for powered off and aborted VMs */
         if (state == VMState.PoweredOff ||
             state == VMState.Aborted)
+        {
             jQuery("#toolbar-button-vm-settings-span").html('<img id="toolbar-button-settings" src="/images/vbox/vm_settings_32px.png" alt="VM settings"/>');
+            jQuery("#toolbar-button-settings").qtip({ content: 'Change settings of selected virtual machine' });
+        }
         else
             jQuery("#toolbar-button-vm-settings-span").html('<img src="/images/vbox/vm_settings_disabled_32px.png" alt=""/>');
 
@@ -113,18 +127,30 @@ var vboxVMToolbar = Class.create(
             state == VMState.Aborted ||
             state == VMState.Saved ||
             state == VMState.Paused)
+        {
             jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_start_32px.png" alt="Start VM"/">');
+            jQuery("#toolbar-button-start-pause").qtip({ content: 'Start currently selected virtual machine' });
+        }
         else if (state == VMState.Running)
+        {
             jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_pause_32px.png" alt="Pause VM"/>');
+            jQuery("#toolbar-button-start-pause").qtip({ content: 'Pause the currently selected virtual machine' });
+        }
         else
             jQuery("#toolbar-button-vm-start-span").html('<img src="/images/vbox/vm_start_disabled_32px.png" alt=""/>');
 
         /* saved VMs can be discarded */
         if (state == VMState.Saved)
+        {
             jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_discard_32px.png" alt="Discard saved state"/>');
+            jQuery("#toolbar-button-stop-discard").qtip({ content: 'Discard the saved state of the currently selected virtual machine' });
+        }
         else if (state == VMState.Running ||
                  state == VMState.Paused)
+        {
             jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_poweroff_32px.png" alt="Power off VM"/>');
+            jQuery("#toolbar-button-stop-discard").qtip({ content: 'Power down the currently selected virtual machine' });
+        }
         else
             jQuery("#toolbar-button-vm-stop-span").html('<img src="/images/vbox/vm_poweroff_disabled_32px.png" alt=""/>');
 

@@ -157,6 +157,17 @@ var vboxVMModel = Class.create(
 
     rowById: function(machineId)
     {
+    },
+
+    sortByName: function()
+    {
+        this.mArrItems.sort(
+            function(entry1, entry2)
+            {
+                return entry1.mName > entry2.mName ? 1 :
+                    entry1.mName < entry2.mName ? -1 : 0;
+            }
+            );
     }
 });
 

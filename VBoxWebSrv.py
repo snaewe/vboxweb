@@ -476,7 +476,7 @@ class Root(VBoxPage):
         for m in arrMach:
             arrJSON.append(jsMachine(self.ctx, m.mach))
 
-        print "Type %d, %d machines modified" %(updateType, len(arrMach))
+        print "%s update, %d machines modified" %("full" if updateType is 0 else "differential", len(arrMach))
         if isSimpleJson:
             return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
         else:
@@ -501,7 +501,8 @@ class Root(VBoxPage):
              operation == "resumevm" or
              operation == "savestatevm" or
              operation == "poweroffvm" or
-             operation == "acpipoweroffvm"):
+             operation == "acpipoweroffvm" or
+             operation == "discardvm"):
             session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
             progress = self.ctx['vb'].openExistingSession(session, uuid)
             console = session.console;
@@ -520,9 +521,9 @@ class Root(VBoxPage):
             elif operation == "acpipoweroffvm":
                 console.powerButton()
                 statusMessage = "Sent ACPI power button signal to VM with ID " + uuid
-
-        elif operation == "discardvm":
-            pass
+            elif operation == "discardvm":
+                console.discardCurrentState()
+                statusMessage = "Discarded saved state for VM with ID " + uuid
         else:
             print "vboxVMAction: unknown operation"
 
