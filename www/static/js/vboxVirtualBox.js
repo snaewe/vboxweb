@@ -117,7 +117,7 @@ var vboxVirtualBox = Class.create(
                 vbGlobal.mVirtualBox.addMessage(res[0].statusMessage);
 
             /* @todo Get rid of the res[INDEX] handling! This is very error
-             * prone and leads to confusing as more data will be added. */
+             * prone and leads to confusion as more data will be added. */
 
             var numUpdates = res[0].numMach;
             var updateType = res[0].updateType;
