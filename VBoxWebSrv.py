@@ -477,9 +477,25 @@ class Root(VBoxPage):
         if updateType is 0:
             arrJSON.append(jsVirtualBox(self.ctx))
 
+        session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
+
         # Add arrMach to the final JSON array
         for m in arrMach:
-            arrJSON.append(jsMachine(self.ctx, m.mach))
+            machine = m.mach
+            sessionOpen = 0
+            # if a session for the VM is open, connect to it and use its machine object
+            try:
+                print "Opening session for machine: " + machine.name
+                self.ctx['vb'].openExistingSession(session, machine.id)
+                if session.state == self.ctx['ifaces'].SessionState_Open:
+                    sessionOpen = 1
+            except Exception:
+                pass
+            if sessionOpen == 1:
+                machine = session.machine
+            arrJSON.append(jsMachine(self.ctx, machine))
+            if sessionOpen == 1:
+                session.close()
 
         print "%s update, %d machines modified" %("full" if updateType is 0 else "differential", len(arrMach))
         if isSimpleJson:
