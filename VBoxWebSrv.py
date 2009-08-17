@@ -644,7 +644,6 @@ def main(argv = sys.argv):
            }
 
     # Download the RDP web control
-    bRDPForceUpdate = False
     vboxRDPWeb.checkForUpdate(
         "http://download.virtualbox.org/virtualbox/rdpweb/",
         os.path.abspath(os.path.dirname(__file__)) + "/www/static/",
