@@ -63,7 +63,7 @@ var vboxVMToolbar = Class.create(
         switch (event.target.id)
         {
             case "toolbar-button-new":
-                vbGlobal.mVirtualBox.addMessage("New VM not implemented yet!");
+                jQuery("#newvm-dialog").dialog("open");
                 break;
 
             case "toolbar-button-settings":

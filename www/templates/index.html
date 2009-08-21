@@ -46,7 +46,7 @@
         <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.tabs.css"/>
         <link rel="stylesheet" type="text/css" href="/static/css/themes/vboxweb/ui.all.css"/>
     </head>
-    <body onload="onDocumentLoad()">
+    <body>
         <!-- JavaScript detection. -->
         <noscript>
             JavaScript is turned off in your web browser. Turn it on to take full advantage of this site, then refresh the page.
@@ -67,8 +67,13 @@
         <script type="text/javascript" src="/static/js/ui/ui.selectable.js"></script>
         <script type="text/javascript" src="/static/js/ui/ui.sortable.js"></script>
         <script type="text/javascript" src="/static/js/ui/ui.tabs.js"></script>
+        <!-- jQuery UI plugins -->
         <script type="text/javascript" src="/static/js/ui/jquery.qtip-1.0.0-rc3.js"></script>
         <script type="text/javascript" src="/static/js/ui/mbMenu.min.js"></script>
+        <script type="text/javascript" src="/static/js/ui/jquery.history.js"></script>
+        <script type="text/javascript" src="/static/js/ui/jquery.form.js"></script>
+        <script type="text/javascript" src="/static/js/ui/jquery.validate.js"></script>
+        <script type="text/javascript" src="/static/js/ui/jquery.form.wizard-0.9.6.js"></script>
         <!-- Main API -->
         <script type="text/javascript" src="/static/js/VirtualBox_Main.js"></script>
         <!-- Utility stuff. -->
@@ -148,9 +153,34 @@
                 });
             });
 
-            function onDocumentLoad()
-            {
-            }
+            jQuery(function(){
+                jQuery("#newvm-form").formwizard({
+                    //form wizard settings
+                    historyEnabled : true,
+                    formPluginEnabled: true,
+                    validationEnabled : true},
+                {
+                   //validation settings
+                },
+                {
+                   // form plugin settings
+                }
+                );
+            });
+            jQuery(function() {
+                jQuery("#newvm-dialog").dialog({
+                    bgiframe: true,
+                    resizable: false,
+                    height: 360,
+                    width: 550,
+                    modal: true,
+                    autoOpen: false,
+                    overlay: {
+                        backgroundColor: '#000',
+                        opacity: 0.5
+                    }
+                });
+            });
 
             function resizeTabLayout ()
             {
@@ -287,21 +317,21 @@
 
         </script>
 
-        <div id="vmToolbar" class="outer-layout-north" style="display: none;">
-            <table width="100%"cellspacing="0">
-                <tr style="background-color: #C8C8C8">
-                    <td class="applicationMenu" style="padding-top: 2px; padding-left: 10px; border-bottom: 1px #000000; border-bottom-style: solid;">
+        <div id="vmToolbar" class="outer-layout-north">
+            <table width="100%" cellspacing="0">
+                <tr>
+                    <td class="applicationMenu">
                         <table class="rootVoices" cellspacing='0' cellpadding='0' border='0'><tr>
                             <td class="rootVoice {menu: 'menu_VBoxWeb'}" ><img src="/images/vbox/register_16px.png" alt="" align="top"/>VirtualBox Web Console</td>
-                            <td class="rootVoice {menu: 'menu_VM'}" >Virtual Machine</td>
+                            <td class="rootVoice {menu: 'menu_VM'}" ><img src="/images/vbox/machine_16px.png" alt="" align="top"/>Virtual Machine</td>
                         </tr></table>
                     </td>
                     <!-- fill up remaining horizontal space with the border -->
-                    <td style="border-bottom: 1px #000000; border-bottom-style: solid;">
+                    <td class="applicationMenu">
                         &nbsp;
                     </td>
                 </tr>
-                <tr>
+                <tr class="toolbar">
                     <td align="left" style="padding-left: 10px; padding-top: 2px;">
                         <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png" alt=""/>
                         <span id="toolbar-button-vm-settings-span"></span>
@@ -320,13 +350,12 @@
             </table>
         </div>
 
-        <div class="outer-layout-west" style="display: none;">
+        <div class="outer-layout-west">
             <!-- this table represents the list of VMs -->
             <table id="vmList" cellspacing="0" width="100%"></table>
         </div>
 
-        <div id="vmTab" class="outer-layout-center" style="display: none;">
-
+        <div id="vmTab" class="outer-layout-center">
             <ul>
                 <li><a href="#tabs-center-details"><span><img src="/images/vbox/settings_16px.png" class="tabs-center-page-icon" alt=""/>Details</span></a></li>
                 <li><a href="#tabs-center-rdp"><span><img src="/images/vbox/vrdp_16px.png" class="tabs-center-page-icon" alt=""/>Console</span></a></li>
@@ -355,7 +384,6 @@
                                 <div style="clear: both"></div>
                             </div>
                         </div>
-
 
                         <div class="tab-section" id="tab-details-sec-vm-system">
                             <div id="tab-details-hdr-system" class="tab-section-header">
@@ -474,7 +502,7 @@
             </div> <!-- TabPanelsContainer -->
         </div> <!-- vmTab -->
 
-        <div id="vmMessageArea" class="outer-layout-south" style="display: none;">
+        <div id="vmMessageArea" class="outer-layout-south">
             <table id="vmMessageTable" width="100%" cellspacing="0">
            </table>
         </div>
@@ -497,33 +525,92 @@
             </table>
         </div>
 
+        <div id="newvm-dialog" title="Create a new Virtual Machine" style="display: none;">
+            <table width="100%">
+                <tr align="top">
+                    <td style="padding-right: 10px; padding-top: 10px;">
+                        <img src="/images/vbox/vmw_new_welcome.png" alt=""/>
+                    </td>
+                    <td valign="top" width="100%">
+                        <form id="newvm-form" method="post" action="#">
+                            <div class="step" style="height: 220px;">
+                                <table width="100%">
+                                    <tr>
+                                        <td class="wizardpagetitle">Welcome to the New Virtual Machine Wizard!</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="wizardform">This wizard will guide you through the steps that are necessary to create a new virtual
+                                        machine on your VirtualBox host.<p>
+                                        Use the <b>Next</b> button to go to the next page of the wizard and the <b>Back</b>
+                                        button to return to the previous page.</p></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="step" style="height: 220px;">
+                                <table width="100%">
+                                    <tr>
+                                        <td class="wizardpagetitle">VM Name and OS Type</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="wizardform"><input disabled="disabled" type="text" value="" /><br />
+                                        <input disabled="disabled" type="text" value="" /><br />
+                                        <input disabled="disabled" type="text" value="" /><br />
+                                        <select class="link" >
+                                        <option value="" >Choose the step to go to...</option>
+                                        <option value="step3" >Go to Step3</option>
+                                        <option value="step4" >Go to Step4</option>
+                                        </select><br /></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div id="step3" class="step" style="height: 220px;">
+                                <h1>step 3 - submit step</h1>
+                                <input disabled="disabled" type="text" value="" /><br />
+                                <input disabled="disabled" type="text" value="" class="required"/><br />
+                                <input disabled="disabled" type="hidden" class="link" value="submit_step" />
+                            </div>
+                            <div id="step4" class="step" style="height: 220px;">
+                                <h1>step 4</h1>
+                                <input disabled="disabled" type="text" value="" /><br />
+                                <input disabled="disabled" type="text" name="email" class="required email" /><br />
+                            </div>
+                            <div id="step5" class="step" style="height: 220px;">
+                                <h1>step 5 - last step</h1>
+                                <input disabled="disabled" type="text" value="" /><br />
+                                <input disabled="disabled" type="text" value="" /><br />
+                            </div>
+                            <div>
+                                <input type="reset" value="Reset" />
+                                <input type="submit" value="Submit" />
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <!-- menues -->
         <div id="menu_VBoxWeb" class="menu">
-                <a class="{img: 'vm_new_32px.png'}">Create new VM...</a>
-                <a class="{img: 'vm_settings_32px.png'}">Preferences...</a>
-                <a rel="separator"> </a>
-                <a class="{action: 'vbGlobal.mVirtualBox.logout()', img: 'logout_32px.png'}">Log out</a>
+            <a class="{action: 'jQuery(\'#newvm-dialog\').dialog(\'open\')', img: 'vm_new_32px.png'}">Create new VM...</a>
+            <a class="{img: 'vm_settings_32px.png'}">Preferences...</a>
+            <a rel="separator"> </a>
+            <a class="{action: 'vbGlobal.mVirtualBox.logout()', img: 'logout_32px.png'}">Log out</a>
         </div>
 
         <!-- the following menu is bogus, just keep a refrence to the concept -->
         <div id="menu_VM" class="menu">
-                <a rel="text" >
-                        <img src="/images/vbox/meditation_32px.png" alt="img"/><br/>
-                        <br/>immagini che vuoi ed altro testo che ti pare Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi felis leo, consequat et, lacinia a, facilisis sit amet,<br/><br/>
-                </a>
-                <a rel="separator"> </a>
-                <a class="{action: 'document.title=(\'menu_3.1\')', img: 'iconDone.png'}">menu_3.1</a>
-                <a id="aaa" class="{menu:'sub_menu_2'}"  >submenu</a>
-                <a class="{action: 'document.title=(\'menu_3.4\')'}">menu_3.4 con testo veramente molto lungo</a>
+            <a rel="text" >
+                <img src="/images/vbox/meditation_32px.png" alt="img"/><br/>
+                <br/>immagini che vuoi ed altro testo che ti pare Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi felis leo, consequat et, lacinia a, facilisis sit amet,<br/><br/>
+            </a>
+            <a rel="separator"> </a>
+            <a class="{action: 'document.title=(\'menu_3.1\')', img: 'vm_start_32px.png'}">menu_3.1</a>
+            <a id="aaa" class="{menu:'sub_menu_2'}"  >submenu</a>
+            <a class="{action: 'document.title=(\'menu_3.4\')'}">menu_3.4 con testo veramente molto lungo</a>
         </div>
 
         <div id="sub_menu_2" class="menu">
-                <a class="{action: 'document.title=(\'sub_menu_2.1\')', img: 'buttonfind.gif'}" >sub_menu_2.1</a>
-                <a class="{action: 'document.title=(\'sub_menu_2.2\')'}">sub_menu_2.2</a>
-                <a rel="separator"> </a>
-                <a class="{action: 'document.title=(\'sub_menu_2.3\')'}">sub_menu_2.3</a>
-                <a class="{action: 'document.title=(\'sub_menu_2.4\')'}" >sub_menu_2.4</a>
+            <a class="{action: 'document.title=(\'sub_menu_2.4\')'}" >sub_menu_2.4</a>
         </div>
     </body>
 </html>

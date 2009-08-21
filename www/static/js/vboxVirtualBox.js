@@ -212,8 +212,8 @@ var vboxVirtualBox = Class.create(
         dateStr = date.getFullYear() + '-' + month + '-' + day + ' ' +
             hours + ':' + minutes + ':' + seconds;
 
-        jQuery("#vmMessageTable").prepend('<tr><td class="message" style="width:120px; white-space: nowrap;">' +
-            dateStr + '</td><td class="message" width="100%">' + message + '</td></tr>');
+        jQuery("#vmMessageTable").prepend('<tr><td class="message" style="width: 120px;" nowrap="nowrap">' +
+            dateStr + '</td><td class="message">' + message + '</td></tr>');
     },
 
     getUserName: function()
