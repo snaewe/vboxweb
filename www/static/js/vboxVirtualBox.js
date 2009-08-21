@@ -232,7 +232,7 @@ var vboxVirtualBox = Class.create(
     addMachine: function(vboxMachineImpl)
     {
         /** @todo Search for machine first before adding. */
-        console.log("vboxVirtualBox::addMachine: Name = %s", vboxMachineImpl.getName());
+        //console.log("vboxVirtualBox::addMachine: Name = %s", vboxMachineImpl.getName());
         this.mArrMachines[this.mArrMachines.length] = vboxMachineImpl;
     },
 

@@ -186,7 +186,6 @@ var vboxVMListView = Class.create(
     selectItemByRow: function(row)
     {
         this.mCurItem = this.mVMModel.itemByRow(row);
-        console.log("vboxVMListView::selectItemByRow: Row = %d, mCurItem = %s", row, this.mCurItem.name());
         return this.mCurItem;
     },
 
@@ -202,7 +201,7 @@ var vboxVMListView = Class.create(
     {
         var numItems = this.mVMModel.getCount();
         var newItems = "";
-        console.log("vboxVMListView::invalidate: Item count: %d", numItems);
+
         /* empty table */
         jQuery("#vmList").html("");
         for (var i = 0; i < numItems; i++)
@@ -259,7 +258,6 @@ var vboxVMListView = Class.create(
     {
         var curIndex = jQuery("#vmList .vmlist-entry-row").index(event.currentTarget);
         this.mCurItem = this.mVMModel.itemByRow(curIndex);
-        console.log("vboxVMListView::selectionChanged: mCurItem = %s", this.mCurItem.name());
     },
 
     selectedItem: function()

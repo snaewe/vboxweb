@@ -27,7 +27,6 @@ var vboxSelectorWnd = Class.create(
 {
     initialize: function(vboxVMListView, vboxTabWidget, vboxVMToolbar)
     {
-       console.log("vboxSelectorWnd::initialize");
        this.mVMToolbar = vboxVMToolbar;
        this.mVMListView = vboxVMListView;
        this.mVMModel = new vboxVMModel(this.mVMListView);
@@ -56,8 +55,6 @@ var vboxSelectorWnd = Class.create(
     {
         var vbox = vbGlobal.virtualBox();
         var numMachines = vbox.getMachineCount();
-
-        console.log("vboxSelectorWnd::refreshVMList: %d machines", numMachines);
 
         this.mVMModel.clear();
         for (var i = 0; i < numMachines; i++)

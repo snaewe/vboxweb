@@ -34,7 +34,7 @@ body {
 .outer-layout-north {
     background: #5889AB;
     color: #FFFFFF;
-    padding: 5px 10px;
+    /*padding: 5px 10px;*/
 }
 
 /* VM List. */
@@ -183,4 +183,115 @@ td.message {
     padding-bottom: 4px;
     padding-left: 8px;
     padding-right: 0px;
+}
+
+/* 
+ * Menu bar
+ */
+.menu{
+  display:none;
+}
+
+.rootVoices{
+    background-color:#C8C8C8;
+}
+.rootVoices td.rootVoice {
+    vertical-align:middle;
+    background-color:transparent;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: black;
+    font-size:14px;
+    line-height:18px;
+    cursor: pointer;
+}
+
+.rootVoices td.rootVoice.selected{
+    background: gray;
+    color:#ffffff;
+    cursor: pointer;
+    font-size:14px;
+}
+
+.rootVoices.vertical {
+    /* this is the width of the menu bar, items will be evenly distributed */
+    width: 180px;
+}
+
+.menuShadow{
+    padding:2px;
+    padding-bottom:0px;
+    left:-2px;
+    top:1px;
+}
+
+/* AH: there's still some bogus stuff from the sample, cleanup! */
+.menuContainer{
+    background-color:gray;
+    padding:0;
+}
+.menuContainer .line{
+    background-color:transparent;
+    width:100%;
+}
+.menuContainer .line.title {
+    background-color:#B23305;
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:14px;
+    border-bottom:1px solid darkred;
+}
+.menuContainer .line.title a{
+    font-size:14px;
+}
+.menuContainer td a{
+    text-decoration:none;
+    color: #f3f3f3;
+}
+.menuContainer td.voice{
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:12px;
+    padding:7px;
+}
+.menuContainer .separator{
+    background-color:#999;
+    height:1px;
+}
+.menuContainer td.img{
+    font-family:Arial,Helvetica,sans-serif;
+    text-align:center;
+    font-size:12px;
+    color: #c3c3c3;
+    background-color:transparent;
+    width:24px;
+    padding:5px;
+}
+.menuContainer td.img img{
+    width:20px;
+}
+.menuContainer .textBox{
+    padding: 10px;
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:12px;
+    background:dimgray url("../header_bgnd.jpg");
+    color: #c3c3c3;
+}
+.menuContainer .selected td{
+    background-color:#f3f3f3;
+    background-image:url("../images/bgnd_sel_2.jpg")
+}
+.menuContainer .selected td a{
+    color:#000;
+}
+.menuContainer .disabled td, .menuContainer .disabled td a {
+    color: #cccccc;
+}
+.menuContainer .subMenuOpener{
+    background-image:url("../images/menuArrow_w.gif");
+    background-repeat:no-repeat;
+    background-position:right;
+}
+.menuContainer .selected .subMenuOpener{
+    background-image:url("../images/menuArrow.gif");
+    background-repeat:no-repeat;
+    background-position:right;
 }

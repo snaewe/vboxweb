@@ -29,6 +29,7 @@ import socket
 import sys
 import urllib
 import hashlib
+from threading import Thread
 
 if sys.version_info < (2, 6):
     import simplejson
@@ -41,6 +42,7 @@ from cherrypy.lib.static import serve_file
 
 if sys.platform == 'win32':
     import pythoncom
+    import win32com
 
 # VirtualBox API
 import vboxapi
@@ -248,7 +250,7 @@ class VBoxMonitor:
         if sys.platform == 'win32':
             return "", 0, bRet
 
-        return "", bRet
+        return bRet, ""
 
     def onExtraDataChange(self, id, key, value):
         print "onExtraDataChange: %s %s=>%s" %(id, key, value)
@@ -314,7 +316,6 @@ class VBoxPage:
         if self.initCOM is False:
             if sys.platform == 'win32':
                 # Get the "real" VBox interface from the stream created in the class constructor above
-                import win32com
                 i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
                 self.ctx['vb'] = win32com.client.Dispatch(i)
             self.initCOM = True
@@ -358,13 +359,15 @@ class VBoxPage:
 
     def get_loginform(self, username, msg="Enter login information", from_page="/"):
         return """<html><body>
-            <form method="post" action="/login">
+            <h1>VirtualBox Web Console</h1>
+            <table><tr><td style="padding-right: 10px;"><img src="/images/vbox/welcome.png" alt=""/></td>
+            <td><form method="post" action="/login">
             <input type="hidden" name="from_page" value="%(from_page)s" />
             %(msg)s<br />
-            Username: <input type="text" name="username" value="%(username)s" /><br />
-            Password: <input type="password" name="password" /><br />
-            <input type="submit" value="Log in" /><p>
-            Use <code>VBoxWebSrv.py adduser myuser mypassword</code> to create user accounts.
+            <table><tr><td>Username:</td><td><input type="text" name="username" value="%(username)s" /></td></tr>
+            <tr><td>Password:</td><td><input type="password" name="password" /></td></tr></table>
+            <input type="submit" value="Log in" /><p></td></tr></table>
+            Use <code>python VBoxWebSrv.py adduser myuser mypassword</code> to create user accounts.
         </body></html>""" % locals()
 
     @cherrypy.expose
@@ -448,9 +451,10 @@ class Root(VBoxPage):
 
     def registerCallbacks(self):
         # Register IVirtualBox (global) callback
-        self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
-        self.ctx['vb'].registerCallback(self.callbackVBox)
-
+        if sys.platform <> 'win32': # Won't work on win32 atm
+            self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
+            self.ctx['vb'].registerCallback(self.callbackVBox)
+        
     @cherrypy.expose
     @require()
     def vboxGetUpdates(self):
@@ -613,6 +617,7 @@ def main(argv = sys.argv):
             bRDPWebForceUpdate = True
 
     # Why subscribe() doesn't take callback argument, having global vboxMgr is a bit ugly
+    # AH: I think this is bogus, I never saw the callbacks being called
     cherrypy.engine.subscribe('start_thread', perThreadInit)
     cherrypy.engine.subscribe('stop_thread',  perThreadDeinit)
 
@@ -650,17 +655,45 @@ def main(argv = sys.argv):
         None,
         bRDPWebForceUpdate)
 
-    # Run web server
-    cherrypy.quickstart(Root(ctx), '/', {
-        '/static': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': 'www/static'},
-        '/images': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': 'www/static/images'}}
-        )
+
+    # Start the webserver thread
+    print "Starting web server thread"
+    ws = WebServerThread(ctx)
+    ws.start()
+
+    # Events loop, wait for keyboard interrupt
+    try:
+        while  True:
+            g_virtualBoxManager.waitForEvents(-1)
+    except:
+        pass
 
     # Shut down
+    ws.finish()
+
+class WebServerThread(Thread):
+    def __init__(self, ctx):
+        Thread.__init__(self)
+        self.ctx = ctx
+        if sys.platform == 'win32':
+            self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vb'])
+        
+    def finish(self):
+        cherrypy.engine.exit()
+
+    def run(self):
+        if sys.platform == 'win32':
+            i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
+            self.ctx['vb'] = win32com.client.Dispatch(i)
+        # Run web server
+        cherrypy.quickstart(Root(self.ctx), '/', {
+                '/static': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir': 'www/static'},
+                '/images': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir': 'www/static/images'}}
+        )
 
 if __name__ == '__main__':
     main(sys.argv)

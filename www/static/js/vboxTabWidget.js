@@ -55,8 +55,6 @@ var vboxTabWidget = Class.create(
         if (this.canChangeTab())
         {
             this.mCurTab = ui.panel.id;
-            console.log("vboxTabWidget::onTabChange: curTab = %s", this.mCurTab);
-
             jQuery(".tab-sections").show(); /* Show all sections by default. */
             return this.invalidatePage(this.mCurTab);
         }
@@ -82,7 +80,6 @@ var vboxTabWidget = Class.create(
 
     invalidate: function()
     {
-        console.log("vboxTabWidget::invalidate: curTab = %s", this.mCurTab);
         this.selectionChanged();
     },
 
@@ -147,7 +144,10 @@ var vboxTabWidget = Class.create(
 
         jQuery("#tab-details-vm-display-videomem-val").text(mach.getVRAMSize() + tr(" MB"));
         jQuery("#tab-details-vm-display-3daccel-val").text(mach.getAccelerate3DEnabled() ? tr("Enabled") : tr("Disabled"));
-        jQuery("#tab-details-vm-display-rdpport-val").text(vrdpServer.getPort());
+        if (vrdpServer.getEnabled())
+            jQuery("#tab-details-vm-display-rdpport-val").text(tr("Enabled") + ", " + tr("Port ") + vrdpServer.getPort());
+        else
+            jQuery("#tab-details-vm-display-rdpport-val").text(tr("Disabled") + " (" + tr("Port ") + vrdpServer.getPort() + ")");
 
         jQuery("li.harddisks-list-item").remove();
         for (i = 0; i < hardDiskAttachments.length; i++)
@@ -309,10 +309,14 @@ var vboxTabWidget = Class.create(
         jQuery("#tab-rdp-auth-btnconn").attr("disabled", disabled);
     },
 
+    /*
+     * RDP Web Control event handlers.
+     */
+
     rdpStatus: function(e)
     {
-        console.log("vboxTabWidget::rdpStatus: Success = %s, ID = %s, Ref = %s",
-            e.success, e.id, e.ref);
+        //console.log("vboxTabWidget::rdpStatus: Success = %s, ID = %s, Ref = %s",
+        //    e.success, e.id, e.ref);
         return false;
     },
 
@@ -443,7 +447,6 @@ var vboxTabWidget = Class.create(
 
     selectionChanged: function()
     {
-        console.log("vboxTabWidget::selectionChanged: curTab = %s", this.mCurTab);
         this.invalidatePage(this.mCurTab);
     }
 });

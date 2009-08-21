@@ -58,6 +58,7 @@
         <!-- @todo add debug switch for including non-minimized versions. -->
         <script type="text/javascript" src="/static/js/jquery.min.js"></script>
         <script type="text/javascript" src="/static/js/jquery.layout.min.js"></script>
+        <script type="text/javascript" src="/static/js/jquery.metadata.js"></script>
         <!-- Prototype -->
         <script type="text/javascript" src="/static/js/prototype.js"></script>
         <!-- UI scripts. -->
@@ -67,6 +68,7 @@
         <script type="text/javascript" src="/static/js/ui/ui.sortable.js"></script>
         <script type="text/javascript" src="/static/js/ui/ui.tabs.js"></script>
         <script type="text/javascript" src="/static/js/ui/jquery.qtip-1.0.0-rc3.js"></script>
+        <script type="text/javascript" src="/static/js/ui/mbMenu.min.js"></script>
         <!-- Main API -->
         <script type="text/javascript" src="/static/js/VirtualBox_Main.js"></script>
         <!-- Utility stuff. -->
@@ -94,6 +96,57 @@
 
             /* Set global jQuery handle (instead of using "jQuery(...)" all the time.
             var $j = jQuery.noConflict();*/
+
+            /* create the main menu bar */
+            jQuery(function(){
+                jQuery(".applicationMenu").buildMenu(
+                {
+                    menuWidth:200,
+                    openOnRight:false,
+                    menuSelector: ".menuContainer",
+                    containment:"wrapper",
+                    iconPath:"/images/vbox/",
+                    hasImages:true,
+                    fadeInTime:100,
+                    fadeOutTime:300,
+                    adjustLeft:2,
+                    minZindex:"auto",
+                    adjustTop:10,
+                    opacity:.95,
+                    shadow:true,
+                    closeOnMouseOut:true,
+                    closeAfter:1000
+                });
+            });
+
+            jQuery(function() {
+                jQuery("#poweroff-dialog").dialog({
+                    bgiframe: true,
+                    resizable: false,
+                    height:200,
+                    modal: true,
+                    autoOpen: false,
+                    overlay: {
+                        backgroundColor: '#000',
+                        opacity: 0.5
+                    },
+                    buttons: {
+                        Ok: function() {
+                            var poweroffMethod = jQuery("input[@name='poweroff-dialog-selection']:checked").val();
+                            if (poweroffMethod == "savestate")
+                                vbGlobal.mVirtualBox.savestateVM(vmSelWnd.curItem().id());
+                            else if (poweroffMethod == "acpipoweroff")
+                                vbGlobal.mVirtualBox.acpipoweroffVM(vmSelWnd.curItem().id());
+                            else
+                                vbGlobal.mVirtualBox.poweroffVM(vmSelWnd.curItem().id());
+                            jQuery(this).dialog('close');
+                        },
+                        Cancel: function() {
+                            jQuery(this).dialog('close');
+                        }
+                    }
+                });
+            });
 
             function onDocumentLoad()
             {
@@ -126,35 +179,6 @@
                 }
             }
 
-            jQuery(function() {
-                jQuery("#poweroff-dialog").dialog({
-                    bgiframe: true,
-                    resizable: false,
-                    height:200,
-                    modal: true,
-                    autoOpen: false,
-                    overlay: {
-                        backgroundColor: '#000',
-                        opacity: 0.5
-                    },
-                    buttons: {
-                        Ok: function() {
-                            var poweroffMethod = jQuery("input[@name='poweroff-dialog-selection']:checked").val();
-                            if (poweroffMethod == "savestate")
-                                vbGlobal.mVirtualBox.savestateVM(vmSelWnd.curItem().id());
-                            else if (poweroffMethod == "acpipoweroff")
-                                vbGlobal.mVirtualBox.acpipoweroffVM(vmSelWnd.curItem().id());
-                            else
-                                vbGlobal.mVirtualBox.poweroffVM(vmSelWnd.curItem().id());
-                            jQuery(this).dialog('close');
-                        },
-                        Cancel: function() {
-                            jQuery(this).dialog('close');
-                        }
-                    }
-                });
-            });
-
             jQuery(document).ready(onDocumentReady);
             function onDocumentReady()
             {
@@ -164,7 +188,7 @@
                     ,   north__resizable:                   false
                     ,   north__slidable:                    false
                     /* unfortunately, Safari does not choose the right height, it becomes 1px */
-                    ,   north__size:                        40
+                    ,   north__size:                        60
                     ,   north__togglerLength_open:          0
                     ,   north__togglerLength_close:        -1
 
@@ -265,8 +289,20 @@
 
         <div id="vmToolbar" class="outer-layout-north" style="display: none;">
             <table width="100%"cellspacing="0">
+                <tr style="background-color: #C8C8C8">
+                    <td class="applicationMenu" style="padding-top: 2px; padding-left: 10px; border-bottom: 1px #000000; border-bottom-style: solid;">
+                        <table class="rootVoices" cellspacing='0' cellpadding='0' border='0'><tr>
+                            <td class="rootVoice {menu: 'menu_VBoxWeb'}" ><img src="/images/vbox/register_16px.png" alt="" align="top"/>VirtualBox Web Console</td>
+                            <td class="rootVoice {menu: 'menu_VM'}" >Virtual Machine</td>
+                        </tr></table>
+                    </td>
+                    <!-- fill up remaining horizontal space with the border -->
+                    <td style="border-bottom: 1px #000000; border-bottom-style: solid;">
+                        &nbsp;
+                    </td>
+                </tr>
                 <tr>
-                    <td align="left">
+                    <td align="left" style="padding-left: 10px; padding-top: 2px;">
                         <img id="toolbar-button-new" src="/images/vbox/vm_new_32px.png" alt=""/>
                         <span id="toolbar-button-vm-settings-span"></span>
                         <span id="toolbar-button-vm-start-span"></span>
@@ -459,6 +495,35 @@
                     <td><input type="radio" name="poweroff-dialog-selection" value="poweroff">Power off the machine</input></td>
                 </tr>
             </table>
+        </div>
+
+
+        <!-- menues -->
+        <div id="menu_VBoxWeb" class="menu">
+                <a class="{img: 'vm_new_32px.png'}">Create new VM...</a>
+                <a class="{img: 'vm_settings_32px.png'}">Preferences...</a>
+                <a rel="separator"> </a>
+                <a class="{action: 'vbGlobal.mVirtualBox.logout()', img: 'logout_32px.png'}">Log out</a>
+        </div>
+
+        <!-- the following menu is bogus, just keep a refrence to the concept -->
+        <div id="menu_VM" class="menu">
+                <a rel="text" >
+                        <img src="/images/vbox/meditation_32px.png" alt="img"/><br/>
+                        <br/>immagini che vuoi ed altro testo che ti pare Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi felis leo, consequat et, lacinia a, facilisis sit amet,<br/><br/>
+                </a>
+                <a rel="separator"> </a>
+                <a class="{action: 'document.title=(\'menu_3.1\')', img: 'iconDone.png'}">menu_3.1</a>
+                <a id="aaa" class="{menu:'sub_menu_2'}"  >submenu</a>
+                <a class="{action: 'document.title=(\'menu_3.4\')'}">menu_3.4 con testo veramente molto lungo</a>
+        </div>
+
+        <div id="sub_menu_2" class="menu">
+                <a class="{action: 'document.title=(\'sub_menu_2.1\')', img: 'buttonfind.gif'}" >sub_menu_2.1</a>
+                <a class="{action: 'document.title=(\'sub_menu_2.2\')'}">sub_menu_2.2</a>
+                <a rel="separator"> </a>
+                <a class="{action: 'document.title=(\'sub_menu_2.3\')'}">sub_menu_2.3</a>
+                <a class="{action: 'document.title=(\'sub_menu_2.4\')'}" >sub_menu_2.4</a>
         </div>
     </body>
 </html>
