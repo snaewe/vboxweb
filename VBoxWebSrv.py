@@ -399,7 +399,7 @@ class VBoxPageRoot:
         # Close session if opened
         if operation == "startvm":
             session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-            progress = self.ctx['vb'].openRemoteSession(session, uuid, "gui", "")
+            progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
             # todo we shouldn't wait here, perform asynchronously
             progress.waitForCompletion(-1)
             session.close()
