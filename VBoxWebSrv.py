@@ -399,7 +399,7 @@ class VBoxPageRoot:
         # Close session if opened
         if operation == "startvm":
             session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-            progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
+            progress = self.ctx['vb'].openRemoteSession(session, uuid, "gui", "")
             # todo we shouldn't wait here, perform asynchronously
             progress.waitForCompletion(-1)
             session.close()
@@ -471,6 +471,19 @@ def perThreadInit(threadIndex):
 def perThreadDeinit(threadIndex):
     g_virtualBoxManager.deinitPerThread()
 
+
+
+g_terminated = False
+def onShutdown():
+    global g_terminated
+
+    g_terminated = True
+    if sys.platform == 'win32':
+        #g_virtualBoxManager.interruptWaitEvents()
+        from win32api import PostThreadMessage
+        from win32con import WM_USER
+        PostThreadMessage(g_virtualBoxManager.platform.tid, WM_USER, None, None)
+
 def main(argv = sys.argv):
 
     print "VirtualBox Version: %s, Platform: %s" %(g_virtualBoxManager.vbox.version, sys.platform)
@@ -539,6 +552,7 @@ def main(argv = sys.argv):
         None,
         bRDPWebForceUpdate)
 
+    cherrypy.engine.subscribe('stop', onShutdown)
 
     # Start the webserver thread
     print "Starting web server thread"
@@ -546,8 +560,9 @@ def main(argv = sys.argv):
     ws.start()
 
     # Events loop, wait for keyboard interrupt
+    global g_terminated
     try:
-        while  True:
+        while not g_terminated:
             g_virtualBoxManager.waitForEvents(-1)
     except:
         pass
