@@ -27,6 +27,7 @@ import cherrypy
 import os
 import socket
 import sys
+import threading
 import urllib
 import hashlib
 from threading import Thread
@@ -49,7 +50,9 @@ import vboxapi
 
 # VBoxWeb modules
 sys.path.insert(0,'modules')
+from vboxGuestMonitor import VBoxGuestMonitor
 import vboxRDPWeb
+from vboxVBoxMonitor import VBoxMonitor
 
 SESSION_KEY = '_cp_username'
 
@@ -167,129 +170,12 @@ class jsMachine:
         for i in range(1, maxBootPosition + 1):
             self.bootOrder.append(machine.getBootOrder(i))
 
-# Implementation of IConsoleCallback
-class GuestMonitor:
-    def __init__(self, mach):
-        self.mach = mach
-
-    def onMousePointerShapeChange(self, visible, alpha, xHot, yHot, width, height, shape):
-        print  "%s: onMousePointerShapeChange: visible=%d" %(self.mach.name, visible)
-
-    def onMouseCapabilityChange(self, supportsAbsolute, needsHostCursor):
-        print  "%s: onMouseCapabilityChange: needsHostCursor=%d" %(self.mach.name, needsHostCursor)
-
-    def onKeyboardLedsChange(self, numLock, capsLock, scrollLock):
-        print  "%s: onKeyboardLedsChange capsLock=%d"  %(self.mach.name, capsLock)
-
-    def onStateChange(self, state):
-        print  "%s: onStateChange state=%d" %(self.mach.name, state)
-
-    def onAdditionsStateChange(self):
-        print  "%s: onAdditionsStateChange" %(self.mach.name)
-
-    def onDVDDriveChange(self):
-        print  "%s: onDVDDriveChange" %(self.mach.name)
-
-    def onFloppyDriveChange(self):
-        print  "%s: onFloppyDriveChange" %(self.mach.name)
-
-    def onNetworkAdapterChange(self, adapter):
-        print  "%s: onNetworkAdapterChange" %(self.mach.name)
-
-    def onSerialPortChange(self, port):
-        print  "%s: onSerialPortChange" %(self.mach.name)
-
-    def onParallelPortChange(self, port):
-        print  "%s: onParallelPortChange" %(self.mach.name)
-
-    def onStorageControllerChange(self):
-        print  "%s: onStorageControllerChange" %(self.mach.name)
-
-    def onVRDPServerChange(self):
-        print  "%s: onVRDPServerChange" %(self.mach.name)
-
-    def onUSBControllerChange(self):
-        print  "%s: onUSBControllerChange" %(self.mach.name)
-
-    def onUSBDeviceStateChange(self, device, attached, error):
-        print  "%s: onUSBDeviceStateChange" %(self.mach.name)
-
-    def onSharedFolderChange(self, scope):
-        print  "%s: onSharedFolderChange" %(self.mach.name)
-
-    def onRuntimeError(self, fatal, id, message):
-        print  "%s: onRuntimeError fatal=%d message=%s" %(self.mach.name, fatal, message)
-
-    def onCanShowWindow(self):
-        print  "%s: onCanShowWindow" %(self.mach.name)
-        return True
-
-    def onShowWindow(self, winId):
-        print  "%s: onShowWindow: %d" %(self.mach.name, winId)
-
-# Implementation of IVirtualBoxCallback, simply re-routes to page object (parent)
-class VBoxMonitor:
-    def __init__(self, parent):
-        self.parent = parent
-
-    def onMachineStateChange(self, id, state):
-        print "onMachineStateChange: %s %d" %(id, state)
-        self.parent.onMachineStateChange(id, state)
-
-    def onMachineDataChange(self,id):
-        print "onMachineDataChange: %s" %(id)
-        self.parent.onMachineDataChange(id)
-
-    def onExtraDataCanChange(self, id, key, value):
-        print "onExtraDataCanChange: %s %s=>%s" %(id, key, value)
-        #bRet = self.parent.onExtraDataCanChange(id, key, value)
-        bRet = True
-
-        # Witty COM bridge thinks if someone wishes to return tuple, hresult
-        # is one of values we want to return
-        if sys.platform == 'win32':
-            return "", 0, bRet
-
-        return bRet, ""
-
-    def onExtraDataChange(self, id, key, value):
-        print "onExtraDataChange: %s %s=>%s" %(id, key, value)
-        self.parent.onExtraDataChange(id, key, value)
-
-    def onMediaRegistered(self, id, type, registred):
-        print "onMediaRegistred: %s" %(id)
-        self.parent.onMediaRegistered(id, type, registred)
-
-    def onMachineRegistered(self, id, registred):
-        print "onMachineRegistred: %s" %(id)
-        self.parent.onMachineRegistered(id, registred)
-
-    def onSessionStateChange(self, id, state):
-        print "onSessionStateChange: %s %d" %(id, state)
-        self.parent.onSessionStateChange(id, state)
-
-    def onSnapshotTaken(self, mach, id):
-        print "onSnapshotTaken: %s %s" %(mach, id)
-        self.parent.onSnapshotTaken(mach, id)
-
-    def onSnapshotDiscarded(self, mach, id):
-        print "onSnapshotDiscarded: %s %s" %(mach, id)
-        self.parent.onSnapshotDiscarded(mach, id)
-
-    def onSnapshotChange(self, mach, id):
-        print "onSnapshotChange: %s %s" %(mach, id)
-        self.parent.onSnapshotChange(mach, id)
-
-    def onGuestPropertyChange(self, id, name, newValue, flags):
-        print "onGuestPropertyChange: %s: %s=%s" %(id, name, newValue)
-        self.parent.onGuestPropertyChange(id, name, newValue, flags)
-
 class VBoxMachine:
     def __init__(self, mach):
         self.mach = mach
         self.isDirty = True
 
-class VBoxPage:
+class VBoxPageRoot:
     def __init__(self, ctx):
         self.ctx = ctx
 
@@ -447,14 +333,12 @@ class VBoxPage:
         # Don't react on this event - generated too much unused traffic atm
         pass
 
-class Root(VBoxPage):
-
     def registerCallbacks(self):
         # Register IVirtualBox (global) callback
         if sys.platform <> 'win32': # Won't work on win32 atm
             self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
             self.ctx['vb'].registerCallback(self.callbackVBox)
-        
+
     @cherrypy.expose
     @require()
     def vboxGetUpdates(self):
@@ -487,7 +371,7 @@ class Root(VBoxPage):
         for m in arrMach:
             machine = m.mach
             sessionOpen = 0
-            # if a session for the VM is open, connect to it and use its machine object
+            # If a session for the VM is open, connect to it and use its machine object
             try:
                 print "Opening session for machine: " + machine.name
                 self.ctx['vb'].openExistingSession(session, machine.id)
@@ -501,7 +385,7 @@ class Root(VBoxPage):
             if sessionOpen == 1:
                 session.close()
 
-        print "%s update, %d machines modified" %("full" if updateType is 0 else "differential", len(arrMach))
+        print "%s update, %d machine(s) modified" %("Full" if updateType is 0 else "Differential", len(arrMach))
         if isSimpleJson:
             return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
         else:
@@ -671,9 +555,9 @@ def main(argv = sys.argv):
     # Shut down
     ws.finish()
 
-class WebServerThread(Thread):
+class WebServerThread(threading.Thread):
     def __init__(self, ctx):
-        Thread.__init__(self)
+        threading.Thread.__init__(self)
         self.ctx = ctx
         if sys.platform == 'win32':
             self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vb'])
@@ -686,7 +570,7 @@ class WebServerThread(Thread):
             i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
             self.ctx['vb'] = win32com.client.Dispatch(i)
         # Run web server
-        cherrypy.quickstart(Root(self.ctx), '/', {
+        cherrypy.quickstart(VBoxPageRoot(self.ctx), '/', {
                 '/static': {
                     'tools.staticdir.on': True,
                     'tools.staticdir.dir': 'www/static'},
