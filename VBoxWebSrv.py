@@ -32,6 +32,9 @@ import urllib
 import hashlib
 from threading import Thread
 
+from genshi.template import TemplateLoader
+from genshi.filters import HTMLFormFiller
+
 if sys.version_info < (2, 6):
     import simplejson
     isSimpleJson = True
@@ -195,6 +198,11 @@ class VBoxPageRoot:
                 self.jsonPrinter = json.write
         self.arrMach = []
 
+        self.templateLoader = TemplateLoader (
+            os.path.join(os.path.dirname(__file__), 'templates'),
+            auto_reload=True
+        )
+
         # Register authentication check handler
         cherrypy.tools.auth = cherrypy.Tool('before_handler', self.checkAuth)
 
@@ -244,17 +252,8 @@ class VBoxPageRoot:
         """Called on logout"""
 
     def get_loginform(self, username, msg="Enter login information", from_page="/"):
-        return """<html><body>
-            <h1>VirtualBox Web Console</h1>
-            <table><tr><td style="padding-right: 10px;"><img src="/images/vbox/welcome.png" alt=""/></td>
-            <td><form method="post" action="/login">
-            <input type="hidden" name="from_page" value="%(from_page)s" />
-            %(msg)s<br />
-            <table><tr><td>Username:</td><td><input type="text" name="username" value="%(username)s" /></td></tr>
-            <tr><td>Password:</td><td><input type="password" name="password" /></td></tr></table>
-            <input type="submit" value="Log in" /><p></td></tr></table>
-            Use <code>python VBoxWebSrv.py adduser myuser mypassword</code> to create user accounts.
-        </body></html>""" % locals()
+        tmpl = self.templateLoader.load('template_login.html')
+        return tmpl.generate(username=username, message=msg, from_page=from_page).render('html', doctype='html')
 
     @cherrypy.expose
     def login(self, username=None, password=None, from_page="/"):
@@ -576,7 +575,7 @@ class WebServerThread(threading.Thread):
         self.ctx = ctx
         if sys.platform == 'win32':
             self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vb'])
-        
+
     def finish(self):
         cherrypy.engine.exit()
 

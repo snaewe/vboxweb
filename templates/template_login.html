@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+    <body>
+        <h1>VirtualBox Web Console</h1>
+        <table>
+            <tr>
+                <td style="padding-right: 10px;"><img src="/images/vbox/welcome.png" alt=""/>
+                </td>
+                <td>
+                    <form method="post" action="/login">
+                        <input type="hidden" name="from_page" value="${from_page}"/>
+                        ${message}<br/>
+                        <table>
+                            <tr>
+                                <td>Username:</td>
+                                <td><input type="text" name="username" value="${username}" /></td>
+                            </tr>
+                            <tr>
+                                <td>Password:</td>
+                                <td><input type="password" name="password" /></td>
+                            </tr>
+                        </table>
+                        <input type="submit" value="Log in" />
+                    </form>
+                </td>
+            </tr>
+        </table>
+        Use <code>python VBoxWebSrv.py adduser myuser mypassword</code> to create user accounts.
+    </body>
+</html>
