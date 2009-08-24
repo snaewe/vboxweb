@@ -471,14 +471,17 @@ def perThreadDeinit(threadIndex):
     g_virtualBoxManager.deinitPerThread()
 
 
-
-g_terminated = False
+g_bTerminated = False
 def onShutdown():
-    global g_terminated
+    global g_bTerminated
 
-    g_terminated = True
+    g_bTerminated = True
+    if hasattr(g_virtualBoxManager, 'interruptWaitEvents'):
+        g_virtualBoxManager.interruptWaitEvents()
+        return
+
+    # For Win32, we can do that w/o g_virtualBoxManager support easily
     if sys.platform == 'win32':
-        #g_virtualBoxManager.interruptWaitEvents()
         from win32api import PostThreadMessage
         from win32con import WM_USER
         PostThreadMessage(g_virtualBoxManager.platform.tid, WM_USER, None, None)
@@ -559,11 +562,11 @@ def main(argv = sys.argv):
     ws.start()
 
     # Events loop, wait for keyboard interrupt
-    global g_terminated
+    global g_bTerminated
     try:
-        while not g_terminated:
+        while not g_bTerminated:
             g_virtualBoxManager.waitForEvents(-1)
-    except:
+    except KeyboardInterrupt:
         pass
 
     # Shut down
