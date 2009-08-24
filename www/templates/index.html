@@ -87,6 +87,7 @@
         <script type="text/javascript" src="/static/js/vboxVMListView.js"></script>
         <script type="text/javascript" src="/static/js/vboxTabWidget.js"></script>
         <script type="text/javascript" src="/static/js/vboxSelectorWnd.js"></script>
+        <script type="text/javascript" src="/static/js/vboxDialogs.js"></script>
         <!-- Inline code. -->
         <script type="text/javascript">
 
@@ -121,64 +122,6 @@
                     shadow:true,
                     closeOnMouseOut:true,
                     closeAfter:1000
-                });
-            });
-
-            jQuery(function() {
-                jQuery("#poweroff-dialog").dialog({
-                    bgiframe: true,
-                    resizable: false,
-                    height:200,
-                    modal: true,
-                    autoOpen: false,
-                    overlay: {
-                        backgroundColor: '#000',
-                        opacity: 0.5
-                    },
-                    buttons: {
-                        Ok: function() {
-                            var poweroffMethod = jQuery("input[@name='poweroff-dialog-selection']:checked").val();
-                            if (poweroffMethod == "savestate")
-                                vbGlobal.mVirtualBox.savestateVM(vmSelWnd.curItem().id());
-                            else if (poweroffMethod == "acpipoweroff")
-                                vbGlobal.mVirtualBox.acpipoweroffVM(vmSelWnd.curItem().id());
-                            else
-                                vbGlobal.mVirtualBox.poweroffVM(vmSelWnd.curItem().id());
-                            jQuery(this).dialog('close');
-                        },
-                        Cancel: function() {
-                            jQuery(this).dialog('close');
-                        }
-                    }
-                });
-            });
-
-            jQuery(function(){
-                jQuery("#newvm-form").formwizard({
-                    //form wizard settings
-                    historyEnabled : true,
-                    formPluginEnabled: true,
-                    validationEnabled : true},
-                {
-                   //validation settings
-                },
-                {
-                   // form plugin settings
-                }
-                );
-            });
-            jQuery(function() {
-                jQuery("#newvm-dialog").dialog({
-                    bgiframe: true,
-                    resizable: false,
-                    height: 360,
-                    width: 550,
-                    modal: true,
-                    autoOpen: false,
-                    overlay: {
-                        backgroundColor: '#000',
-                        opacity: 0.5
-                    }
                 });
             });
 
@@ -247,6 +190,8 @@
                 vmTabView = new vboxTabWidget();
                 vmSelWnd = new vboxSelectorWnd(vmListView, vmTabView, vmToolbar);
                 vbGlobal.setSelectorWnd(vmSelWnd);
+                vboxDialogs = new vboxDialogs();
+                vboxDialogs.initDialogs();
 
                 jQuery('#vmTab').bind('tabsselect', function(event, ui) {
                     return vmTabView.onTabChange(event, ui);
@@ -506,91 +451,9 @@
             <table id="vmMessageTable" width="100%" cellspacing="0"></table>
         </div>
 
-        <!-- VM power off dialog, initially hidden, displayed using jQuery -->
-        <div id="poweroff-dialog" title="Close virtual machine" style="display: none;">
-            <table width="100%" cellspacing="0">
-                <tr>
-                    <td><img src="/images/vbox/state_saved_16px.png" alt=""/></td>
-                    <td><input type="radio" name="poweroff-dialog-selection" value="savestate" checked="checked">Save the machine state</input></td>
-                </tr>
-                <tr>
-                    <td><img src="/images/vbox/state_powered_off_16px.png" alt=""/></td>
-                    <td><input type="radio" name="poweroff-dialog-selection" value="acpipoweroff">Send the shutdown signal</input></td>
-                </tr>
-                <tr>
-                    <td><img src="/images/vbox/poweroff_16px.png" alt=""/></td>
-                    <td><input type="radio" name="poweroff-dialog-selection" value="poweroff">Power off the machine</input></td>
-                </tr>
-            </table>
-        </div>
-
-        <div id="newvm-dialog" title="Create a new Virtual Machine" style="display: none;">
-            <table width="100%">
-                <tr align="top">
-                    <td style="padding-right: 10px; padding-top: 10px;">
-                        <img src="/images/vbox/vmw_new_welcome.png" alt=""/>
-                    </td>
-                    <td valign="top" width="100%">
-                        <form id="newvm-form" method="post" action="#">
-                            <div class="step" style="height: 220px;">
-                                <table width="100%">
-                                    <tr>
-                                        <td class="wizardpagetitle">Welcome to the New Virtual Machine Wizard!</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="wizardform">This wizard will guide you through the steps that are necessary to create a new virtual
-                                        machine on your VirtualBox host.<p>
-                                        Use the <b>Next</b> button to go to the next page of the wizard and the <b>Back</b>
-                                        button to return to the previous page.</p></td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div class="step" style="height: 220px;">
-                                <table width="100%">
-                                    <tr>
-                                        <td class="wizardpagetitle">VM Name and OS Type</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="wizardform"><input disabled="disabled" type="text" value="" /><br />
-                                        <input disabled="disabled" type="text" value="" /><br />
-                                        <input disabled="disabled" type="text" value="" /><br />
-                                        <select class="link" >
-                                        <option value="" >Choose the step to go to...</option>
-                                        <option value="step3" >Go to Step3</option>
-                                        <option value="step4" >Go to Step4</option>
-                                        </select><br /></td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="step3" class="step" style="height: 220px;">
-                                <h1>step 3 - submit step</h1>
-                                <input disabled="disabled" type="text" value="" /><br />
-                                <input disabled="disabled" type="text" value="" class="required"/><br />
-                                <input disabled="disabled" type="hidden" class="link" value="submit_step" />
-                            </div>
-                            <div id="step4" class="step" style="height: 220px;">
-                                <h1>step 4</h1>
-                                <input disabled="disabled" type="text" value="" /><br />
-                                <input disabled="disabled" type="text" name="email" class="required email" /><br />
-                            </div>
-                            <div id="step5" class="step" style="height: 220px;">
-                                <h1>step 5 - last step</h1>
-                                <input disabled="disabled" type="text" value="" /><br />
-                                <input disabled="disabled" type="text" value="" /><br />
-                            </div>
-                            <div>
-                                <input type="reset" value="Reset" />
-                                <input type="submit" value="Submit" />
-                            </div>
-                        </form>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
         <!-- menues -->
         <div id="menu_VBoxWeb" class="menu">
-            <a class="{action: 'jQuery(\'#newvm-dialog\').dialog(\'open\')', img: 'vm_new_32px.png'}">Create new VM...</a>
+            <a class="{action: 'vboxDialogs.showNewVMWizard()', img: 'vm_new_32px.png'}">Create new VM...</a>
             <a class="{img: 'vm_settings_32px.png'}">Preferences...</a>
             <a rel="separator"> </a>
             <a class="{action: 'vbGlobal.mVirtualBox.logout()', img: 'logout_32px.png'}">Log out</a>

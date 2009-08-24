@@ -63,7 +63,7 @@ var vboxVMToolbar = Class.create(
         switch (event.target.id)
         {
             case "toolbar-button-new":
-                jQuery("#newvm-dialog").dialog("open");
+                vboxDialogs.showNewVMWizard();
                 break;
 
             case "toolbar-button-settings":

@@ -604,7 +604,10 @@ class WebServerThread(threading.Thread):
                     'tools.staticdir.dir': 'www/static'},
                 '/images': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir': 'www/static/images'}}
+                    'tools.staticdir.dir': 'www/static/images'},
+                '/html': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir': 'www/templates'}}
         )
 
 if __name__ == '__main__':
