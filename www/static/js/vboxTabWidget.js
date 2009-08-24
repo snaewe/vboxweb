@@ -27,10 +27,10 @@ RDPState =
 {
     Unloaded: 0,
     NotFound: 1,
-    Connecting: 2,
-    Connected: 3,
-    Disconnecting: 4,
-    Disconnected: 5,
+    Disconnecting: 2,
+    Connecting: 3,
+    Disconnected: 4,
+    Connected: 5,
     Redirecting: 6
 };
 
@@ -39,7 +39,7 @@ var vboxTabWidget = Class.create(
     initialize: function()
     {
         this.mCurTab = "tabs-center-details";
-        this.mFlashRDPStatus = 0;
+        this.mFlashRDPStatus = RDPState.Unloaded;
     },
 
     setParent: function(parent)
@@ -63,12 +63,18 @@ var vboxTabWidget = Class.create(
 
     onResize: function(eventObject)
     {
-        log("vboxTabWidget::onResize");
-        if (this.mFlashRDPStatus > 0)
+        if (this.mFlashRDPStatus > RDPState.Unloaded)
         {
-            this.rdpDisconnect();
+            log("vboxTabWidget::onResize: mFlashRDPStatus = %d", this.mFlashRDPStatus);
+            var bRenewConn = false;
+            if (this.mFlashRDPStatus >= RDPState.Connected)
+                bRenewConn = true;
+
+            if (bRenewConn)
+                this.rdpHandleConnect();
             this.rdpResize();
-            this.rdpConnect();
+            if (bRenewConn)
+                this.rdpConnect();
         }
     },
 
@@ -362,7 +368,6 @@ var vboxTabWidget = Class.create(
 
     rdpHandleConnect: function()
     {
-        var rc;
         if (this.mFlashRDPStatus == RDPState.Disconnected)
         {
             this.mFlashRDPStatus = RDPState.Connecting;

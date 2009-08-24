@@ -459,6 +459,7 @@ g_virtualBoxManager = vboxapi.VirtualBoxManager(None, None)
 g_threadPool = {}
 g_logLevel = 99
 g_sessionNum = 0
+g_serverTerminated = False
 
 def log(level, str):
     if g_logLevel >= level:
@@ -470,12 +471,9 @@ def perThreadInit(threadIndex):
 def perThreadDeinit(threadIndex):
     g_virtualBoxManager.deinitPerThread()
 
-
-g_bTerminated = False
 def onShutdown():
-    global g_bTerminated
-
-    g_bTerminated = True
+    global g_serverTerminated
+    g_serverTerminated = True
     if hasattr(g_virtualBoxManager, 'interruptWaitEvents'):
         g_virtualBoxManager.interruptWaitEvents()
         return
@@ -562,12 +560,12 @@ def main(argv = sys.argv):
     ws.start()
 
     # Events loop, wait for keyboard interrupt
-    global g_bTerminated
+    global g_serverTerminated
     try:
       # Darwin-specific uglyness
       if sys.platform == 'darwin':
         import time
-        while not g_bTerminated:
+        while not g_serverTerminated:
             # We have no timed waits on Darwin, and waitForEvents(-1)
             # blocks signal delivery for some reasons, thus we cannot send 
             # wait interrupt notifcation. 
@@ -575,7 +573,7 @@ def main(argv = sys.argv):
             g_virtualBoxManager.waitForEvents(0)
             time.sleep(0.3) 
       else:
-          while not g_bTerminated:
+          while not g_serverTerminated:
             g_virtualBoxManager.waitForEvents(-1)
     except KeyboardInterrupt:
         pass
