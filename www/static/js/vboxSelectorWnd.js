@@ -94,6 +94,29 @@ var vboxSelectorWnd = Class.create(
 
     },
 
+    logMessage: function(message)
+    {
+        /* this is ugly business but I couldn't find a better method */
+        date = new Date();
+        month = date.getMonth() + 1;
+        if (month < 10) month = '0' + month;
+        day = date.getDate();
+        if (day < 10) day = '0' + day;
+        hours = date.getHours();
+        if (hours < 10) hours = '0' + hours;
+        minutes = date.getMinutes();
+        if (minutes < 10) minutes = '0' + minutes;
+        seconds = date.getSeconds();
+        if (seconds < 10) seconds = '0' + seconds;
+        dateStr = date.getFullYear() + '-' + month + '-' + day + ' ' +
+            hours + ':' + minutes + ':' + seconds;
+
+        jQuery("#vmMessageTable").prepend('<tr class="vmMessage"><td class="vmMessageTs">' +
+            dateStr + '</td><td class="vmMessageBody">' + String.sprintf(message) + '</td></tr>');
+        jQuery("#vmMessageTable tr:nth-child(odd)").addClass("ui-state-hover");
+        jQuery("#vmMessageTable tr:nth-child(even)").removeClass("ui-state-hover");
+    },
+
     curItem: function()
     {
         return this.mVMListView.selectedItem();

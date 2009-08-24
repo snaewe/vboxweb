@@ -114,7 +114,7 @@ var vboxVirtualBox = Class.create(
 
             /* Did we get a status messsage to display? */
             if (res[0].statusMessage)
-                vbGlobal.mVirtualBox.addMessage(res[0].statusMessage);
+                vbGlobal.selectorWnd().logMessage(res[0].statusMessage);
 
             /* @todo Get rid of the res[INDEX] handling! This is very error
              * prone and leads to confusion as more data will be added. */
@@ -193,27 +193,6 @@ var vboxVirtualBox = Class.create(
         }
 
         return true;
-    },
-
-    addMessage: function(message)
-    {
-        /* this is ugly business but I couldn't find a better method */
-        date = new Date();
-        month = date.getMonth() + 1;
-        if (month < 10) month = '0' + month;
-        day = date.getDate();
-        if (day < 10) day = '0' + day;
-        hours = date.getHours();
-        if (hours < 10) hours = '0' + hours;
-        minutes = date.getMinutes();
-        if (minutes < 10) minutes = '0' + minutes;
-        seconds = date.getSeconds();
-        if (seconds < 10) seconds = '0' + seconds;
-        dateStr = date.getFullYear() + '-' + month + '-' + day + ' ' +
-            hours + ':' + minutes + ':' + seconds;
-
-        jQuery("#vmMessageTable").prepend('<tr><td class="message" style="width: 120px;" nowrap="nowrap">' +
-            dateStr + '</td><td class="message">' + message + '</td></tr>');
     },
 
     getUserName: function()

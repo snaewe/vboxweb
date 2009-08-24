@@ -391,7 +391,7 @@ var vboxTabWidget = Class.create(
             var curItem = this.mParent.curItem();
             var rdpServ = curItem.machine().getVRDPServer();
 
-            vbGlobal.mVirtualBox.addMessage("Establishing RDP connection to IP " + rdpServ.netAddress +
+            vbGlobal.selectorWnd().logMessage("Establishing RDP connection to IP " + rdpServ.netAddress +
                 " on port " + rdpServ.port + " for VM with ID " + curItem.id());
 
             var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);

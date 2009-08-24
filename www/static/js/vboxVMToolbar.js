@@ -67,7 +67,7 @@ var vboxVMToolbar = Class.create(
                 break;
 
             case "toolbar-button-settings":
-                vbGlobal.mVirtualBox.addMessage("Change VM settings not implemented!");
+                vbGlobal.selectorWnd().logMessage("Change VM settings not %s implemented!", "foo!!!");
                 break;
 
             case "toolbar-button-start-pause":
@@ -87,12 +87,12 @@ var vboxVMToolbar = Class.create(
                 }
                 else if (state == VMState.Saved)
                 {
-                    vbGlobal.mVirtualBox.addMessage("Discard VM not implemented!");
+                    vbGlobal.selectorWnd().logMessage("Discard VM not implemented!");
                 }
                 break;
 
             case "toolbar-button-logout":
-                vbGlobal.mVirtualBox.logout();
+                vbGlobal.virtualBox().logout();
                 break;
 
             default:

@@ -176,8 +176,14 @@ body {
     margin-left: 0;
 }
 
-/* the message list */
-td.message {
+/*
+ * Message list
+ */
+#vmMessageArea {
+    overflow: auto;
+}
+
+tr.vmMessage {
     border-bottom: 1px #000000 dotted;
     text-align: left;
     font-weight: normal;
@@ -190,7 +196,18 @@ td.message {
     padding-right: 0px;
 }
 
-/* 
+/* Timestap */
+td.vmMessageTs {
+    width: 120px;
+    nowrap: nowrap;
+}
+
+/* The actual message text */
+td.vmMessageBody {
+    /* Nothing specified here yet */
+}
+
+/*
  * Menu bar
  */
 .menu{

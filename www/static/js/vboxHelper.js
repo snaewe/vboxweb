@@ -29,6 +29,39 @@ function tr(a_String)
     return a_String;
 }
 
+function sprintf()
+{
+    if (sprintf.arguments.length < 1)
+        return;
+
+    var vaList = sprintf.arguments[0];
+    for( var i=1; i<sprintf.arguments.length; i++)
+    {
+        switch (typeof(sprintf.arguments[i]))
+        {
+            case 'string':
+                vaList = vaList.replace(/%s/, sprintf.arguments[i]);
+                break;
+
+            case 'number':
+                vaList = vaList.replace(/%d/, sprintf.arguments[i]);
+                break;
+
+            case 'boolean':
+                vaList = vaList.replace(/%b/, sprintf.arguments[i] ? 'true' : 'false');
+                break;
+
+            default:
+                break;
+        }
+    }
+    return vaList;
+}
+
+/* Make sprintf() function above part of the String class if not yet available */
+if (!String.sprintf)
+    String.sprintf = sprintf;
+
 /* Fallback console for non-debugging environments. */
 if (window.console == undefined /* add more check here when using "console.*" functions */)
 {
