@@ -564,7 +564,18 @@ def main(argv = sys.argv):
     # Events loop, wait for keyboard interrupt
     global g_bTerminated
     try:
+      # Darwin-specific uglyness
+      if sys.platform == 'darwin':
+        import time
         while not g_bTerminated:
+            # We have no timed waits on Darwin, and waitForEvents(-1)
+            # blocks signal delivery for some reasons, thus we cannot send 
+            # wait interrupt notifcation. 
+            # Instead we cheat a bit and just sleep() between events
+            g_virtualBoxManager.waitForEvents(0)
+            time.sleep(0.3) 
+      else:
+          while not g_bTerminated:
             g_virtualBoxManager.waitForEvents(-1)
     except KeyboardInterrupt:
         pass
