@@ -63,7 +63,7 @@ var vboxTabWidget = Class.create(
 
     onResize: function(eventObject)
     {
-        console.log("vboxTabWidget::onResize");
+        log("vboxTabWidget::onResize");
         if (this.mFlashRDPStatus > 0)
         {
             this.rdpDisconnect();
@@ -92,7 +92,7 @@ var vboxTabWidget = Class.create(
 
         if (curItem == undefined)
         {
-            console.log("vboxTabWidget::invalidatePage: Current item is undefined.");
+            log("vboxTabWidget::invalidatePage: Current item is undefined.");
             return false;
         }
 
@@ -111,7 +111,7 @@ var vboxTabWidget = Class.create(
                 break;
 
             default:
-                console.log("vboxTabWidget::invalidatePage: Invalid page name: %s", curId);
+                log("vboxTabWidget::invalidatePage: Invalid page name: %s", curId);
                 return false;
         }
 
@@ -195,7 +195,7 @@ var vboxTabWidget = Class.create(
 
     invalidatePageRDP: function(curItem, pageSelected)
     {
-        console.log("vboxTabWidget::invalidatePageRDP: Machine status = %d", curItem.state());
+        log("vboxTabWidget::invalidatePageRDP: Machine status = %d", curItem.state());
         var rdpServ = curItem.machine().getVRDPServer();
         var rdpStatus = "";
 
@@ -315,14 +315,14 @@ var vboxTabWidget = Class.create(
 
     rdpStatus: function(e)
     {
-        //console.log("vboxTabWidget::rdpStatus: Success = %s, ID = %s, Ref = %s",
+        //log("vboxTabWidget::rdpStatus: Success = %s, ID = %s, Ref = %s",
         //    e.success, e.id, e.ref);
         return false;
     },
 
     rdpLoaded: function(flashObj)
     {
-        console.log("vboxTabWidget::rdpLoaded");
+        log("vboxTabWidget::rdpLoaded");
         this.mFlashRDPStatus = RDPState.Disconnected;
         this.invalidatePage();
         return false;
@@ -330,7 +330,7 @@ var vboxTabWidget = Class.create(
 
     rdpUnloaded: function(flashObj)
     {
-        console.log("vboxTabWidget::rdpUnloaded");
+        log("vboxTabWidget::rdpUnloaded");
         this.mFlashRDPStatus = RDPState.Unloaded;
         this.invalidatePage();
         return false;
@@ -338,7 +338,7 @@ var vboxTabWidget = Class.create(
 
     rdpConnected: function(flashObj)
     {
-        console.log("vboxTabWidget::rdpConnected");
+        log("vboxTabWidget::rdpConnected");
         this.mFlashRDPStatus = RDPState.Connected;
         this.invalidatePage();
         return false;
@@ -346,7 +346,7 @@ var vboxTabWidget = Class.create(
 
     rdpRedirect: function(flashObj)
     {
-        console.log("vboxTabWidget::rdpRedirect");
+        log("vboxTabWidget::rdpRedirect");
         this.mFlashRDPStatus = RDPState.Redirecting;
         this.invalidatePage();
         return false;
@@ -354,7 +354,7 @@ var vboxTabWidget = Class.create(
 
     rdpDisconnected: function(flashObj)
     {
-        console.log("vboxTabWidget::rdpDisconnected");
+        log("vboxTabWidget::rdpDisconnected");
         this.mFlashRDPStatus = RDPState.Disconnected;
         this.invalidatePage();
         return false;
@@ -391,13 +391,13 @@ var vboxTabWidget = Class.create(
             var curItem = this.mParent.curItem();
             var rdpServ = curItem.machine().getVRDPServer();
 
-            vbGlobal.selectorWnd().logMessage("Establishing RDP connection to IP " + rdpServ.netAddress +
+            log("Establishing RDP connection to IP " + rdpServ.netAddress +
                 " on port " + rdpServ.port + " for VM with ID " + curItem.id());
 
             var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);
             flash.setProperty("serverAddress", rdpServ.netAddress);
 
-            console.log("vboxTabWidget::rdpConnect: Connecting to %s:%d (auth type=%d)",
+            log("vboxTabWidget::rdpConnect: Connecting to %s:%d (auth type=%d)",
                 rdpServ.netAddress, rdpServ.port, rdpServ.authType);
 
             if (rdpServ.port > 0)
@@ -424,7 +424,7 @@ var vboxTabWidget = Class.create(
 
     rdpDisconnect: function()
     {
-        console.log("vboxTabWidget::rdpDisconnect");
+        log("vboxTabWidget::rdpDisconnect");
         if (this.mFlashRDPStatus == RDPState.Disconnecting)
         {
             var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);

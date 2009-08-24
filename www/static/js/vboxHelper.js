@@ -31,24 +31,24 @@ function tr(a_String)
 
 function sprintf()
 {
-    if (sprintf.arguments.length < 1)
-        return;
+    if (arguments.length < 1)
+        return undefined;
 
-    var vaList = sprintf.arguments[0];
-    for( var i=1; i<sprintf.arguments.length; i++)
+    var vaList = arguments[0];
+    for( var i=1; i<arguments.length; i++)
     {
-        switch (typeof(sprintf.arguments[i]))
+        switch (typeof(arguments[i]))
         {
             case 'string':
-                vaList = vaList.replace(/%s/, sprintf.arguments[i]);
+                vaList = vaList.replace(/%s/, arguments[i]);
                 break;
 
             case 'number':
-                vaList = vaList.replace(/%d/, sprintf.arguments[i]);
+                vaList = vaList.replace(/%d/, arguments[i]);
                 break;
 
             case 'boolean':
-                vaList = vaList.replace(/%b/, sprintf.arguments[i] ? 'true' : 'false');
+                vaList = vaList.replace(/%b/, arguments[i] ? 'true' : 'false');
                 break;
 
             default:
@@ -77,15 +77,49 @@ if (window.console == undefined /* add more check here when using "console.*" fu
         }
 }
 
+function log()
+{
+    var level = 1; /* @todo let the user specify the log level somehow */
+    if (log.arguments.length <= 0)
+        return;
+
+    var args = "";
+    for (var i=0; i<arguments.length; i++)
+    {
+        if (i > 0)
+            args += ", ";
+        switch (typeof(arguments[i]))
+        {
+            case 'string':
+                args += "\"" + arguments[i] + "\"";
+                break;
+
+            default:
+                args += arguments[i];
+                break;
+        }
+    }
+
+    var cmd = "";
+    if (level < vbGlobal.config().logLevel())
+    {
+        cmd = 'vbGlobal.selectorWnd().logMessage(String.sprintf(' + args + '));';
+        eval(cmd);
+    }
+
+    cmd = 'console.log(' + args + ');';
+    eval(cmd);
+}
+
 /* Extend jQuery with context function to handle callbacks correctly.
    Example: error: jQuery.context(this).callback('rdpNotFound') */
 jQuery.extend(
 {
-    context: function (context)
+    context: function(context)
     {
         var co =
         {
-            callback: function (method)
+            callback: function(method)
             {
                 if (typeof method == 'string')
                     method = context[method];

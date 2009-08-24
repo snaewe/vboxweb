@@ -67,7 +67,7 @@ var vboxVMToolbar = Class.create(
                 break;
 
             case "toolbar-button-settings":
-                vbGlobal.selectorWnd().logMessage("Change VM settings not %s implemented!", "foo!!!");
+                log("Change VM settings not implemented!");
                 break;
 
             case "toolbar-button-start-pause":
@@ -87,7 +87,7 @@ var vboxVMToolbar = Class.create(
                 }
                 else if (state == VMState.Saved)
                 {
-                    vbGlobal.selectorWnd().logMessage("Discard VM not implemented!");
+                    log("Discard VM not implemented!");
                 }
                 break;
 
@@ -96,7 +96,7 @@ var vboxVMToolbar = Class.create(
                 break;
 
             default:
-                console.log("vboxVMToolbar::buttonClicked: unknown source ID: " + event.target.id);
+                log("vboxVMToolbar::buttonClicked: unknown source ID: " + event.target.id);
         }
     },
 
@@ -106,7 +106,7 @@ var vboxVMToolbar = Class.create(
 
         if (curItem == undefined)
         {
-            console.log("vboxVMToolbar::invalidatePage: Current item is undefined.");
+            log("vboxVMToolbar::invalidatePage: Current item is undefined.");
             return;
         }
 

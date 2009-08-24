@@ -28,11 +28,17 @@ var vboxConfig = Class.create(
     initialize: function()
     {
         this.mServerAddress = "";
+        this.mLogLevel = 99;
     },
 
     loadSettingsJSON: function(jsonObject)
     {
         this.mServerAddress = jsonObject.ExtraData[0].mServerAddress;
+    },
+
+    logLevel: function()
+    {
+        return this.mLogLevel;
     },
 
     serverAddress: function()

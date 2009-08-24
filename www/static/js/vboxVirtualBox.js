@@ -114,7 +114,7 @@ var vboxVirtualBox = Class.create(
 
             /* Did we get a status messsage to display? */
             if (res[0].statusMessage)
-                vbGlobal.selectorWnd().logMessage(res[0].statusMessage);
+                log(res[0].statusMessage);
 
             /* @todo Get rid of the res[INDEX] handling! This is very error
              * prone and leads to confusion as more data will be added. */
@@ -136,7 +136,7 @@ var vboxVirtualBox = Class.create(
                     if (numUpdates > 0)
                     {
                         var newMach;
-                        console.log("vboxVirtualBox::updateProcess: Updates for %d machine(s) ...", numUpdates);
+                        log("vboxVirtualBox::updateProcess: Updates for %d machine(s) ...", numUpdates);
 
                         /* Add new or update existing machines. */
                         for (var i = 0; i < numUpdates; i++)
@@ -151,7 +151,7 @@ var vboxVirtualBox = Class.create(
                             }
                             else
                             {
-                                console.log("vboxVirtualBox::updateProcess: Updating machine: %s", curMach.getName());
+                                log("vboxVirtualBox::updateProcess: Updating machine: %s", curMach.getName());
                                 curMach.loadSettingsJSON(arrJSON);
 
                             }
@@ -169,7 +169,7 @@ var vboxVirtualBox = Class.create(
         }
         catch (e)
         {
-            console.log("vboxVirtualBox::updateProcess: %s", e);
+            log("vboxVirtualBox::updateProcess: %s", e);
             this.dispatchException(e);
         }
         finally
@@ -183,11 +183,11 @@ var vboxVirtualBox = Class.create(
         try
         {
             var res = response.responseText.evalJSON(true);
-            console.log("vboxVirtualBox::updateFailed: Update failed! Data = %s", res);
+            log("vboxVirtualBox::updateFailed: Update failed! Data = %s", res);
         }
         catch (e)
         {
-            console.log("vboxVirtualBox::updateFailed: %s", e);
+            log("vboxVirtualBox::updateFailed: %s", e);
             this.dispatchException(e);
             return false;
         }
@@ -211,7 +211,7 @@ var vboxVirtualBox = Class.create(
     addMachine: function(vboxMachineImpl)
     {
         /** @todo Search for machine first before adding. */
-        //console.log("vboxVirtualBox::addMachine: Name = %s", vboxMachineImpl.getName());
+        //log("vboxVirtualBox::addMachine: Name = %s", vboxMachineImpl.getName());
         this.mArrMachines[this.mArrMachines.length] = vboxMachineImpl;
     },
 
