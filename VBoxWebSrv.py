@@ -627,11 +627,15 @@ VBoxWeb Command Usage:
     })
 
     # Lookup our external IP
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("google.com", 80))
-    serverAdr, serverPort = s.getsockname()[:2]
-    s.close
-
+    serverAdr = '0.0.0.0'
+    serverPort = 0
+    try:
+      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      s.connect(("google.com", 80))
+      serverAdr, serverPort = s.getsockname()[:2]
+      s.close
+    except:
+      pass
     # Init config
     ctx = {'global':g_vboxManager,
            'mgr':g_vboxManager.mgr,
