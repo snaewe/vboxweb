@@ -334,9 +334,8 @@ class VBoxPageRoot:
 
     def registerCallbacks(self):
         # Register IVirtualBox (global) callback
-        if sys.platform <> 'win32': # Won't work on win32 atm
-            self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
-            self.ctx['vb'].registerCallback(self.callbackVBox)
+        self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
+        self.ctx['vb'].registerCallback(self.callbackVBox)
 
     @cherrypy.expose
     @require()
