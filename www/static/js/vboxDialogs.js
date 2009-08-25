@@ -41,7 +41,7 @@ var vboxDialogs = Class.create(
                 jQuery("#poweroff-dialog").dialog({
                     bgiframe: true,
                     resizable: false,
-                    height:200,
+                    height: 200,
                     modal: true,
                     autoOpen: false,
                     overlay: {

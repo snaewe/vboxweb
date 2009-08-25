@@ -52,7 +52,7 @@
                     </td>
                     <td valign="top" width="100%">
                         <form id="newvm-form" method="post" action="#">
-                            <div class="step" style="height: 220px;">
+                            <div class="step">
                                 <table width="100%">
                                     <tr>
                                         <td class="wizardpagetitle">Welcome to the New Virtual Machine Wizard!</td>
@@ -65,7 +65,7 @@
                                     </tr>
                                 </table>
                             </div>
-                            <div class="step" style="height: 220px;">
+                            <div class="step">
                                 <table width="100%">
                                     <tr>
                                         <td class="wizardpagetitle">VM Name and OS Type</td>
@@ -82,23 +82,24 @@
                                     </tr>
                                 </table>
                             </div>
-                            <div id="step3" class="step" style="height: 220px;">
+                            <div id="step3" class="step">
                                 <h1>step 3 - submit step</h1>
                                 <input disabled="disabled" type="text" value="" /><br />
                                 <input disabled="disabled" type="text" value="" class="required"/><br />
                                 <input disabled="disabled" type="hidden" class="link" value="submit_step" />
                             </div>
-                            <div id="step4" class="step" style="height: 220px;">
+                            <div id="step4" class="step">
                                 <h1>step 4</h1>
                                 <input disabled="disabled" type="text" value="" /><br />
                                 <input disabled="disabled" type="text" name="email" class="required email" /><br />
                             </div>
-                            <div id="step5" class="step" style="height: 220px;">
+                            <div id="step5" class="step">
                                 <h1>step 5 - last step</h1>
                                 <input disabled="disabled" type="text" value="" /><br />
                                 <input disabled="disabled" type="text" value="" /><br />
                             </div>
-                            <div>
+                            <!-- these become to Back Next buttoms -->
+                            <div style="position: absolute; bottom: 30px;">
                                 <input type="reset" value="Reset" />
                                 <input type="submit" value="Submit" />
                             </div>

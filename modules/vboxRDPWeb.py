@@ -98,9 +98,7 @@ def checkForUpdate(url = None, dest = None, proxies = None, forceUpdate = False)
             raise ValueError("No destination URL given!")
 
         # Get latest version information
-        print "Looking up latest version of Sun RDP Web Control (from %s) ..." %(url)
         fVersion = getRemoteVersion(url, proxies)
-        print "Latest version is: ",fVersion
 
         # @todo Implement check of remotely retrieved fVersion to a local
         #       version to only get update if required (newer)

@@ -30,7 +30,7 @@ import sys
 import threading
 import urllib
 import hashlib
-from threading import Thread
+import time
 
 from genshi.template import TemplateLoader
 from genshi.filters import HTMLFormFiller
@@ -526,12 +526,10 @@ def main(argv = sys.argv):
     })
 
     # Lookup our external IP
-    print "Getting external IP (google.com) ..."
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(("google.com", 80))
     serverAdr, serverPort = s.getsockname()[:2]
     s.close
-    print "External IP is:", serverAdr
 
     # Init config
     ctx = {'global':g_virtualBoxManager,
@@ -554,7 +552,6 @@ def main(argv = sys.argv):
     cherrypy.engine.subscribe('stop', onShutdown)
 
     # Start the webserver thread
-    print "Starting web server thread"
     ws = WebServerThread(ctx)
     ws.start()
 
@@ -563,7 +560,6 @@ def main(argv = sys.argv):
     try:
       # Darwin-specific uglyness
       if sys.platform == 'darwin':
-        import time
         while not g_serverTerminated:
             # We have no timed waits on Darwin, and waitForEvents(-1)
             # blocks signal delivery for some reasons, thus we cannot send 
