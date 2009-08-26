@@ -99,7 +99,7 @@ var vboxDialogs = Class.create(
 
     showNewVMWizard: function()
     {
-        /** @todo go to the first page of the wizard (how?) */
+        jQuery("#newvm-form").formwizard("reset");
         jQuery("#newvm-dialog").dialog("open");
     }
 
