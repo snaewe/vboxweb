@@ -58,10 +58,12 @@
                                         <td class="wizardpagetitle">Welcome to the New Virtual Machine Wizard!</td>
                                     </tr>
                                     <tr>
-                                        <td class="wizardform">This wizard will guide you through the steps that are necessary to create a new virtual
-                                        machine on your VirtualBox host.<p>
-                                        Use the <b>Next</b> button to go to the next page of the wizard and the <b>Back</b>
-                                        button to return to the previous page.</p></td>
+                                        <td class="wizardform">
+                                            This wizard will guide you through the steps that are necessary to create a new virtual
+                                            machine on your VirtualBox host.<p>
+                                            Use the <b>Next</b> button to go to the next page of the wizard and the <b>Back</b>
+                                            button to return to the previous page.</p>
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
@@ -71,32 +73,18 @@
                                         <td class="wizardpagetitle">VM Name and OS Type</td>
                                     </tr>
                                     <tr>
-                                        <td class="wizardform"><input disabled="disabled" type="text" value="" /><br />
-                                        <input disabled="disabled" type="text" value="" /><br />
-                                        <input disabled="disabled" type="text" value="" /><br />
-                                        <select class="link" >
-                                        <option value="" >Choose the step to go to...</option>
-                                        <option value="step3" >Go to Step3</option>
-                                        <option value="step4" >Go to Step4</option>
-                                        </select><br /></td>
+                                        <td class="wizardform">
+                                            <table>
+                                                <tr><td style="padding-right: 10px">Name:</td><td width="100%"><input disabled="disabled" type="text" value="" /></td></tr>
+                                                <tr><td style="padding-right: 10px">Operating System:</td><td width="100%"><div id="newvmdialog-ostype"class="xapplicationMenu">
+                                                    <table class="rootVoices" cellspacing='0' cellpadding='0' border='0'><tr>
+                                                            <td id="ostype-selected" class="rootVoice {menu: 'menu_OSType'}">placeholder</td>
+                                                    </tr></table>
+                                                </div></td></tr>
+                                            </table>
+                                        </td>
                                     </tr>
                                 </table>
-                            </div>
-                            <div id="step3" class="step">
-                                <h1>step 3 - submit step</h1>
-                                <input disabled="disabled" type="text" value="" /><br />
-                                <input disabled="disabled" type="text" value="" class="required"/><br />
-                                <input disabled="disabled" type="hidden" class="link" value="submit_step" />
-                            </div>
-                            <div id="step4" class="step">
-                                <h1>step 4</h1>
-                                <input disabled="disabled" type="text" value="" /><br />
-                                <input disabled="disabled" type="text" name="email" class="required email" /><br />
-                            </div>
-                            <div id="step5" class="step">
-                                <h1>step 5 - last step</h1>
-                                <input disabled="disabled" type="text" value="" /><br />
-                                <input disabled="disabled" type="text" value="" /><br />
                             </div>
                             <!-- these become to Back Next buttoms -->
                             <div style="position: absolute; bottom: 30px;">
@@ -107,6 +95,17 @@
                     </td>
                 </tr>
             </table>
+            <div id="menu_OSType" class="menu">
+                <a rel="text" >
+                    <img src="/images/vbox/os_win_other.png" alt="img"/>
+                    Select the operating system family and version of the guest that you plan to run in this virtual machine.<br/>
+                </a>
+                <a rel="separator"> </a>
+                <!-- this gets populated dynamically with the OS families -->
+                <span id="osfamilies-span"></span>
+            </div>
+            <!-- this gets populated with the individual OS family submenues -->
+            <span id="ostype_submenues"></span>
         </div>
     </body>
 </html>

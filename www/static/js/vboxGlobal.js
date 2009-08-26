@@ -201,7 +201,7 @@ var vboxGlobal = Class.create(
         return strState;
     },
 
-    vmGuestOSTypeIcon: function (osTypeId)
+    vmGuestOSTypeIcon: function (osTypeId, fRelative)
     {
         var strBasePath = "/images/vbox/";
         var strIcon = "os_linux_other.png";

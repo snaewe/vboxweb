@@ -67,6 +67,26 @@ var vboxDialogs = Class.create(
             });
 
             jQuery(function(){
+                jQuery("#newvmdialog-ostype").buildMenu(
+                {
+                    menuWidth:200,
+                    openOnRight:false,
+                    menuSelector: ".menuContainer",
+                    containment:"wrapper",
+                    iconPath:"/images/vbox/",
+                    hasImages:true,
+                    fadeInTime:100,
+                    fadeOutTime:300,
+                    adjustLeft:2,
+                    minZindex:"auto",
+                    adjustTop:10,
+                    opacity:.95,
+                    shadow:true,
+                    closeOnMouseOut:true,
+                    closeAfter:1000
+                });
+            });
+            jQuery(function(){
                 jQuery("#newvm-form").formwizard({
                     //form wizard settings
                     historyEnabled : true,
