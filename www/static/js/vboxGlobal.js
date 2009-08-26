@@ -273,7 +273,10 @@ var vboxGlobal = Class.create(
             default:
                 break;
         }
-        return strBasePath + strIcon;
+        if (fRelative == true)
+            return strIcon;
+        else
+            return strBasePath + strIcon;
     },
 
     hardDiskType: function (type)
