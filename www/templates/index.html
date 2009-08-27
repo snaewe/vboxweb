@@ -191,7 +191,6 @@
                 vmSelWnd = new vboxSelectorWnd(vmListView, vmTabView, vmToolbar);
                 vbGlobal.setSelectorWnd(vmSelWnd);
                 vboxDialogs = new vboxDialogs();
-                vboxDialogs.initDialogs();
 
                 jQuery('#vmTab').bind('tabsselect', function(event, ui) {
                     return vmTabView.onTabChange(event, ui);

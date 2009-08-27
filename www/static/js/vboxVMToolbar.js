@@ -83,7 +83,7 @@ var vboxVMToolbar = Class.create(
                 if (state == VMState.Running ||
                     state == VMState.Paused)
                 {
-                    jQuery('#poweroff-dialog').dialog('open');
+                    vboxDialogs.showPowerOffDialog();
                 }
                 else if (state == VMState.Saved)
                 {

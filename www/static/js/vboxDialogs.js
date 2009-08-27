@@ -25,15 +25,16 @@
 
 var vboxDialogs = Class.create(
 {
-    /*
-     * This performs the initial setup work for the dialogs, like
-     * loading the HTML file and inserting it into the DOM, configuring
-     * the DIVs, etc. Called when the HTML loads.
-     */
-    initDialogs: function()
+    showPowerOffDialog: function()
     {
-        /* load the dialogs HTML file with a completion function */
-        jQuery.get("/html/dialogs.html", function(data) {
+        /* already loaded? Then show */
+        if (jQuery("#poweroff-dialog").length)
+        {
+            jQuery('#poweroff-dialog').dialog('open');
+            return;
+        }
+        /* load the dialog */
+        jQuery.get("dialog?dialogid=poweroff-dialog", function(data) {
             /* append the loaded HTML to the body section */
             jQuery("body").append(data);
 
@@ -65,6 +66,24 @@ var vboxDialogs = Class.create(
                     }
                 });
             });
+            jQuery('#poweroff-dialog').dialog('open');
+        });
+    },
+
+    showNewVMWizard: function()
+    {
+        /* already loaded? Then show */
+        if (jQuery("#newvm-dialog").length)
+        {
+            selectOSType("WindowsXP");
+            jQuery("#newvm-form").formwizard("reset");
+            jQuery('#newvm-dialog').dialog('open');
+            return;
+        }
+        /* load the dialog */
+        jQuery.get("dialog?dialogid=newvm-dialog", function(data) {
+            /* append the loaded HTML to the body section */
+            jQuery("body").append(data);
 
             jQuery(function(){
                 jQuery("#newvmdialog-ostype").buildMenu(
@@ -114,59 +133,56 @@ var vboxDialogs = Class.create(
                     }
                 });
             });
-        });
-    },
 
-    showNewVMWizard: function()
-    {
-        /*
-         * Create the OS type menu. We're doing this here and not at dialog
-         * loading time for several reasons. First of all, the OS type list
-         * might not have been loaded from the server yet and also this is a
-         * potentially time consuming task. Later, we should load the whole
-         * dialog not at startup time but when called for the first time.
-         */
-        selectOSType = function(osTypeId)
-        {
-            jQuery("#ostype-selected").html(
-                "<img alt=\"\" width=\"20px\" align=\"top\" style=\"padding-right: 20px;\" src=\"" +
-                vbGlobal.vmGuestOSTypeIcon(osTypeId, false) + "\"/>" +
-                "<span id=\"ostype-selected-id\">" +
-                vbGlobal.mVirtualBox.getGuestOSTypeById(osTypeId).getDescription() +
-                "</span>"
-            );
-        }
-        var osTypes = vbGlobal.mVirtualBox.mArrGuestOSTypes;
-        for (var i = 0; i < osTypes.length; i++)
-        {
-            /* check if the menu for the family exists */
-            var submenu = jQuery("#ostype-submenu-" + osTypes[i].getFamilyId());
-            if (submenu.length == 0)
+            /*
+             * Create the OS type menu. We're doing this here and not at dialog
+             * loading time for several reasons. First of all, the OS type list
+             * might not have been loaded from the server yet and also this is a
+             * potentially time consuming task. Later, we should load the whole
+             * dialog not at startup time but when called for the first time.
+             */
+            selectOSType = function(osTypeId)
             {
-                /* create link to the submenu */
-                jQuery("#osfamilies-span").append(
-                    "<a class=\"{menu: 'ostype-submenu-" + osTypes[i].getFamilyId() + "', " +
-                    "img: 'vm_start_32px.png'}\">" + osTypes[i].getFamilyId() + "</a>"
-                );
-                /* create the submenu */
-                jQuery("#ostype_submenues").append(
-                    "<div id=\"ostype-submenu-" + osTypes[i].getFamilyId() + "\" class=\"menu\">" +
-                    "<span id=\"osfamily-" + osTypes[i].getFamilyId() + "-span\"></span>" +
-                    "</div>"
+                jQuery("#ostype-selected").html(
+                    "<img alt=\"\" width=\"20px\" align=\"top\" style=\"padding-right: 20px;\" src=\"" +
+                    vbGlobal.vmGuestOSTypeIcon(osTypeId, false) + "\"/>" +
+                    "<span id=\"ostype-selected-id\">" +
+                    vbGlobal.mVirtualBox.getGuestOSTypeById(osTypeId).getDescription() +
+                    "</span>"
                 );
             }
-            /* now add the OS entry to the right submenu, check if present to multiple calls to this method */
-            if (jQuery("#ostype-entry-" + osTypes[i].getId()).length == 0)
-                jQuery("#osfamily-" + osTypes[i].getFamilyId() + "-span").append(
-                    "<a id=\"ostype-entry-" + osTypes[i].getId() + "\" class=\"{action: 'selectOSType(\\'" + osTypes[i].getId() + "\\')', img: '" +
-                    vbGlobal.vmGuestOSTypeIcon(osTypes[i].getId(), true) +
-                    "'}\">" + osTypes[i].getDescription() + "</a>"
-                );
-        }
-        /* start with Windows XP as the default */
-        selectOSType("WindowsXP");
-        jQuery("#newvm-form").formwizard("reset");
-        jQuery("#newvm-dialog").dialog("open");
+            var osTypes = vbGlobal.mVirtualBox.mArrGuestOSTypes;
+            for (var i = 0; i < osTypes.length; i++)
+            {
+                /* check if the menu for the family exists */
+                var submenu = jQuery("#ostype-submenu-" + osTypes[i].getFamilyId());
+                if (submenu.length == 0)
+                {
+                    /* create link to the submenu */
+                    jQuery("#osfamilies-span").append(
+                        "<a class=\"{menu: 'ostype-submenu-" + osTypes[i].getFamilyId() + "', " +
+                        "img: 'vm_start_32px.png'}\">" + osTypes[i].getFamilyId() + "</a>"
+                    );
+                    /* create the submenu */
+                    jQuery("#ostype_submenues").append(
+                        "<div id=\"ostype-submenu-" + osTypes[i].getFamilyId() + "\" class=\"menu\">" +
+                        "<span id=\"osfamily-" + osTypes[i].getFamilyId() + "-span\"></span>" +
+                        "</div>"
+                    );
+                }
+                /* now add the OS entry to the right submenu, check if present to multiple calls to this method */
+                if (jQuery("#ostype-entry-" + osTypes[i].getId()).length == 0)
+                    jQuery("#osfamily-" + osTypes[i].getFamilyId() + "-span").append(
+                        "<a id=\"ostype-entry-" + osTypes[i].getId() + "\" class=\"{action: 'selectOSType(\\'" + osTypes[i].getId() + "\\')', img: '" +
+                        vbGlobal.vmGuestOSTypeIcon(osTypes[i].getId(), true) +
+                        "'}\">" + osTypes[i].getDescription() + "</a>"
+                    );
+            }
+            /* start with Windows XP as the default */
+            selectOSType("WindowsXP");
+            jQuery("#newvm-form").formwizard("reset");
+            jQuery("#newvm-dialog").dialog("open");
+        });
     }
 
 });

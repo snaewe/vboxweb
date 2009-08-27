@@ -441,6 +441,14 @@ class VBoxPageRoot:
         else:
             return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
+    # return markup for a specific dialog
+    @cherrypy.expose
+    @require()
+    def dialog(self, dialogid):
+        print "Page: dialog, requesting ID " + dialogid
+        tmpl = self.templateLoader.load('dialogs.html')
+        return tmpl.generate(dialogid=dialogid).render('html')
+
     # Entry point when browser loads the whole page
     @cherrypy.expose
     @require()

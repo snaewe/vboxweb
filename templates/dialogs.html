@@ -1,0 +1,114 @@
+<!--
+ * Copyright (C) 2009 Sun Microsystems, Inc.
+
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+    <body>
+
+        <div py:if='dialogid == "poweroff-dialog"'
+             id="poweroff-dialog" title="Close virtual machine" style="display: none;">
+            <table width="100%" cellspacing="0">
+                <tr>
+                    <td><img src="/images/vbox/state_saved_16px.png" alt=""/></td>
+                    <td><input type="radio" name="poweroff-dialog-selection" value="savestate" checked="checked">Save the machine state</input></td>
+                </tr>
+                <tr>
+                    <td><img src="/images/vbox/state_powered_off_16px.png" alt=""/></td>
+                    <td><input type="radio" name="poweroff-dialog-selection" value="acpipoweroff">Send the shutdown signal</input></td>
+                </tr>
+                <tr>
+                    <td><img src="/images/vbox/poweroff_16px.png" alt=""/></td>
+                    <td><input type="radio" name="poweroff-dialog-selection" value="poweroff">Power off the machine</input></td>
+                </tr>
+            </table>
+        </div>
+
+        <div py:if= 'dialogid == "newvm-dialog"'
+             id="newvm-dialog" title="Create a new Virtual Machine" style="display: none;">
+            <table width="100%">
+                <tr align="top">
+                    <td style="padding-right: 10px; padding-top: 10px;">
+                        <img src="/images/vbox/vmw_new_welcome.png" alt=""/>
+                    </td>
+                    <td valign="top" width="100%">
+                        <form id="newvm-form" method="post" action="#">
+                            <div class="step">
+                                <table width="100%">
+                                    <tr>
+                                        <td class="wizardpagetitle">Welcome to the New Virtual Machine Wizard!</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="wizardform">
+                                            This wizard will guide you through the steps that are necessary to create a new virtual
+                                            machine on your VirtualBox host.<p>
+                                            Use the <b>Next</b> button to go to the next page of the wizard and the <b>Back</b>
+                                            button to return to the previous page.</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="step">
+                                <table width="100%">
+                                    <tr>
+                                        <td class="wizardpagetitle">VM Name and OS Type</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="wizardform">
+                                            <table>
+                                                <tr><td style="padding-right: 10px">Name:</td><td width="100%"><input disabled="disabled" type="text" value="" /></td></tr>
+                                                <tr><td style="padding-right: 10px">Operating System:</td><td width="100%"><div id="newvmdialog-ostype" class="xapplicationMenu">
+                                                    <table class="rootVoices" cellspacing='0' cellpadding='0' border='0'><tr>
+                                                            <td id="ostype-selected" class="rootVoice {menu: 'menu_OSType'}">placeholder</td>
+                                                    </tr></table>
+                                                </div></td></tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <!-- these become to Back Next buttoms -->
+                            <div style="position: absolute; bottom: 30px;">
+                                <input type="reset" value="Reset" />
+                                <input type="submit" value="Submit" />
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+            <div id="menu_OSType" class="menu">
+                <a rel="text" >
+                    <img src="/images/vbox/os_win_other.png" alt="img"/>
+                    Select the operating system family and version of the guest that you plan to run in this virtual machine.<br/>
+                </a>
+                <a rel="separator"> </a>
+                <!-- this gets populated dynamically with the OS families -->
+                <span id="osfamilies-span"></span>
+            </div>
+            <!-- this gets populated with the individual OS family submenues -->
+            <span id="ostype_submenues"></span>
+        </div>
+    </body>
+</html>
