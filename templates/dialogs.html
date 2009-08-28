@@ -89,6 +89,24 @@
                                     </tr>
                                 </table>
                             </div>
+                            <div class="step">
+                                <table width="100%">
+                                    <tr>
+                                        <td class="wizardpagetitle">Memory</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="wizardform">
+                                            <table>
+                                                <tr><td style="padding-right: 10px">Choose the amount of RAM to dedice to this virtual machine. The recommended size
+                                                for the guest operating system you've chosen is <b><span id="newvm-recommendedram"/></b> MB.</td></tr>
+                                                <tr><td><div id="newvm-ramslider"></div></td></tr>
+                                                <tr><td><table width="100%"><tr><td align="left"><b>4 MB</b></td><td align="right"><b><span id="newvm-maxram"/></b> MB</td></tr></table></td></tr>
+                                                <tr><td>Selected RAM size: <input id="newvm-ramsize" maxlength="4" size="4"/> MB.</td></tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
                             <!-- these become to Back Next buttoms -->
                             <div style="position: absolute; bottom: 30px;">
                                 <input type="reset" value="Reset" />
@@ -100,7 +118,6 @@
             </table>
             <div id="menu_OSType" class="menu">
                 <a rel="text" >
-                    <img src="/images/vbox/os_win_other.png" alt="img"/>
                     Select the operating system family and version of the guest that you plan to run in this virtual machine.<br/>
                 </a>
                 <a rel="separator"> </a>

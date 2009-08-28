@@ -143,14 +143,34 @@ var vboxDialogs = Class.create(
              */
             selectOSType = function(osTypeId)
             {
+                var guestOSType = vbGlobal.mVirtualBox.getGuestOSTypeById(osTypeId);
                 jQuery("#ostype-selected").html(
                     "<img alt=\"\" width=\"20px\" align=\"top\" style=\"padding-right: 20px;\" src=\"" +
                     vbGlobal.vmGuestOSTypeIcon(osTypeId, false) + "\"/>" +
                     "<span id=\"ostype-selected-id\">" +
-                    vbGlobal.mVirtualBox.getGuestOSTypeById(osTypeId).getDescription() +
+                    guestOSType.getDescription() +
                     "</span>"
                 );
+                /* set the recommended RAM size */
+                /* it's kind of dirty to do all this slider business here, think of a better solution! */
+                jQuery("#newvm-recommendedram").text(guestOSType.getRecommendedRAM());
+                jQuery("#newvm-ramsize").val(guestOSType.getRecommendedRAM());
+                /** TODO: get max ram from server */
+                jQuery("#newvm-maxram").text("4096");
+                jQuery("#newvm-ramslider").slider({
+                    max: 4096,
+                    step: 4,
+                    value: guestOSType.getRecommendedRAM(),
+                    slide: function(event, ui) {
+                        jQuery("#newvm-ramsize").val(ui.value);
+                    }
+                });
+                jQuery("#newvm-ramslider").slider('option', 'value', guestOSType.getRecommendedRAM());
+                jQuery("#newvm-ramsize").keyup(function() {
+                    jQuery("#newvm-ramslider").slider('option', 'value', jQuery(this).val());
+                });
             }
+
             var osTypes = vbGlobal.mVirtualBox.mArrGuestOSTypes;
             for (var i = 0; i < osTypes.length; i++)
             {
