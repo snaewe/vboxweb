@@ -176,6 +176,7 @@ var vboxVMListView = Class.create(
     initialize: function()
     {
         this.mCurItem = undefined;
+        this.mCurIndex = undefined;
     },
 
     setModel: function(vboxVMModel)
@@ -186,6 +187,7 @@ var vboxVMListView = Class.create(
     selectItemByRow: function(row)
     {
         this.mCurItem = this.mVMModel.itemByRow(row);
+        this.mCurIndex = row;
         return this.mCurItem;
     },
 
@@ -227,10 +229,8 @@ var vboxVMListView = Class.create(
             jQuery("#vmList").append(newItem);
         }
 
-        /* Select first item */
-        /* @todo Save old selected item, create list (see above) and select the old
-                 VM again (if still present). Otherwise set first entry. */
-        jQuery("#vmList .vmlist-entry-row:first").toggleClass('ui-selected');
+        /* put the selection mark on the right item */
+        jQuery("#vmList .vmlist-entry-row:eq(" + this.selectedIndex() + ")").toggleClass('ui-selected');
 
         /* (Re-)connect all handlers */
         jQuery('#vmList .vmlist-entry-row').
@@ -256,12 +256,17 @@ var vboxVMListView = Class.create(
 
     selectionChanged: function(event)
     {
-        var curIndex = jQuery("#vmList .vmlist-entry-row").index(event.currentTarget);
-        this.mCurItem = this.mVMModel.itemByRow(curIndex);
+        this.mCurIndex = jQuery("#vmList .vmlist-entry-row").index(event.currentTarget);
+        this.mCurItem = this.mVMModel.itemByRow(this.mCurIndex);
     },
 
     selectedItem: function()
     {
         return this.mCurItem;
+    },
+
+    selectedIndex: function()
+    {
+        return this.mCurIndex;
     }
 });

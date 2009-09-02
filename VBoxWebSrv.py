@@ -107,9 +107,15 @@ class jsVirtualBox:
         self.numGuestOSTypes = len(self.arrGuestOSTypes)
 
 class jsVRDPServer:
-    def __init__(self, ctx, vrdp):
+    def __init__(self, ctx, machine):
+        vrdp = machine.VRDPServer
         self.enabled = vrdp.enabled
-        self.port = vrdp.port
+        # the actual VRDP port has to be read from the extra data
+        port = machine.getExtraData("VBoxInternal2/VRDPBindPort")
+        if port and port != "invalid":
+            self.port = port
+        else:
+            self.port = vrdp.port
 
         self.netAddress = vrdp.netAddress
         if not self.netAddress:
@@ -160,7 +166,7 @@ class jsMachine:
         self.accelerate3DEnabled = machine.accelerate3DEnabled
         self.HWVirtExEnabled = machine.HWVirtExEnabled
         self.HWVirtExNestedPagingEnabled = machine.HWVirtExNestedPagingEnabled
-        self.VRDPServer = jsVRDPServer(ctx, machine.VRDPServer)
+        self.VRDPServer = jsVRDPServer(ctx, machine)
         self.state = machine.state
         self.sessState = machine.sessionState
 
@@ -339,7 +345,7 @@ class VBoxPageRoot:
 
     @cherrypy.expose
     @require()
-    def vboxGetUpdates(self):
+    def vboxGetUpdates(self, statusMessage = ""):
         print "Page: vboxGetUpdates"
 
         arrJSON = []
@@ -357,7 +363,7 @@ class VBoxPageRoot:
             updateType = 1 # Differential
 
         # Add header (must always come first atm)
-        arrJSON.append(jsHeader(self.ctx, arrMach, updateType))
+        arrJSON.append(jsHeader(self.ctx, arrMach, updateType, statusMessage))
 
         # Add global VirtualBox object on full update
         if updateType is 0:
@@ -389,18 +395,60 @@ class VBoxPageRoot:
         else:
             return self.jsonPrinter(arrJSON, default=convertObjToJSON)
 
+    def startVM(self, uuid):
+        session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
+        progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
+        # todo we shouldn't wait here, perform asynchronously
+        progress.waitForCompletion(-1)
+        session.close()
+
+    # enable VRDP for the given VM, port = 0 means use default algorithm
+    def enableVRDP(self, session, port):
+        print "enableVRDP: called for port " + port
+        if not session.console:
+            print "enableVRDP: error, machine must have an open session!"
+            return
+        machine = session.machine
+        vrdpserver = machine.VRDPServer
+        if port == "0":
+            # set the standard ports
+            machine.setExtraData("VBoxInternal2/VRDPPortRange", g_VRDPPortRange)
+        else:
+            vrdpserver.port = port
+        # if RDP server running, restart it so it gets the right settings
+        # also reset the port binding information so we do get get stale information in case of an error
+        machine.setExtraData("VBoxInternal2/VRDPBindPort", "invalid")
+        if vrdpserver.enabled:
+            vrdpserver.enabled = False
+        vrdpserver.enabled = True
+        # VRDP server startup is asynchronous. The best thing we can do here is
+        # poll for the port binding information. The VRDP server will set it when
+        # it's up and running
+        loopcount = 0
+        while machine.getExtraData("VBoxInternal2/VRDPBindPort") == "invalid":
+            loopcount = loopcount + 1
+            if loopcount >= 30:
+                break
+            time.sleep(0.1)
+        portInUse = machine.getExtraData("VBoxInternal2/VRDPBindPort")
+        print "enableVRDP: machine " + machine.id + " listening on port " + portInUse
+
+    def disableVRDP(self, session):
+        if not session.console:
+            print "disableVRDP: error, machine must have an open session!"
+            return
+        machine = session.machine
+        vrdpserver = machine.VRDPServer
+        vrdpserver.enabled = False
+
     @cherrypy.expose
     @require()
-    def vboxVMAction(self, operation, uuid):
+    def vboxVMAction(self, operation, uuid, port = 0):
         statusMessage = ""
         print "Page: vboxVMAction called with operation " + operation + " and uuid " + uuid
         # Close session if opened
         if operation == "startvm":
-            session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-            progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
-            # todo we shouldn't wait here, perform asynchronously
-            progress.waitForCompletion(-1)
-            session.close()
+            self.startVM(uuid)
             statusMessage = "Started VM with ID " + uuid
 
         # Commands requiring an open session
@@ -409,9 +457,11 @@ class VBoxPageRoot:
              operation == "savestatevm" or
              operation == "poweroffvm" or
              operation == "acpipoweroffvm" or
-             operation == "discardvm"):
+             operation == "discardvm" or
+             operation == "enablevrdp" or
+             operation == "disablevrdp"):
             session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-            progress = self.ctx['vb'].openExistingSession(session, uuid)
+            self.ctx['vb'].openExistingSession(session, uuid)
             console = session.console;
             if operation == "pausevm":
                 console.pause()
@@ -431,15 +481,16 @@ class VBoxPageRoot:
             elif operation == "discardvm":
                 console.discardCurrentState()
                 statusMessage = "Discarded saved state for VM with ID " + uuid
+            elif operation == "enablevrdp":
+                self.enableVRDP(session, port)
+            elif operation == "disablevrdp":
+                self.disableVRDP(session)
+            session.close()
         else:
             print "vboxVMAction: unknown operation"
 
-        arrJSON = []
-        arrJSON.append(jsHeader(self.ctx, [], 1, statusMessage))
-        if isSimpleJson:
-            return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
-        else:
-            return self.jsonPrinter(arrJSON, default=convertObjToJSON)
+        self.machineSetDirty(uuid)
+        return self.vboxGetUpdates(statusMessage)
 
     # return markup for a specific dialog
     @cherrypy.expose
@@ -467,6 +518,9 @@ g_threadPool = {}
 g_logLevel = 99
 g_sessionNum = 0
 g_serverTerminated = False
+# the default port range for the VRDP server
+# TODO: get from configuration
+g_VRDPPortRange = "3400-3700"
 
 def log(level, str):
     if g_logLevel >= level:

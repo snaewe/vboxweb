@@ -109,7 +109,7 @@ var vboxTabWidget = Class.create(
                 break;
 
             case 'tabs-center-rdp':
-                this.invalidatePageRDP(curItem, true);
+                 this.invalidatePageRDP(curItem, true);
                 break;
 
             case 'tabs-center-desc':
@@ -201,7 +201,6 @@ var vboxTabWidget = Class.create(
 
     invalidatePageRDP: function(curItem, pageSelected)
     {
-        log("vboxTabWidget::invalidatePageRDP: Machine status = %d", curItem.state());
         var rdpServ = curItem.machine().getVRDPServer();
         var rdpStatus = "";
 
@@ -214,15 +213,17 @@ var vboxTabWidget = Class.create(
             if (curItem.state() < 4)
                 throw(tr("The remote view is not available because the virtual machine is not running"));
 
-            if (!rdpServ.enabled)
-                throw(tr("The VRDP server of the VM is not enabled."));
-
             switch (this.mFlashRDPStatus)
             {
                 case RDPState.Unloaded:
 
                     rdpStatus = tr("Loading Console ...");
                     jQuery("#tab-rdp-sec-conn").hide();
+
+                    // TODO this is not good. We need to enable the VRDP server
+                    // but this is an asynchronous thing so we should have a
+                    // callback handler and wait for the callback
+                    vbGlobal.mVirtualBox.setVRDPState(curItem.machine().getId(), true);
 
                     /* Request header to see if SWF file is present. */
                     var bError = false;
@@ -251,7 +252,6 @@ var vboxTabWidget = Class.create(
                     break;
 
                 case RDPState.Connected:
-
                     rdpStatus = tr("Connected.");
                     this.rdpInvalidateConnBtn("Disconnect", false);
                     jQuery("#tab-rdp-sec-conn").show();
@@ -328,7 +328,6 @@ var vboxTabWidget = Class.create(
 
     rdpLoaded: function(flashObj)
     {
-        log("vboxTabWidget::rdpLoaded");
         this.mFlashRDPStatus = RDPState.Disconnected;
         this.invalidatePage();
         return false;
@@ -336,7 +335,6 @@ var vboxTabWidget = Class.create(
 
     rdpUnloaded: function(flashObj)
     {
-        log("vboxTabWidget::rdpUnloaded");
         this.mFlashRDPStatus = RDPState.Unloaded;
         this.invalidatePage();
         return false;
@@ -360,10 +358,8 @@ var vboxTabWidget = Class.create(
 
     rdpDisconnected: function(flashObj)
     {
-        log("vboxTabWidget::rdpDisconnected");
         this.mFlashRDPStatus = RDPState.Disconnected;
         this.invalidatePage();
-        return false;
     },
 
     rdpHandleConnect: function()
@@ -402,9 +398,6 @@ var vboxTabWidget = Class.create(
             var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);
             flash.setProperty("serverAddress", rdpServ.netAddress);
 
-            log("vboxTabWidget::rdpConnect: Connecting to %s:%d (auth type=%d)",
-                rdpServ.netAddress, rdpServ.port, rdpServ.authType);
-
             if (rdpServ.port > 0)
                 flash.setProperty("serverPort", rdpServ.port);
 
@@ -429,14 +422,13 @@ var vboxTabWidget = Class.create(
 
     rdpDisconnect: function()
     {
-        log("vboxTabWidget::rdpDisconnect");
-        if (this.mFlashRDPStatus == RDPState.Disconnecting)
-        {
-            var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);
+        /*
+         * we accept calls to this function independent of the state
+         * so that we can always disconnect, even when things get wrong
+         */
+        var flash = RDPWebClient.getFlashById(RDPWebClient.FlashId);
+        if (flash)
             flash.disconnect();
-        }
-
-        return false;
     },
 
     rdpResize: function()
@@ -452,6 +444,8 @@ var vboxTabWidget = Class.create(
 
     selectionChanged: function()
     {
+        /* make sure the RDP connection gets terminated */
+        this.rdpDisconnect();
         this.invalidatePage(this.mCurTab);
     }
 });

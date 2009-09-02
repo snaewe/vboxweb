@@ -56,6 +56,10 @@ var vboxSelectorWnd = Class.create(
         var vbox = vbGlobal.virtualBox();
         var numMachines = vbox.getMachineCount();
 
+        var curIndex = this.mVMListView.selectedIndex();
+        if (curIndex == undefined)
+            curIndex = 0;
+
         this.mVMModel.clear();
         for (var i = 0; i < numMachines; i++)
         {
@@ -67,8 +71,8 @@ var vboxSelectorWnd = Class.create(
         {
             /* we want the VMs to appear in alphabetic order */
             this.mVMModel.sortByName();
-            /* Select first item in list. */
-            this.mVMListView.selectItemByRow(0);
+            /* select the previously selected item */
+            this.mVMListView.selectItemByRow(curIndex);
             this.invalidate();
         }
         else
@@ -89,7 +93,7 @@ var vboxSelectorWnd = Class.create(
     },
 
     /* Refresh a specific VM item in the list. */
-    refreshVMItem: function(machineId, abDetails, aRDP, aDescription)
+    refreshVMItem: function(machineId)
     {
 
     },

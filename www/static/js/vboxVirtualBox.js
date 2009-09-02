@@ -136,7 +136,7 @@ var vboxVirtualBox = Class.create(
                     if (numUpdates > 0)
                     {
                         var newMach;
-                        log("vboxVirtualBox::updateProcess: Updates for %d machine(s) ...", numUpdates);
+                        // log("vboxVirtualBox::updateProcess: Updates for %d machine(s) ...", numUpdates);
 
                         /* Add new or update existing machines. */
                         for (var i = 0; i < numUpdates; i++)
@@ -151,9 +151,8 @@ var vboxVirtualBox = Class.create(
                             }
                             else
                             {
-                                log("vboxVirtualBox::updateProcess: Updating machine: %s", curMach.getName());
+                                log("Refreshing data for machine: %s", curMach.getName());
                                 curMach.loadSettingsJSON(arrJSON);
-
                             }
                         }
 
@@ -302,5 +301,18 @@ var vboxVirtualBox = Class.create(
     acpipoweroffVM: function(id)
     {
         this.receiveData("/vboxVMAction?operation=acpipoweroffvm&uuid=" + id);
+    },
+
+    setVRDPState: function(id, enabled, port)
+    {
+        if (enabled)
+        {
+            // defaults to zero which means server chooses next available port
+            port = typeof(port) != 'undefined' ? port : 0;
+            this.receiveData("/vboxVMAction?operation=enablevrdp&uuid=" + id +
+                             "&port=" + port);
+        }
+        else
+            this.receiveData("/vboxVMAction?operation=disablevrdp&uuid=" + id);
     }
 });
