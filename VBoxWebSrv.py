@@ -573,6 +573,26 @@ def main(argv = sys.argv):
                 print "Syntax: " + argv[0] + " rdpweb update"
                 return
             bRDPWebForceUpdate = True
+        elif argv[1] == "help":
+            print """
+VBoxWeb Command Usage:
+
+    adduser <username> <password>
+        -Add a new user to VBoxWeb
+        
+    deluser <username>
+        -Delete an existing user
+        
+    rdpweb update
+        -Update the embeddded flash RDP viewer
+        
+    help
+        -Display this message
+"""
+            return
+        else:
+            print "\nUnknown command '%s'. See '%s help' for available commands" % (argv[1], argv[0])
+            return
 
     # Why subscribe() doesn't take callback argument, having global vboxMgr is a bit ugly
     # AH: I think this is bogus, I never saw the callbacks being called
