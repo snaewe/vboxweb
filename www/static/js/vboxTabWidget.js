@@ -135,9 +135,7 @@ var vboxTabWidget = Class.create(
                 strBootOrder = strBootOrder + ", " + vbGlobal.deviceType(bootOrder[i]);
         }
 
-        var vrdpServer = new vboxIVRDPServerImpl(mach.getVRDPServer());
         var guestOSType = vbGlobal.virtualBox().getGuestOSTypeById(mach.getOSTypeId());
-        var hardDiskAttachments = mach.getHardDiskAttachments();
 
         jQuery("#tab-details-vm-general-name-val").text(curItem.name());
         jQuery("#tab-details-vm-general-osname-val").text(guestOSType.getDescription());
@@ -145,57 +143,33 @@ var vboxTabWidget = Class.create(
         jQuery("#tab-details-vm-system-ram-val").text(mach.getMemorySize() + tr(" MB"));
         jQuery("#tab-details-vm-system-cpu-val").text(mach.getCPUCount());
         jQuery("#tab-details-vm-system-bootorder-val").text(strBootOrder);
-        jQuery("#tab-details-vm-system-hwvirt-val").text(mach.getHWVirtExEnabled() ? tr("Enabled") : tr("Disabled"));
-        jQuery("#tab-details-vm-system-nestedp-val").text(mach.getHWVirtExNestedPagingEnabled() ? tr("Enabled") : tr("Disabled"));
+        jQuery("#tab-details-vm-system-hwvirt-val").text(mach.jsonObject.HWVirtExEnabled ? tr("Enabled") : tr("Disabled")); /* Hack alert! */
+        jQuery("#tab-details-vm-system-nestedp-val").text(mach.jsonObject.HWVirtExNestedPagingEnabled ? tr("Enabled") : tr("Disabled")); /* Hack alert! */
 
+        /* Display */
         jQuery("#tab-details-vm-display-videomem-val").text(mach.getVRAMSize() + tr(" MB"));
         jQuery("#tab-details-vm-display-3daccel-val").text(mach.getAccelerate3DEnabled() ? tr("Enabled") : tr("Disabled"));
+
+        var vrdpServer = new vboxIVRDPServerImpl(mach.getVRDPServer());
         if (vrdpServer.getEnabled())
-            jQuery("#tab-details-vm-display-rdpport-val").text(tr("Enabled") + ", " + tr("Port ") + vrdpServer.getPort());
+            jQuery("#tab-details-vm-display-rdpport-val").text(tr("Enabled") + ", " + tr("Port(s) ") + vrdpServer.getPorts());
         else
-            jQuery("#tab-details-vm-display-rdpport-val").text(tr("Disabled") + " (" + tr("Port ") + vrdpServer.getPort() + ")");
+            jQuery("#tab-details-vm-display-rdpport-val").text(tr("Disabled") + " (" + tr("Port(s) ") + vrdpServer.getPorts() + ")");
 
-        jQuery("li.harddisks-list-item").remove();
-        for (i = 0; i < hardDiskAttachments.length; i++)
+        /* Storage */
+        jQuery("li.storage-list-item").remove();
+        var storageControllers = mach.getStorageControllers();
+        for (i = 0; i < storageControllers.length; i++)
         {
-            attachment = new vboxIHardDiskAttachmentImpl(hardDiskAttachments[i]);
-            hardDisk = new vboxIHardDiskImpl(attachment.getHardDisk());
-            if (attachment.getController() === "IDE")
-            {
-                port = (attachment.getPort() === 0) ? tr("Primary") : tr("Secondary");
-                device = (attachment.getDevice() === 0) ? tr("Master") : tr("Slave");
-            }
-            else if (attachment.getController() === "SATA")
-            {
-                port = tr("Port ") + attachment.getPort();
-                device = "";
-            }
-            else if (attachment.getController() === "SCSI")
-            {
-                port = tr("Port ") + attachment.getPort();
-                device = "";
-            }
-            else
-            {
-                port = attachment.getPort();
-                device = attachment.getDevice();
-            }
-
-            if (device != "")
-                device = ' ' + device;
-            strHardDisk = hardDisk.getName() + " (" + vbGlobal.hardDiskType(hardDisk.getType()) +
-                          ", " + (hardDisk.getLogicalSize() / 1024) + " GB)";
-            strListItem = '<div class="tab-details-vm-attribute">' +
-                          attachment.getController() + " " + port + device + ":" +
-                          '</div><div class="tab-details-vm-value">' + strHardDisk +
-                          '</div><div style="clear: both"></div>';
-            jQuery("#tab-details-vm-harddisks-list").append('<li class="harddisks-list-item">' + strListItem + "</li>");
+            var controller = storageControllers[i];
+            /** @todo implement medium <-> storage controller enumeration here */
+            jQuery("#tab-details-vm-storage-list").append('<li class="storage-list-item">' + controller.name + "</li>");
         }
 
-        if (hardDiskAttachments.length <= 0)
+        if (storageControllers.length <= 0)
         {
-            jQuery("#tab-details-vm-harddisks-list").
-                append('<li class="harddisks-list-item">' + tr("No hard disks attached") + "</li>");
+            jQuery("#tab-details-vm-storage-list").
+                append('<li class="storage-list-item">' + tr("No storage attached") + "</li>");
         }
     },
 

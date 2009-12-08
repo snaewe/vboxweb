@@ -59,6 +59,21 @@ var vboxIVirtualBoxErrorInfoImpl = Class.create(
     
 });
 
+var vboxILocalOwnerImpl = Class.create(
+{
+    initialize: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    },
+    
+    
+    loadSettingsJSON: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    }
+    
+});
+
 var vboxIVirtualBoxCallbackImpl = Class.create(
 {
     initialize: function(jsonObject)
@@ -138,14 +153,6 @@ var vboxIVirtualBoxImpl = Class.create(
     getSettingsFilePath: function()
     {
         return this.jsonObject.settingsFilePath;
-    },
-    getSettingsFileVersion: function()
-    {
-        return this.jsonObject.settingsFileVersion;
-    },
-    getSettingsFormatVersion: function()
-    {
-        return this.jsonObject.settingsFormatVersion;
     },
     getHost: function()
     {
@@ -373,6 +380,10 @@ var vboxIMachineImpl = Class.create(
     {
         return this.jsonObject.HardwareVersion;
     },
+    getHardwareUUID: function()
+    {
+        return this.jsonObject.hardwareUUID;
+    },
     getCPUCount: function()
     {
         return this.jsonObject.CPUCount;
@@ -397,6 +408,10 @@ var vboxIMachineImpl = Class.create(
     {
         return this.jsonObject.accelerate3DEnabled;
     },
+    getAccelerate2DVideoEnabled: function()
+    {
+        return this.jsonObject.accelerate2DVideoEnabled;
+    },
     getMonitorCount: function()
     {
         return this.jsonObject.monitorCount;
@@ -405,21 +420,9 @@ var vboxIMachineImpl = Class.create(
     {
         return this.jsonObject.BIOSSettings;
     },
-    getHWVirtExEnabled: function()
+    getFirmwareType: function()
     {
-        return this.jsonObject.HWVirtExEnabled;
-    },
-    getHWVirtExNestedPagingEnabled: function()
-    {
-        return this.jsonObject.HWVirtExNestedPagingEnabled;
-    },
-    getHWVirtExVPIDEnabled: function()
-    {
-        return this.jsonObject.HWVirtExVPIDEnabled;
-    },
-    getPAEEnabled: function()
-    {
-        return this.jsonObject.PAEEnabled;
+        return this.jsonObject.firmwareType;
     },
     getSnapshotFolder: function()
     {
@@ -429,17 +432,9 @@ var vboxIMachineImpl = Class.create(
     {
         return this.jsonObject.VRDPServer;
     },
-    getHardDiskAttachments: function()
+    getMediumAttachments: function()
     {
-        return this.jsonObject.hardDiskAttachments;
-    },
-    getDVDDrive: function()
-    {
-        return this.jsonObject.DVDDrive;
-    },
-    getFloppyDrive: function()
-    {
-        return this.jsonObject.floppyDrive;
+        return this.jsonObject.mediumAttachments;
     },
     getUSBController: function()
     {
@@ -456,10 +451,6 @@ var vboxIMachineImpl = Class.create(
     getSettingsFilePath: function()
     {
         return this.jsonObject.settingsFilePath;
-    },
-    getSettingsFileVersion: function()
-    {
-        return this.jsonObject.settingsFileVersion;
     },
     getSettingsModified: function()
     {
@@ -517,6 +508,22 @@ var vboxIMachineImpl = Class.create(
     {
         return this.jsonObject.guestPropertyNotificationPatterns;
     },
+    getTeleporterEnabled: function()
+    {
+        return this.jsonObject.teleporterEnabled;
+    },
+    getTeleporterPort: function()
+    {
+        return this.jsonObject.teleporterPort;
+    },
+    getTeleporterAddress: function()
+    {
+        return this.jsonObject.teleporterAddress;
+    },
+    getTeleporterPassword: function()
+    {
+        return this.jsonObject.teleporterPassword;
+    },
 
     
     loadSettingsJSON: function(jsonObject)
@@ -550,6 +557,10 @@ var vboxIRemoteDisplayInfoImpl = Class.create(
         getActive: function()
     {
         return this.jsonObject.active;
+    },
+    getPort: function()
+    {
+        return this.jsonObject.port;
     },
     getNumberOfClients: function()
     {
@@ -644,8 +655,7 @@ var vboxIConsoleImpl = Class.create(
     },
     getDebugger: function()
     {
-// debugger is a reserved keyword, Safari chokes on it, have to fix the generator
-//         return this.jsonObject.debugger;
+        return this.jsonObject.debugger;
     },
     getUSBDevices: function()
     {
@@ -662,60 +672,6 @@ var vboxIConsoleImpl = Class.create(
     getRemoteDisplayInfo: function()
     {
         return this.jsonObject.remoteDisplayInfo;
-    },
-
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIHostDVDDriveImpl = Class.create(
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-        getName: function()
-    {
-        return this.jsonObject.name;
-    },
-    getDescription: function()
-    {
-        return this.jsonObject.description;
-    },
-    getUdi: function()
-    {
-        return this.jsonObject.udi;
-    },
-
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIHostFloppyDriveImpl = Class.create(
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-        getName: function()
-    {
-        return this.jsonObject.name;
-    },
-    getDescription: function()
-    {
-        return this.jsonObject.description;
-    },
-    getUdi: function()
-    {
-        return this.jsonObject.udi;
     },
 
     
@@ -918,9 +874,9 @@ var vboxISystemPropertiesImpl = Class.create(
     {
         return this.jsonObject.defaultHardDiskFolder;
     },
-    getHardDiskFormats: function()
+    getMediumFormats: function()
     {
-        return this.jsonObject.hardDiskFormats;
+        return this.jsonObject.mediumFormats;
     },
     getDefaultHardDiskFormat: function()
     {
@@ -1115,6 +1071,10 @@ var vboxIProgressImpl = Class.create(
     {
         return this.jsonObject.operationPercent;
     },
+    getTimeout: function()
+    {
+        return this.jsonObject.timeout;
+    },
 
     
     loadSettingsJSON: function(jsonObject)
@@ -1171,6 +1131,45 @@ var vboxISnapshotImpl = Class.create(
     
 });
 
+var vboxIMediumAttachmentImpl = Class.create(
+{
+    initialize: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    },
+        getMedium: function()
+    {
+        return this.jsonObject.medium;
+    },
+    getController: function()
+    {
+        return this.jsonObject.controller;
+    },
+    getPort: function()
+    {
+        return this.jsonObject.port;
+    },
+    getDevice: function()
+    {
+        return this.jsonObject.device;
+    },
+    getType: function()
+    {
+        return this.jsonObject.type;
+    },
+    getPassthrough: function()
+    {
+        return this.jsonObject.passthrough;
+    },
+
+    
+    loadSettingsJSON: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    }
+    
+});
+
 var vboxIMediumImpl = Class.create(
 {
     initialize: function(jsonObject)
@@ -1197,9 +1196,49 @@ var vboxIMediumImpl = Class.create(
     {
         return this.jsonObject.name;
     },
+    getDeviceType: function()
+    {
+        return this.jsonObject.deviceType;
+    },
+    getHostDrive: function()
+    {
+        return this.jsonObject.hostDrive;
+    },
     getSize: function()
     {
         return this.jsonObject.size;
+    },
+    getFormat: function()
+    {
+        return this.jsonObject.format;
+    },
+    getType: function()
+    {
+        return this.jsonObject.type;
+    },
+    getParent: function()
+    {
+        return this.jsonObject.parent;
+    },
+    getChildren: function()
+    {
+        return this.jsonObject.children;
+    },
+    getBase: function()
+    {
+        return this.jsonObject.base;
+    },
+    getReadOnly: function()
+    {
+        return this.jsonObject.readOnly;
+    },
+    getLogicalSize: function()
+    {
+        return this.jsonObject.logicalSize;
+    },
+    getAutoReset: function()
+    {
+        return this.jsonObject.autoReset;
     },
     getLastAccessError: function()
     {
@@ -1218,85 +1257,7 @@ var vboxIMediumImpl = Class.create(
     
 });
 
-var vboxIHardDiskAttachmentImpl = Class.create(
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-        getHardDisk: function()
-    {
-        return this.jsonObject.hardDisk;
-    },
-    getController: function()
-    {
-        return this.jsonObject.controller;
-    },
-    getPort: function()
-    {
-        return this.jsonObject.port;
-    },
-    getDevice: function()
-    {
-        return this.jsonObject.device;
-    },
-
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIHardDiskImpl = Class.create(vboxIMediumImpl,
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-        getFormat: function()
-    {
-        return this.jsonObject.format;
-    },
-    getType: function()
-    {
-        return this.jsonObject.type;
-    },
-    getParent: function()
-    {
-        return this.jsonObject.parent;
-    },
-    getChildren: function()
-    {
-        return this.jsonObject.children;
-    },
-    getRoot: function()
-    {
-        return this.jsonObject.root;
-    },
-    getReadOnly: function()
-    {
-        return this.jsonObject.readOnly;
-    },
-    getLogicalSize: function()
-    {
-        return this.jsonObject.logicalSize;
-    },
-    getAutoReset: function()
-    {
-        return this.jsonObject.autoReset;
-    },
-
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIHardDiskFormatImpl = Class.create(
+var vboxIMediumFormatImpl = Class.create(
 {
     initialize: function(jsonObject)
     {
@@ -1317,82 +1278,6 @@ var vboxIHardDiskFormatImpl = Class.create(
     getCapabilities: function()
     {
         return this.jsonObject.capabilities;
-    },
-
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIFloppyImageImpl = Class.create(vboxIMediumImpl,
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-    
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIDVDImageImpl = Class.create(vboxIMediumImpl,
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-    
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIDVDDriveImpl = Class.create(
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-        getState: function()
-    {
-        return this.jsonObject.state;
-    },
-    getPassthrough: function()
-    {
-        return this.jsonObject.passthrough;
-    },
-
-    
-    loadSettingsJSON: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    }
-    
-});
-
-var vboxIFloppyDriveImpl = Class.create(
-{
-    initialize: function(jsonObject)
-    {
-        this.jsonObject = jsonObject;
-    },
-        getEnabled: function()
-    {
-        return this.jsonObject.enabled;
-    },
-    getState: function()
-    {
-        return this.jsonObject.state;
     },
 
     
@@ -1982,9 +1867,9 @@ var vboxIVRDPServerImpl = Class.create(
     {
         return this.jsonObject.enabled;
     },
-    getPort: function()
+    getPorts: function()
     {
-        return this.jsonObject.port;
+        return this.jsonObject.ports;
     },
     getNetAddress: function()
     {
@@ -2255,6 +2140,51 @@ var vboxIVirtualBoxImpl = Class.create(
 });
 
 var vboxISessionImpl = Class.create(
+{
+    initialize: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    },
+    
+    
+    loadSettingsJSON: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    }
+    
+});
+
+var vboxILocalOwnerImpl = Class.create(
+{
+    initialize: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    },
+    
+    
+    loadSettingsJSON: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    }
+    
+});
+
+var vboxIVirtualBoxCallbackImpl = Class.create(
+{
+    initialize: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    },
+    
+    
+    loadSettingsJSON: function(jsonObject)
+    {
+        this.jsonObject = jsonObject;
+    }
+    
+});
+
+var vboxIConsoleCallbackImpl = Class.create(
 {
     initialize: function(jsonObject)
     {

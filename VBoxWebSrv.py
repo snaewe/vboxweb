@@ -113,10 +113,9 @@ class jsVRDPServer:
         # the actual VRDP port has to be read from the extra data
         port = machine.getExtraData("VBoxInternal2/VRDPBindPort")
         if port and port != "invalid":
-            self.port = port
+            self.ports = port
         else:
-            self.port = vrdp.port
-
+            self.ports = vrdp.ports
         self.netAddress = vrdp.netAddress
         if not self.netAddress:
             self.netAddress = ctx['serverAdr']
@@ -138,19 +137,20 @@ class jsGuestOSType:
         self.recommendedVRAM = guestOSType.recommendedVRAM
         self.recommendedHDD = guestOSType.recommendedHDD
 
-class jsHardDiskAttachment:
-    def __init__(self, attachment):
-        self.hardDisk = jsHardDisk(attachment.hardDisk)
-        self.controller = attachment.controller
-        self.port = attachment.port
-        self.device = attachment.device
+class jsStorageController:
+    def __init__(self, controller):
+        self.name = controller.name
 
-class jsHardDisk:
-    def __init__(self, hardDisk):
-        self.id = hardDisk.id
-        self.name = hardDisk.name
-        self.type = hardDisk.type
-        self.logicalSize = hardDisk.logicalSize
+class jsMedium:
+    def __init__(self, medium):
+        self.description = medium.description
+
+class jsMediumAttachment:
+    def __init__(self, attachment):
+        self.controller = attachment.controller
+        self.device = attachment.device
+        self.type = 0
+        self.port = attachment.port
 
 class jsMachine:
     def __init__(self, ctx, machine):
@@ -164,16 +164,21 @@ class jsMachine:
         self.memorySize = machine.memorySize
         self.VRAMSize = machine.VRAMSize
         self.accelerate3DEnabled = machine.accelerate3DEnabled
-        self.HWVirtExEnabled = machine.HWVirtExEnabled
-        self.HWVirtExNestedPagingEnabled = machine.HWVirtExNestedPagingEnabled
+        self.HWVirtExEnabled = machine.getHWVirtExProperty(ctx['global'].constants.HWVirtExPropertyType_Enabled)
+        self.HWVirtExNestedPagingEnabled = machine.getHWVirtExProperty(ctx['global'].constants.HWVirtExPropertyType_NestedPaging)
         self.VRDPServer = jsVRDPServer(ctx, machine)
         self.state = machine.state
         self.sessState = machine.sessionState
 
-        self.hardDiskAttachments = []
-        arrAtt = ctx['global'].getArray(machine, 'hardDiskAttachments')
+        self.storageControllers = []
+        arrStorageControllers = ctx['global'].getArray(machine, 'storageControllers')
+        for i in arrStorageControllers:
+            self.storageControllers.append(jsStorageController(i))
+
+        self.mediumAttachments = []
+        arrAtt = ctx['global'].getArray(machine, 'mediumAttachments')
         for i in arrAtt:
-            self.hardDiskAttachments.append(jsHardDiskAttachment(i))
+            self.mediumAttachments.append(jsMediumAttachment(i))
 
         maxBootPosition = ctx['vb'].systemProperties.maxBootPosition
         for i in range(1, maxBootPosition + 1):
@@ -513,7 +518,7 @@ class VBoxPageRoot:
         file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/templates/index.html')
         return serve_file(file, content_type='text/html')
 
-g_virtualBoxManager = vboxapi.VirtualBoxManager(None, None)
+g_vboxManager = vboxapi.VirtualBoxManager(None, None)
 g_threadPool = {}
 g_logLevel = 99
 g_sessionNum = 0
@@ -527,27 +532,27 @@ def log(level, str):
         print str
 
 def perThreadInit(threadIndex):
-    g_virtualBoxManager.initPerThread()
+    g_vboxManager.initPerThread()
 
 def perThreadDeinit(threadIndex):
-    g_virtualBoxManager.deinitPerThread()
+    g_vboxManager.deinitPerThread()
 
 def onShutdown():
     global g_serverTerminated
     g_serverTerminated = True
-    if hasattr(g_virtualBoxManager, 'interruptWaitEvents'):
-        g_virtualBoxManager.interruptWaitEvents()
+    if hasattr(g_vboxManager, 'interruptWaitEvents'):
+        g_vboxManager.interruptWaitEvents()
         return
 
-    # For Win32, we can do that w/o g_virtualBoxManager support easily
+    # For Win32, we can do that w/o g_vboxManager support easily
     if sys.platform == 'win32':
         from win32api import PostThreadMessage
         from win32con import WM_USER
-        PostThreadMessage(g_virtualBoxManager.platform.tid, WM_USER, None, None)
+        PostThreadMessage(g_vboxManager.platform.tid, WM_USER, None, None)
 
 def main(argv = sys.argv):
 
-    print "VirtualBox Version: %s, Platform: %s" %(g_virtualBoxManager.vbox.version, sys.platform)
+    print "VirtualBox Version: %s, Platform: %s" %(g_vboxManager.vbox.version, sys.platform)
 
     bRDPWebForceUpdate = False
 
@@ -559,14 +564,14 @@ def main(argv = sys.argv):
                 return
             h = hashlib.new('sha1')
             h.update(argv[3])
-            g_virtualBoxManager.vbox.setExtraData(
+            g_vboxManager.vbox.setExtraData(
                 "vboxweb/users/" + argv[2], h.hexdigest())
             return
         elif argv[1] == "deluser":
             if len(argv) <> 3:
                 print "Syntax: " + argv[0] + " deluser <username>"
                 return
-            g_virtualBoxManager.vbox.setExtraData("vboxweb/users/" + argv[2], "")
+            g_vboxManager.vbox.setExtraData("vboxweb/users/" + argv[2], "")
             return
         elif argv[1] == "rdpweb":
             if len(argv) <> 3:
@@ -579,13 +584,13 @@ VBoxWeb Command Usage:
 
     adduser <username> <password>
         -Add a new user to VBoxWeb
-        
+
     deluser <username>
         -Delete an existing user
-        
+
     rdpweb update
         -Update the embeddded flash RDP viewer
-        
+
     help
         -Display this message
 """
@@ -614,12 +619,12 @@ VBoxWeb Command Usage:
     s.close
 
     # Init config
-    ctx = {'global':g_virtualBoxManager,
-           'mgr':g_virtualBoxManager.mgr,
-           'vb':g_virtualBoxManager.vbox,
-           'ifaces':g_virtualBoxManager.constants,
-           'remote':g_virtualBoxManager.remote,
-           'type':g_virtualBoxManager.type,
+    ctx = {'global':g_vboxManager,
+           'mgr':g_vboxManager.mgr,
+           'vb':g_vboxManager.vbox,
+           'ifaces':g_vboxManager.constants,
+           'remote':g_vboxManager.remote,
+           'type':g_vboxManager.type,
            'serverAdr':serverAdr,
            'serverPort':serverPort
            }
@@ -644,14 +649,14 @@ VBoxWeb Command Usage:
       if sys.platform == 'darwin':
         while not g_serverTerminated:
             # We have no timed waits on Darwin, and waitForEvents(-1)
-            # blocks signal delivery for some reasons, thus we cannot send 
-            # wait interrupt notifcation. 
+            # blocks signal delivery for some reasons, thus we cannot send
+            # wait interrupt notifcation.
             # Instead we cheat a bit and just sleep() between events
-            g_virtualBoxManager.waitForEvents(0)
-            time.sleep(0.3) 
+            g_vboxManager.waitForEvents(0)
+            time.sleep(0.3)
       else:
           while not g_serverTerminated:
-            g_virtualBoxManager.waitForEvents(-1)
+            g_vboxManager.waitForEvents(-1)
     except KeyboardInterrupt:
         pass
 
