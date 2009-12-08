@@ -281,15 +281,82 @@ var vboxGlobal = Class.create(
 
     hardDiskType: function (type)
     {
-        var strType = 'Unkown'
+        var strType = ("Unkown Hard Disk Type");
         switch (type)
         {
-            case 0: strType = 'Normal'; break;
-            case 1: strType = 'Immutable'; break;
-            case 2: strType = 'Writethrough'; break;
+            case 0: strType = tr("Normal"); break;
+            case 1: strType = tr("Immutable"); break;
+            case 2: strType = tr("Writethrough"); break;
 
             default: break;
         }
         return strType;
+    },
+
+    storageBusName: function (storageBus)
+    {
+        var strName = tr("Unkown Bus Name");
+        switch (controllerType)
+        {
+            case 1: strName = tr("IDE"); break;
+            case 2: strName = tr("SATA"); break;
+            case 3: strName = tr("SCSI"); break;
+            case 4: strName = tr("Floppy"); break;
+
+            default: break;
+        }
+        return strName;
+    },
+
+    storageBusPortName: function (storageBus, deviceSlot, portNum)
+    {
+        var strName = tr("Invalid Bus Port Name");
+        switch (storageBus)
+        {
+            case 1: /* IDE */
+                switch (deviceSlot)
+                {
+                    case 0: strName = tr("Primary"); break;
+                    case 1: strName = tr("Secondary"); break;
+                }
+                strName += " ";
+                switch (portNum)
+                {
+                    case 0: strName += tr("Master"); break;
+                    case 1: strName += tr("Slave"); break;
+                }
+                break;
+
+            case 2: /* SATA */
+                strName = "Port " + portNum;
+                break;
+            case 3: /* SCSI */
+                strName = "ID " + portNum;
+                break;
+            case 4: /* Floppy */
+                strName = "Floppy Device "  + portNum;
+                break;
+
+            default: break;
+        }
+        return strName;
+    },
+
+    storageControllerName: function (controllerType)
+    {
+        var strName = tr("Unkown Storage Controller");
+        switch (controllerType)
+        {
+            case 1: strName = tr("LsiLogic"); break;
+            case 2: strName = tr("BusLogic"); break;
+            case 3: strName = tr("IntelAhci"); break;
+            case 4: strName = tr("PIIX3"); break;
+            case 5: strName = tr("PIIX4"); break;
+            case 6: strName = tr("ICH6"); break;
+            case 7: strName = tr("I82078"); break;
+
+            default: break;
+        }
+        return strName;
     }
 });

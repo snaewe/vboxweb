@@ -129,7 +129,7 @@ var vboxTabWidget = Class.create(
         var mach = curItem.machine();
         var bootOrder = mach.jsonObject.bootOrder; /* A bit hacky, find a better way later! */
         var strBootOrder = vbGlobal.deviceType(bootOrder[0])
-        for (i=1; i<bootOrder.length; i++)
+        for (var i=1; i<bootOrder.length; i++)
         {
             if (bootOrder[i] > 0)
                 strBootOrder = strBootOrder + ", " + vbGlobal.deviceType(bootOrder[i]);
@@ -157,20 +157,37 @@ var vboxTabWidget = Class.create(
             jQuery("#tab-details-vm-display-rdpport-val").text(tr("Disabled") + " (" + tr("Port(s) ") + vrdpServer.getPorts() + ")");
 
         /* Storage */
-        jQuery("li.storage-list-item").remove();
+        var jaStorageList = jQuery("#tab-details-vm-storage-list"); /* ja* = jQuery Anchor */
+        var strTemp = "";
         var storageControllers = mach.getStorageControllers();
-        for (i = 0; i < storageControllers.length; i++)
+        var mediumAttachments = mach.getMediumAttachments();
+        for (var i = 0; i < storageControllers.length; i++)
         {
             var controller = storageControllers[i];
-            /** @todo implement medium <-> storage controller enumeration here */
-            jQuery("#tab-details-vm-storage-list").append('<li class="storage-list-item">' + controller.name + "</li>");
-        }
+            strTemp += '<div class="tab-details-vm-attribute">' + controller.name + '</div>';
+            strTemp += '<div class="tab-details-vm-value"></div>';
+            strTemp += '<div style="clear: both"></div>';
 
-        if (storageControllers.length <= 0)
-        {
-            jQuery("#tab-details-vm-storage-list").
-                append('<li class="storage-list-item">' + tr("No storage attached") + "</li>");
+            /* List all medium attachments connected to this controller */
+            for (var a = 0; a < mediumAttachments.length; a++)
+            {
+                var mediumAtt = mediumAttachments[a];
+                if (mediumAtt.controller == controller.name)
+                {
+                    strTemp += '<div class="tab-details-vm-attribute" style="padding-left: 10px">';
+                    strTemp += vbGlobal.storageBusPortName(controller.bus, mediumAtt.device, mediumAtt.port);
+                    strTemp += '</div>';
+                    strTemp += '<div class="tab-details-vm-value">';
+                    if (mediumAtt.medium.location != undefined)
+                        strTemp += mediumAtt.medium.location;
+                    else
+                        strTemp += tr("Empty");
+                    strTemp += '</div>';
+                    strTemp += '<div style="clear: both"></div>';
+                }
+            }
         }
+        jaStorageList.html(strTemp);
     },
 
     invalidatePageRDP: function(curItem, pageSelected)

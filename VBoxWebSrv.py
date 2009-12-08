@@ -140,17 +140,31 @@ class jsGuestOSType:
 class jsStorageController:
     def __init__(self, controller):
         self.name = controller.name
+        self.maxDevicesPerPortCount = controller.maxDevicesPerPortCount
+        self.minPortCount = controller.minPortCount
+        self.maxPortCount = controller.maxPortCount
+        self.instance = controller.instance
+        self.portCount = controller.portCount
+        self.bus = controller.bus
+        self.controllerType = controller.controllerType
 
 class jsMedium:
     def __init__(self, medium):
-        self.description = medium.description
+        if medium is None: # Medium can be none when removable media
+            return
+        self.location = medium.location
+        self.name = medium.name
 
 class jsMediumAttachment:
     def __init__(self, attachment):
-        self.controller = attachment.controller
-        self.device = attachment.device
-        self.type = 0
+        if hasattr(attachment, "medium"):
+            self.medium = jsMedium(attachment.medium)
+        else:
+            self.medium = 0
+        self.controller = attachment.controller # Name of the controller
         self.port = attachment.port
+        self.device = attachment.device
+        self.type = attachment.type
 
 class jsMachine:
     def __init__(self, ctx, machine):
