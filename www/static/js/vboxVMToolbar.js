@@ -71,21 +71,21 @@ var vboxVMToolbar = Class.create(
                 break;
 
             case "toolbar-button-start-pause":
-                if (state == VMState.Running)
+                if (state == MachineState.Running)
                     vbGlobal.mVirtualBox.pauseVM(id);
-                else if (state == VMState.Paused)
+                else if (state == MachineState.Paused)
                     vbGlobal.mVirtualBox.resumeVM(id);
                 else
                     vbGlobal.mVirtualBox.startVM(id);
                 break;
 
             case "toolbar-button-stop-discard":
-                if (state == VMState.Running ||
-                    state == VMState.Paused)
+                if (state == MachineState.Running ||
+                    state == MachineState.Paused)
                 {
                     vboxDialogs.showPowerOffDialog();
                 }
-                else if (state == VMState.Saved)
+                else if (state == MachineState.Saved)
                 {
                     log("Discard VM not implemented!");
                 }
@@ -113,8 +113,8 @@ var vboxVMToolbar = Class.create(
         var state = curItem.state();
 
         /* settings can only be changed for powered off and aborted VMs */
-        if (state == VMState.PoweredOff ||
-            state == VMState.Aborted)
+        if (state == MachineState.PoweredOff ||
+            state == MachineState.Aborted)
         {
             jQuery("#toolbar-button-vm-settings-span").html('<img id="toolbar-button-settings" src="/images/vbox/vm_settings_32px.png" alt=""/>');
             jQuery("#toolbar-button-settings").qtip({ content: 'Change settings of selected virtual machine' });
@@ -123,15 +123,15 @@ var vboxVMToolbar = Class.create(
             jQuery("#toolbar-button-vm-settings-span").html('<img src="/images/vbox/vm_settings_disabled_32px.png" alt=""/>');
 
         /* powered off / aborted, paused and saved VMs can be started */
-        if (state == VMState.PoweredOff ||
-            state == VMState.Aborted ||
-            state == VMState.Saved ||
-            state == VMState.Paused)
+        if (state == MachineState.PoweredOff ||
+            state == MachineState.Aborted ||
+            state == MachineState.Saved ||
+            state == MachineState.Paused)
         {
             jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_start_32px.png" alt=""/">');
             jQuery("#toolbar-button-start-pause").qtip({ content: 'Start currently selected virtual machine' });
         }
-        else if (state == VMState.Running)
+        else if (state == MachineState.Running)
         {
             jQuery("#toolbar-button-vm-start-span").html('<img id="toolbar-button-start-pause" src="/images/vbox/vm_pause_32px.png" alt=""/>');
             jQuery("#toolbar-button-start-pause").qtip({ content: 'Pause the currently selected virtual machine' });
@@ -140,13 +140,13 @@ var vboxVMToolbar = Class.create(
             jQuery("#toolbar-button-vm-start-span").html('<img src="/images/vbox/vm_start_disabled_32px.png" alt=""/>');
 
         /* saved VMs can be discarded */
-        if (state == VMState.Saved)
+        if (state == MachineState.Saved)
         {
             jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_discard_32px.png" alt=""/>');
             jQuery("#toolbar-button-stop-discard").qtip({ content: 'Discard the saved state of the currently selected virtual machine' });
         }
-        else if (state == VMState.Running ||
-                 state == VMState.Paused)
+        else if (state == MachineState.Running ||
+                 state == MachineState.Paused)
         {
             jQuery("#toolbar-button-vm-stop-span").html('<img id="toolbar-button-stop-discard" src="/images/vbox/vm_poweroff_32px.png" alt=""/>');
             jQuery("#toolbar-button-stop-discard").qtip({ content: 'Power down the currently selected virtual machine' });

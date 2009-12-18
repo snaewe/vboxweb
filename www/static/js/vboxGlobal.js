@@ -23,20 +23,30 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-VMState =
+MachineState =
 {
     PoweredOff: 1,
     Saved: 2,
-    Aborted: 3,
-    Running: 4,
-    Paused: 5,
-    Stuck: 6,
-    Starting: 7,
-    Stopping: 8,
-    Saving: 9,
-    Restoring: 10,
-    Discarding: 11,
-    SettingUp: 12
+    Teleported: 3,
+    Aborted: 4,
+    Running: 5,
+    Paused: 6,
+    Stuck: 7,
+    Teleporting: 8,
+    LiveSnapshotting: 9,
+    Starting: 10,
+    Stopping: 11,
+    Saving: 12,
+    Restoring: 13,
+    TeleportingPausedVM: 14,
+    TeleportingIn: 15,
+    RestoringSnapshot: 16,
+    DeletingSnapshot: 17,
+    SettingUp: 18,
+    FirstOnline: 5,
+    LastOnline: 13,
+	FirstTransient: 8,
+	LastTransient: 18
 };
 
 var vboxGlobal = Class.create(
@@ -99,26 +109,32 @@ var vboxGlobal = Class.create(
         return strDevice;
     },
 
-    vmStateIcon: function (state)
+    machineStateIcon: function (state)
     {
         var strBasePath = "/images/vbox/";
         var strIcon = "state_powered_off_16px.png";
+        var strNoIcon = "state_running_16px.png";
 
         switch (state)
         {
-            case 1: strIcon = "state_powered_off_16px.png"; break;
-            case 2: strIcon = "state_saved_16px.png"; break;
-            case 3: strIcon = "state_aborted_16px.png"; break;
-            case 4: strIcon = "state_running_16px.png"; break;
-            case 5: strIcon = "state_paused_16px.png"; break;
-            case 6: strIcon = "state_stuck_16px.png"; break;
-            case 7: strIcon = "state_running_16px.png"; break;
-            case 8: strIcon = "state_running_16px.png"; break;
-            case 9: strIcon = "state_saving_16px.png"; break;
-            case 10: strIcon = "state_restoring_16px.png"; break;
-            case 11: strIcon = "state_discarding_16px.png"; break;
-            case 12: strIcon = "settings_16px.png"; break;
-
+            case MachineState.PoweredOff: strIcon = "state_powered_off_16px.png"; break;
+            case MachineState.Saved: strIcon = "state_saved_16px.png"; break;
+            case MachineState.Teleported: strIcon = strNoIcon; break;
+            case MachineState.Aborted:  strIcon = "state_aborted_16px.png"; break;
+            case MachineState.Running: strIcon = "state_running_16px.png"; break;
+            case MachineState.Paused: strIcon = "state_paused_16px.png"; break;
+            case MachineState.Stuck: strIcon = "state_stuck_16px.png"; break;
+            case MachineState.Teleporting: strIcon = strNoIcon; break;
+            case MachineState.LiveSnapshotting: strIcon = strNoIcon; break;
+            case MachineState.Starting: strIcon = strNoIcon; break;
+            case MachineState.Stopping: strIcon = strNoIcon; break;
+            case MachineState.Saving: strIcon = "state_discarding_16px.png"; break;
+            case MachineState.Restoring: strIcon = "settings_16px.png"; break;
+            case MachineState.TeleportingPausedVM: strIcon = strNoIcon; break;
+            case MachineState.TeleportingIn: strIcon = strNoIcon; break;
+            case MachineState.RestoringSnapshot: strIcon = strNoIcon; break;
+            case MachineState.DeletingSnapshot: "discarding_16px.png"; break;
+            case MachineState.SettingUp: strIcon = strNoIcon; break;
             default:
                 break;
         }
@@ -126,46 +142,64 @@ var vboxGlobal = Class.create(
         return strBasePath + strIcon;
     },
 
-    vmStateDescription: function(state)
+    machineStateDescription: function(state)
     {
         /** @todo use an array instead of this huge switch statement */
         var strState = tr("Unknown");
         switch(state)
         {
-            case VMState.PoweredOff:
+            case MachineState.PoweredOff:
                 strState = tr("Powered Off");
                 break;
-            case VMState.Saved:
+            case MachineState.Saved:
                 strState = tr("Saved");
                 break;
-            case VMState.Aborted:
+            case MachineState.Teleported:
+                strState = tr("Teleported");
+                break;
+            case MachineState.Aborted:
                 strState = tr("Aborted");
                 break;
-            case VMState.Running:
+            case MachineState.Running:
                 strState = tr("Running");
                 break;
-            case VMState.Paused:
+            case MachineState.Paused:
                 strState = tr("Paused");
                 break;
-            case VMState.Stuck:
+            case MachineState.Stuck:
                 strState = tr("Stuck");
                 break;
-            case VMState.Starting:
+            case MachineState.Teleporting:
+                strState = tr("Teleporting");
+                break;
+            case MachineState.LiveSnapshotting:
+                strState = tr("LiveSnapshotting");
+                break;
+            case MachineState.Starting:
                 strState = tr("Starting");
                 break;
-            case VMState.Stopping:
+            case MachineState.Stopping:
                 strState = tr("Stopping");
                 break;
-            case VMState.Saving:
+            case MachineState.Saving:
                 strState = tr("Saving");
                 break;
-            case VMState.Restoring:
+            case MachineState.Restoring:
                 strState = tr("Restoring");
                 break;
-            case VMState.Discarding:
-                strState = tr("Discarding");
+            case MachineState.TeleportingPausedVM:
+                strState = tr("Teleporting Paused");
                 break;
-            case VMState.SettingUp:
+            case MachineState.TeleportingIn:
+                strState = tr("Teleporting In");
+                break;
+            case MachineState.RestoringSnapshot:
+                strState = tr("Restoring Snapshot");
+                break;
+            case MachineState.DeletingSnapshot:
+                strState = tr("Deleting Snapshot");
+                break;
+            case MachineState.SettingUp:
                 strState = tr("Setting Up");
                 break;
             default:

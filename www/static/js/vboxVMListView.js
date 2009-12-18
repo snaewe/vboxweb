@@ -220,8 +220,8 @@ var vboxVMListView = Class.create(
                             '</td>'+
                             '<td width="100%" nowrap="nowrap" class="vmlist-entry-vmname">'+
                                 '<b>' + curItem.name() + '</b><br/>' +
-                                '<img alt="" class="vmlist-entry-stateicon" src="' + vbGlobal.vmStateIcon(curItem.state()) + '"/>&nbsp;' +
-                                vbGlobal.vmStateDescription(curItem.state()) +
+                                '<img alt="" class="vmlist-entry-stateicon" src="' + vbGlobal.machineStateIcon(curItem.state()) + '"/>&nbsp;' +
+                                vbGlobal.machineStateDescription(curItem.state()) +
                             '</td>'+
                         '</tr>'+
                     '</table>'+
