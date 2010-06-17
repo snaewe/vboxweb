@@ -6,7 +6,7 @@
         XSLT stylesheet that generates VirtualBox_main.js from
         VirtualBox.xidl.
 
-        Copyright (C) 2009 Sun Microsystems, Inc.
+        Copyright (C) 2010 Oracle Corporation
 -->
 
 <xsl:output
@@ -86,7 +86,7 @@
 </xsl:template>
 
 <xsl:template match="/">
- <xsl:text>/* Copyright (C) 2009 Sun Microsystems, Inc.
+ <xsl:text>/* Copyright (C) 2010 Oracle Corporation
 
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

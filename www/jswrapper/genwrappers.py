@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2009 Sun Microsystems, Inc.
+# Copyright (C) 2010 Oracle Corporation
 
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2009 Sun Microsystems, Inc.
+# Copyright (C) 2010 Oracle Corporation
 
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -107,7 +107,7 @@ def checkForUpdate(url = None, dest = None, proxies = None, forceUpdate = False)
             return
 
         # Download the ZIP
-        print "Downloading Sun RDP Web Control ..."
+        print "Downloading Oracle RDP Web Control ..."
         rdpFile = "rdpweb_" + str(fVersion) + ".zip"
         download(url + rdpFile, dest + rdpFile)
         print "Download complete. Extracting ..."
