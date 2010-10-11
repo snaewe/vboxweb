@@ -664,9 +664,9 @@ class VBoxWeb:
 		if self.checkAuth():
 			if cherrypy.request.params.get('vbwlogin'):
 				raise cherrypy.HTTPRedirect('/')
-			file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/static/index.html')
+			file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/index.html')
 		else:
-			file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/static/login.html')
+			file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/login.html')
 			
 		cherrypy.response.headers["Expires"] = "Mon, 26 Jul 1997 05:00:00 GMT"
 		cherrypy.response.headers['Last-Modified'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())
@@ -708,19 +708,19 @@ class WebServerThread(threading.Thread):
 		cherrypy.quickstart(VBoxWeb(self.ctx), '/', {
 				'/rdpweb': {
 					'tools.staticdir.on': True,
-					'tools.staticdir.dir': 'www/static/rdpweb'},													
+					'tools.staticdir.dir': 'www/rdpweb'},													
                 '/images': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir': 'www/static/images'},
+                    'tools.staticdir.dir': 'www/images'},
                 '/panes': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir': 'www/static/panes'},
+                    'tools.staticdir.dir': 'www/panes'},
                 '/css': {
                     'tools.staticdir.on': True,
                     'tools.staticdir.dir': 'www/css'},
                 '/js': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir': 'www/static/js'},                    
+                    'tools.staticdir.dir': 'www/js'},                    
                 }
         )
 

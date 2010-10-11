@@ -2,7 +2,7 @@
  * English / US language file
  *
  *
- * $Id: en_us.php 57 2010-08-20 13:44:33Z imooreyahoo $
+ * $Id$
  *
 """
 
