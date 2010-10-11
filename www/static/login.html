@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "html-dtd/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+<head>
+
+	<!-- $Id: index.html 57 2010-08-20 13:44:33Z imooreyahoo $ -->
+	<title>VirtualBox Web Console</title>
+
+	<!-- Icon -->
+	<link rel="shortcut icon" href="images/favicon.ico"/>
+
+	<!-- Meta fields. -->
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="Expires" content="0"/>
+	<meta http-equiv="Cache-Control" content ="no-cache"/>
+	<meta http-equiv="Cache-Control" content ="no-store, must-revalidate, max-age=0"/>
+	<meta http-equiv="Cache-Control" content ="post-check=0, pre-check=0"/>
+	<meta http-equiv="Pragma" content="no-cache"/>
+	
+	<!--  Style sheets -->
+    <link rel="stylesheet" type="text/css" href="css/jquery-ui.css"/>
+    <link rel="stylesheet" type="text/css" href="css/jquery.contextMenu.css"/>
+	<link rel="stylesheet" type="text/css" href="css/tipped.css" />
+	<link rel="stylesheet" type="text/css" href="css/jquery.contextMenu.css"/>
+	<link rel="stylesheet" type="text/css" href="css/jqueryFileTree.css" />
+	<link rel="stylesheet" type="text/css" href="css/mediumselect.css"/>       
+    <link rel="stylesheet" type="text/css" href="css/layout.css"/>
+
+       
+    <!-- External / vendor scripts -->
+    <script type="text/javascript" src="js/jquery-1-4-2.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.8.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery.contextMenu.js"></script>
+	<script type="text/javascript" src="js/jquery.tipped-1.5.min.js"></script>
+	<script type="text/javascript" src="js/jqueryFileTree.js"></script>	
+	<script type="text/javascript" src="js/jquery.jec-1.2.5.js"></script>
+	
+	<!-- Internal Scripts -->
+   	<script type="text/javascript" src="js/vboxweb.js"></script>
+    <script type="text/javascript" src="js/utils.js"></script>
+	<script type="text/javascript" src="js/dialogs.js"></script>
+	<script type="text/javascript" src="getLangData"></script>
+	
+	<script type='text/javascript'>
+		$(document).ready(function(){
+
+			$('#vboxIndex').data('vboxLangData',vboxLangData);
+
+			$('#vboxLoginForm').find("span.translate").html(function(i,h){return trans(h);}).removeClass('translate');
+			
+			buttons = {}
+			buttons[trans('Log in')] = function() {
+				document.forms[0].submit()
+			}
+			$('#vboxLoginForm').dialog({'closeOnEscape':false,'width':'auto','height':145,'buttons':buttons,'resizable':false,'modal':true,'autoOpen':true,'stack':true,'dialogClass':'vboxDialogContent','title':'VirtualBox Web Console'});
+
+			// Check for message
+			var query = document.location.search.substr(1).split('&');
+			for(var kv in query) {
+				kv = query[kv].split('=');
+				if(kv[0] == 'vbwlogin') {
+					vboxAlert('<p>'+trans('Login failed')+'</p>',{'width':'400px'});
+					break;
+				}
+			}
+		});
+	</script>
+	<style type='text/css'>
+	</style>
+</head>
+<body>
+<div id='vboxIndex'>
+<div id='vboxLoginForm' style='display: none'>
+<form method='post' action='/?vbwlogin=1'>
+<table style='width: 50%'>
+	<tr>
+		<th style='align: right'><span class='translate'>Username</span>:</th>
+		<td style='align: left'><input name='username' type='text' class='vboxText' /></td>
+	</tr>
+	<tr>
+		<th style='align: right'><span class='translate'>Password</span>:</th>
+		<td style='align: left'><input name='password' type='password' class='vboxText' /></td>
+	</tr>
+</table>
+</form>
+</div>
+</div>
+</body>
+</html>

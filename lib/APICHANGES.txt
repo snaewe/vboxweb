@@ -1,0 +1,29 @@
+VirtualBox_wrappers::IWebsessionManager2
+
+	def logoff(self, _arg_refIVirtualBox):
+
+		req=IWebsessionManager_logoffRequestMsg()
+		req._this=self.handle
+       
+		req._refIVirtualBox=_arg_refIVirtualBox
+		val=self.mgr.getPort().IWebsessionManager_logoff(req)
+  
+  		""" Important!!! """
+		self.port.binding.h.close()     
+		return 
+
+		
+VirtualBox_wrappers::MachineState::_NameMap
+
+	removed FirstOnline and LastOnline
+	
+
+
+VirtualBox_wrappers::VirtualSystemDescriptionType(IUnknown):
+
+   def __init__(self,mgr,handle,isarray=False):
+       self.mgr=mgr
+       self.isarray = isarray
+
+BUGS
+IVirtualBoxErrorInfo::resultCode is an int where it should be a long       

@@ -1,708 +1,842 @@
 #!/usr/bin/env python
-#
-# Copyright (C) 2010 Oracle Corporation
-
-# Permission is hereby granted, free of charge, to any person
-# obtaining a copy of this software and associated documentation
-# files (the "Software"), to deal in the Software without
-# restriction, including without limitation the rights to use,
-# copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following
-# conditions:
-
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-# OTHER DEALINGS IN THE SOFTWARE.
-
+"""
+	$Id$
+	Copyright (C) 2010 Ian Moore (imoore76 at yahoo dot com)
+"""
 import cherrypy
+from cherrypy.lib.static import serve_file
 import os
 import socket
 import sys
 import threading
 import urllib
 import hashlib
+import math
 import time
+import inspect
+import traceback
+import re
+import StringIO
+import types
+import md5
+import random
+import uuid
+import gc
+from email.utils import parsedate_tz
 
-from genshi.template import TemplateLoader
-from genshi.filters import HTMLFormFiller
-
-if sys.version_info < (2, 6):
-    import simplejson
-    isSimpleJson = True
-else:
-    import json
-    isSimpleJson = False
-
-from cherrypy.lib.static import serve_file
+# Enable garbage collection
+gc.enable()
+gc.set_debug(gc.DEBUG_UNCOLLECTABLE)
 
 if sys.platform == 'win32':
-    import pythoncom
-    import win32com
+	try:
+		import pythoncom
+	except Exception, e:
+		print str(e)
+		print "Please install Python for Windows extensions found at\nhttp://sourceforge.net/projects/pywin32/files/"
+		quit()
+	import win32com
 
-# VirtualBox API
-import vboxapi
+	try:
+		import vboxapi # Main VirtualBox API
+	except Exception, e:
+		print "\n"
+		print str(e)
+		print "\nPlease run the vboxapisetup.py python script found in\n<VirtualBox Installation folder>\\sdk\\install\n\n"
+		print "'cd' into the folder and run " + str(os.path.abspath(sys.executable)) + " vboxapysetup.py install"
+		quit()
+else:
+	import vboxapi # Main VirtualBox API
 
 # VBoxWeb modules
-sys.path.insert(0,'modules')
-from vboxGuestMonitor import VBoxGuestMonitor
-import vboxRDPWeb
-from vboxVBoxMonitor import VBoxMonitor
+sys.path.insert(0,'lib')
+sys.path.insert(0,'languages')
 
-SESSION_KEY = '_cp_username'
+# Load vbox connector
+import vboxactions
 
-def require(*conditions):
-    """A decorator that appends conditions to the auth.require config
-    variable."""
-    def decorate(f):
-        if not hasattr(f, '_cp_config'):
-            f._cp_config = dict()
-        if 'auth.require' not in f._cp_config:
-            f._cp_config['auth.require'] = []
-        f._cp_config['auth.require'].extend(conditions)
-        return f
-    return decorate
+
+"""
+
+	JSON imports and helpers
+	
+"""
+
+if sys.version_info < (2, 6):
+	try:
+		import simplejson
+		jsonType = 'simplejson'
+	except:
+		print "Warning: using internal JSON encoder. Installing simplejson for python (usually a package named python-simplejson) will improve performance."
+		jsonType = 'internal'
+else:
+    import json
+    jsonType = 'json'
 
 def convertObjToJSON(obj):
-    # print 'default(', repr(obj), ')'
-    # Convert objects to a dictionary of their representation
     d = { '__class__':obj.__class__.__name__}
     d.update(obj.__dict__)
     return d
 
-if isSimpleJson:
+if jsonType == 'simplejson':
     class ConvertObjToJSONClass(simplejson.JSONEncoder):
         def default(self, obj):
-            return convertObjToJSON(obj)
+			return convertObjToJSON(obj)
 
-#
-# @todo write autowrapper for attributes main-like classes below.
-#       Currently this involves too much copying around.
-#
-class jsHeader:
-    def __init__(self, ctx, arrMach, type, statusMessage = ""):
-        self.magic = "jsVBxWb"
-        self.ver = 1
+def jsonEncode(data):
+	""" Last resort JSON encoder """
+	if type(data) == type(dict()):
+		l = []
+		for k in data.keys():
+			l.append(jsonEncode(str(k))+": "+jsonEncode(data[k]))
+		return str('{ ' + ', '.join(l) + ' }')
+	elif type(data) == type(list()):
+		l = []
+		for i in range(len(data)):
+			l.append(jsonEncode(data[i]))
+		return str('[' + ', '.join(l) + ']')
+	elif type(data) == types.NoneType:
+		return str("null")
+	elif type(data) == type(int()):
+		return str(int(data))
+	elif type(data) == type(bool()):
+		return str('true' if data else 'false')
+	elif type(data) == types.InstanceType and data.__class__.__name__ == 'Boolean':
+		return str(jsonEncode(bool(data)))
+	else:
+		return str('"' + str(data).replace('\\', '\\\\').replace('"','\\"').replace("\r","\\r").replace("\n","\\n") + '"')
 
-        self.username = cherrypy.request.login
-        self.sessionID = cherrypy.session.id
-        self.numMach = len(arrMach)
-        self.updateType = type
-        self.statusMessage = statusMessage
 
-class jsVirtualBox:
-    def __init__(self, ctx):
-        arrOSTypes = ctx['global'].getArray(ctx['vb'], 'guestOSTypes')
-        self.arrGuestOSTypes = []
-        for type in arrOSTypes:
-            self.arrGuestOSTypes.append(jsGuestOSType(type))
-        self.numGuestOSTypes = len(self.arrGuestOSTypes)
 
-class jsVRDPServer:
-    def __init__(self, ctx, machine):
-        vrdp = machine.VRDPServer
-        self.enabled = vrdp.enabled
-        # the actual VRDP port has to be read from the extra data
-        port = machine.getExtraData("VBoxInternal2/VRDPBindPort")
-        if port and port != "invalid":
-            self.ports = port
-        else:
-            self.ports = vrdp.ports
-        self.netAddress = vrdp.netAddress
-        if not self.netAddress:
-            self.netAddress = ctx['serverAdr']
 
-        self.authType = vrdp.authType
-        self.allowMultiConnection = vrdp.allowMultiConnection
-        self.reuseSingleConnection = vrdp.reuseSingleConnection
+"""
 
-class jsGuestOSType:
-    def __init__(self, guestOSType):
-        self.familyId = guestOSType.familyId
-        self.familyDescription = guestOSType.familyDescription
-        self.id = guestOSType.id
-        self.description = guestOSType.description
-        self.is64Bit = guestOSType.is64Bit
-        self.recommendedIOAPIC = guestOSType.recommendedIOAPIC
-        self.recommendedVirtEx = guestOSType.recommendedVirtEx
-        self.recommendedRAM = guestOSType.recommendedRAM
-        self.recommendedVRAM = guestOSType.recommendedVRAM
-        self.recommendedHDD = guestOSType.recommendedHDD
-
-class jsStorageController:
-    def __init__(self, controller):
-        self.name = controller.name
-        self.maxDevicesPerPortCount = controller.maxDevicesPerPortCount
-        self.minPortCount = controller.minPortCount
-        self.maxPortCount = controller.maxPortCount
-        self.instance = controller.instance
-        self.portCount = controller.portCount
-        self.bus = controller.bus
-        self.controllerType = controller.controllerType
-
-class jsMedium:
-    def __init__(self, medium):
-        if medium is None: # Medium can be none when removable media
-            return
-        self.location = medium.location
-        self.name = medium.name
-
-class jsMediumAttachment:
-    def __init__(self, attachment):
-        if hasattr(attachment, "medium"):
-            self.medium = jsMedium(attachment.medium)
-        else:
-            self.medium = 0
-        self.controller = attachment.controller # Name of the controller
-        self.port = attachment.port
-        self.device = attachment.device
-        self.type = attachment.type
-
-class jsMachine:
-    def __init__(self, ctx, machine):
-        self.accessible = machine.accessible
-        self.name = machine.name
-        self.desc = machine.description
-        self.id = machine.id
-        self.OSTypeId = machine.OSTypeId
-        self.CPUCount = machine.CPUCount
-        self.bootOrder = []
-        self.memorySize = machine.memorySize
-        self.VRAMSize = machine.VRAMSize
-        self.accelerate3DEnabled = machine.accelerate3DEnabled
-        self.HWVirtExEnabled = machine.getHWVirtExProperty(ctx['global'].constants.HWVirtExPropertyType_Enabled)
-        self.HWVirtExNestedPagingEnabled = machine.getHWVirtExProperty(ctx['global'].constants.HWVirtExPropertyType_NestedPaging)
-        self.VRDPServer = jsVRDPServer(ctx, machine)
-        self.state = machine.state
-        self.sessState = machine.sessionState
-
-        self.storageControllers = []
-        arrStorageControllers = ctx['global'].getArray(machine, 'storageControllers')
-        for i in arrStorageControllers:
-            self.storageControllers.append(jsStorageController(i))
-
-        self.mediumAttachments = []
-        arrAtt = ctx['global'].getArray(machine, 'mediumAttachments')
-        for i in arrAtt:
-            self.mediumAttachments.append(jsMediumAttachment(i))
-
-        maxBootPosition = ctx['vb'].systemProperties.maxBootPosition
-        for i in range(1, maxBootPosition + 1):
-            self.bootOrder.append(machine.getBootOrder(i))
-
-class VBoxMachine:
-    def __init__(self, mach):
-        self.mach = mach
-        self.isDirty = True
-
-class VBoxPageRoot:
-    def __init__(self, ctx):
-        self.ctx = ctx
-
-        # Ugly COM stuff
-        self.initCOM = False
-        if sys.platform == 'win32':
-            self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vb'])
-
-        # Init JSON printer
-        self.jsonPrinter = None
-        if isSimpleJson:
-            self.jsonPrinter = simplejson.dumps
-        else:
-            if hasattr(json, "dumps"):
-                self.jsonPrinter = json.dumps
-            elif hasattr(json, "write"):
-                self.jsonPrinter = json.write
-        self.arrMach = []
-
-        self.templateLoader = TemplateLoader (
-            os.path.join(os.path.dirname(__file__), 'templates'),
-            auto_reload=True
-        )
-
-        # Register authentication check handler
-        cherrypy.tools.auth = cherrypy.Tool('before_handler', self.checkAuth)
-
-    def prepareCOM(self):
-        if self.initCOM is False:
-            if sys.platform == 'win32':
-                # Get the "real" VBox interface from the stream created in the class constructor above
-                i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
-                self.ctx['vb'] = win32com.client.Dispatch(i)
-            self.initCOM = True
-
-    def checkAuth(self, *args, **kwargs):
-        """A tool that looks in config for 'auth.require'. If found and it
-        is not None, a login is required and the entry is evaluated as alist of
-        conditions that the user must fulfill"""
-        conditions = cherrypy.request.config.get('auth.require', None)
-        # format GET params
-        get_parmas = urllib.quote(cherrypy.request.request_line.split()[1])
-        if conditions is not None:
-            username = cherrypy.session.get(SESSION_KEY)
-            if username:
-                cherrypy.request.login = username
-                for condition in conditions:
-                    # A condition is just a callable that returns true orfalse
-                    if not condition():
-                        # Send old page as from_page parameter
-                        raise cherrypy.HTTPRedirect("/login?from_page=%s" % get_parmas)
-            else:
-                # Send old page as from_page parameter
-                raise cherrypy.HTTPRedirect("/login?from_page=%s" %get_parmas)
-
-    def check_credentials(self, username, password):
-        """Verifies credentials for username and password.
-        Returns None on success or a string describing the error on failure"""
-        pwdDigest = self.ctx['vb'].getExtraData("vboxweb/users/" + username)
-        h = hashlib.new('sha1')
-        h.update(password)
-        if h.hexdigest() == pwdDigest:
-            return None
-        else:
-            return u"Incorrect username or password."
-
-    def on_login(self, username):
-        """Called on successful login"""
-
-    def on_logout(self, username):
-        """Called on logout"""
-
-    def get_loginform(self, username, msg="Enter login information", from_page="/"):
-        tmpl = self.templateLoader.load('template_login.html')
-        return tmpl.generate(username=username, message=msg, from_page=from_page).render('html', doctype='html')
-
-    @cherrypy.expose
-    def login(self, username=None, password=None, from_page="/"):
-        self.prepareCOM()
-        if username is None or password is None:
-            return self.get_loginform("", from_page=from_page)
-
-        error_msg = self.check_credentials(username, password)
-        if error_msg:
-            return self.get_loginform(username, error_msg, from_page)
-        else:
-            cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
-            self.on_login(username)
-            raise cherrypy.HTTPRedirect(from_page or "/")
-
-    @cherrypy.expose
-    def logout(self, from_page="/"):
-        self.prepareCOM()
-        sess = cherrypy.session
-        username = sess.get(SESSION_KEY, None)
-        sess[SESSION_KEY] = None
-        if username:
-            cherrypy.request.login = None
-            self.on_logout(username)
-        raise cherrypy.HTTPRedirect(from_page or "/")
-
-    def populateVMList(self):
-        vboxVMList=self.ctx['global'].getArray(self.ctx['vb'], 'machines')
-        self.arrMach = []
-        for m in vboxVMList: # Append all machines
-            self.arrMach.append(VBoxMachine(m))
-
-    def getMachine(self, id):
-        for m in self.arrMach: # @todo slow, speed this up
-            if cmp(m.mach.id, id) == 0:
-                return m
-        return None
-
-    def machineSetDirty(self, id):
-        m = self.getMachine(id)
-        if m <> None:
-            m.isDirty = True
-
-    def onMachineStateChange(self, id, state):
-        self.machineSetDirty(id)
-
-    def onMachineDataChange(self,id):
-        self.machineSetDirty(id)
-
-    def onExtraDataCanChange(self, id, key, value):
-        # Allow all at the moment
-        return True
-
-    def onExtraDataChange(self, id, key, value):
-        self.machineSetDirty(id)
-
-    def onMediaRegistered(self, id, type, registred):
-        self.machineSetDirty(id)
-
-    def onMachineRegistered(self, id, registered):
-        self.populateVMList() # Just re-build internal list from scratch
-
-    def onSessionStateChange(self, id, state):
-        self.machineSetDirty(id)
-
-    def onSnapshotTaken(self, mach, id):
-        self.machineSetDirty(id)
-
-    def onSnapshotDiscarded(self, mach, id):
-        self.machineSetDirty(id)
-
-    def onSnapshotChange(self, mach, id):
-        self.machineSetDirty(id)
-
-    def onGuestPropertyChange(self, id, name, newValue, flags):
-        # Don't react on this event - generated too much unused traffic atm
-        pass
-
-    def registerCallbacks(self):
-        # Register IVirtualBox (global) callback
-        self.callbackVBox = self.ctx['global'].createCallback('IVirtualBoxCallback', VBoxMonitor, self)
-        self.ctx['vb'].registerCallback(self.callbackVBox)
-
-    @cherrypy.expose
-    @require()
-    def vboxGetUpdates(self, statusMessage = ""):
-        print "Page: vboxGetUpdates"
-
-        arrJSON = []
-        arrMach = []
-
-        # Add all machines that have changed (are dirty) to arrMach
-        for m in self.arrMach:
-            if (m.isDirty is True):
-                arrMach.append(m)
-                m.isDirty = False
-
-        if (len(arrMach) is len(self.arrMach)):
-            updateType = 0 # Full
-        else:
-            updateType = 1 # Differential
-
-        # Add header (must always come first atm)
-        arrJSON.append(jsHeader(self.ctx, arrMach, updateType, statusMessage))
-
-        # Add global VirtualBox object on full update
-        if updateType is 0:
-            arrJSON.append(jsVirtualBox(self.ctx))
-
-        session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-
-        # Add arrMach to the final JSON array
-        for m in arrMach:
-            machine = m.mach
-            sessionOpen = 0
-            # If a session for the VM is open, connect to it and use its machine object
-            try:
-                print "Opening session for machine: " + machine.name
-                self.ctx['vb'].openExistingSession(session, machine.id)
-                if session.state == self.ctx['ifaces'].SessionState_Open:
-                    sessionOpen = 1
-            except Exception:
-                pass
-            if sessionOpen == 1:
-                machine = session.machine
-            arrJSON.append(jsMachine(self.ctx, machine))
-            if sessionOpen == 1:
-                session.close()
-
-        print "%s update, %d machine(s) modified" %("Full" if updateType is 0 else "Differential", len(arrMach))
-        if isSimpleJson:
-            return self.jsonPrinter(arrJSON, cls=ConvertObjToJSONClass)
-        else:
-            return self.jsonPrinter(arrJSON, default=convertObjToJSON)
-
-    def startVM(self, uuid):
-        session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-        progress = self.ctx['vb'].openRemoteSession(session, uuid, "headless", "")
-        # todo we shouldn't wait here, perform asynchronously
-        progress.waitForCompletion(-1)
-        session.close()
-
-    # enable VRDP for the given VM, port = 0 means use default algorithm
-    def enableVRDP(self, session, port):
-        print "enableVRDP: called for port " + port
-        if not session.console:
-            print "enableVRDP: error, machine must have an open session!"
-            return
-        machine = session.machine
-        vrdpserver = machine.VRDPServer
-        if port == "0":
-            # set the standard ports
-            machine.setExtraData("VBoxInternal2/VRDPPortRange", g_VRDPPortRange)
-        else:
-            vrdpserver.port = port
-        # if RDP server running, restart it so it gets the right settings
-        # also reset the port binding information so we do get get stale information in case of an error
-        machine.setExtraData("VBoxInternal2/VRDPBindPort", "invalid")
-        if vrdpserver.enabled:
-            vrdpserver.enabled = False
-        vrdpserver.enabled = True
-        # VRDP server startup is asynchronous. The best thing we can do here is
-        # poll for the port binding information. The VRDP server will set it when
-        # it's up and running
-        loopcount = 0
-        while machine.getExtraData("VBoxInternal2/VRDPBindPort") == "invalid":
-            loopcount = loopcount + 1
-            if loopcount >= 30:
-                break
-            time.sleep(0.1)
-        portInUse = machine.getExtraData("VBoxInternal2/VRDPBindPort")
-        print "enableVRDP: machine " + machine.id + " listening on port " + portInUse
-
-    def disableVRDP(self, session):
-        if not session.console:
-            print "disableVRDP: error, machine must have an open session!"
-            return
-        machine = session.machine
-        vrdpserver = machine.VRDPServer
-        vrdpserver.enabled = False
-
-    @cherrypy.expose
-    @require()
-    def vboxVMAction(self, operation, uuid, port = 0):
-        statusMessage = ""
-        print "Page: vboxVMAction called with operation " + operation + " and uuid " + uuid
-        # Close session if opened
-        if operation == "startvm":
-            self.startVM(uuid)
-            statusMessage = "Started VM with ID " + uuid
-
-        # Commands requiring an open session
-        elif (operation == "pausevm" or
-             operation == "resumevm" or
-             operation == "savestatevm" or
-             operation == "poweroffvm" or
-             operation == "acpipoweroffvm" or
-             operation == "discardvm" or
-             operation == "enablevrdp" or
-             operation == "disablevrdp"):
-            session = self.ctx['mgr'].getSessionObject(self.ctx['vb'])
-            self.ctx['vb'].openExistingSession(session, uuid)
-            console = session.console;
-            if operation == "pausevm":
-                console.pause()
-                statusMessage = "Paused VM with ID " + uuid
-            elif operation == "resumevm":
-                console.resume()
-                statusMessage = "Resumed VM with ID " + uuid
-            elif operation == "savestatevm":
-                console.saveState()
-                statusMessage = "Saving state of VM with ID " + uuid
-            elif operation == "poweroffvm":
-                console.powerDown()
-                statusMessage = "Powering off VM with ID " + uuid
-            elif operation == "acpipoweroffvm":
-                console.powerButton()
-                statusMessage = "Sent ACPI power button signal to VM with ID " + uuid
-            elif operation == "discardvm":
-                console.discardCurrentState()
-                statusMessage = "Discarded saved state for VM with ID " + uuid
-            elif operation == "enablevrdp":
-                self.enableVRDP(session, port)
-            elif operation == "disablevrdp":
-                self.disableVRDP(session)
-            session.close()
-        else:
-            print "vboxVMAction: unknown operation"
-
-        self.machineSetDirty(uuid)
-        return self.vboxGetUpdates(statusMessage)
-
-    # return markup for a specific dialog
-    @cherrypy.expose
-    @require()
-    def dialog(self, dialogid):
-        print "Page: dialog, requesting ID " + dialogid
-        tmpl = self.templateLoader.load('dialogs.html')
-        return tmpl.generate(dialogid=dialogid).render('html')
-
-    # Entry point when browser loads the whole page
-    @cherrypy.expose
-    @require()
-    def index(self):
-        print "Page: init"
-
-        self.prepareCOM()
-        self.registerCallbacks()
-        self.populateVMList()
-
-        file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/templates/index.html')
-        return serve_file(file, content_type='text/html')
-
-g_vboxManager = vboxapi.VirtualBoxManager(None, None)
+	Global vars
+	
+"""
+g_vboxManager = None
 g_threadPool = {}
 g_logLevel = 99
-g_sessionNum = 0
 g_serverTerminated = False
-# the default port range for the VRDP server
-# TODO: get from configuration
-g_VRDPPortRange = "3400-3700"
+g_progressOps = {}
 
-def log(level, str):
-    if g_logLevel >= level:
-        print str
+def trans(str):
+	"""Language translation"""
+	strt = None
+	import VBoxWebConfig
+	c = VBoxWebConfig.VBoxWebConfig()
+	exec("import " + c.language)
+	exec("strt = "+c.language+".trans.get('"+str+"')")
+	
+	return strt if strt else str
+
+
+"""
+
+	Progress operations MUST persist accross requests
+	
+"""
+def progressObjStore(progress,session):
+	# Generate progress ID
+	pid = str(uuid.uuid4())
+	g_progressOps[pid] = {
+			'progress':progress,
+			'session':session
+	}
+	return pid
+
+
+def progressObjGet(pid):
+	try:
+		return g_progressOps.get(pid)
+	except:
+		return None
+
+def progressObjDel(pid):
+	try:
+		pop = g_progressOps.get(pid)
+		# remove session
+		try:
+			s = pop.get('session')
+			if s: s.unlockMachine()
+		except:
+			pass
+		del g_progressOps[pid]
+	except:
+		pass
+
 
 def perThreadInit(threadIndex):
-    g_vboxManager.initPerThread()
+	if g_vboxManager:
+		g_vboxManager.initPerThread()
 
 def perThreadDeinit(threadIndex):
-    g_vboxManager.deinitPerThread()
+	if g_vboxManager:
+		g_vboxManager.deinitPerThread()
 
 def onShutdown():
     global g_serverTerminated
     g_serverTerminated = True
-    if hasattr(g_vboxManager, 'interruptWaitEvents'):
-        g_vboxManager.interruptWaitEvents()
-        return
+    if g_vboxManager:
+    	
+    	if hasattr(g_vboxManager, 'interruptWaitEvents'):
+			g_vboxManager.interruptWaitEvents()
+			
+    	if sys.platform == 'win32':
+    		from win32api import PostThreadMessage
+    		from win32con import WM_USER
+    		PostThreadMessage(g_vboxManager.platform.tid, WM_USER, None, None)
+			
 
-    # For Win32, we can do that w/o g_vboxManager support easily
-    if sys.platform == 'win32':
-        from win32api import PostThreadMessage
-        from win32con import WM_USER
-        PostThreadMessage(g_vboxManager.platform.tid, WM_USER, None, None)
-
-def main(argv = sys.argv):
-
-    print "VirtualBox Version: %s, Platform: %s" %(g_vboxManager.vbox.version, sys.platform)
-
-    bRDPWebForceUpdate = False
-
-    # Check command line args
-    if len(argv) > 1:
-        if argv[1] == "adduser":
-            if len(argv) <> 4:
-                print "Syntax: " + argv[0] + " adduser <username> <password>"
-                return
-            h = hashlib.new('sha1')
-            h.update(argv[3])
-            g_vboxManager.vbox.setExtraData(
-                "vboxweb/users/" + argv[2], h.hexdigest())
-            return
-        elif argv[1] == "deluser":
-            if len(argv) <> 3:
-                print "Syntax: " + argv[0] + " deluser <username>"
-                return
-            g_vboxManager.vbox.setExtraData("vboxweb/users/" + argv[2], "")
-            return
-        elif argv[1] == "rdpweb":
-            if len(argv) <> 3:
-                print "Syntax: " + argv[0] + " rdpweb update"
-                return
-            bRDPWebForceUpdate = True
-        elif argv[1] == "help":
-            print """
-VBoxWeb Command Usage:
-
-    adduser <username> <password>
-        -Add a new user to VBoxWeb
-
-    deluser <username>
-        -Delete an existing user
-
-    rdpweb update
-        -Update the embeddded flash RDP viewer
-
-    help
-        -Display this message
 """
-            return
-        else:
-            print "\nUnknown command '%s'. See '%s help' for available commands" % (argv[1], argv[0])
-            return
 
-    # Why subscribe() doesn't take callback argument, having global vboxMgr is a bit ugly
-    # AH: I think this is bogus, I never saw the callbacks being called
-    cherrypy.engine.subscribe('start_thread', perThreadInit)
-    cherrypy.engine.subscribe('stop_thread',  perThreadDeinit)
+	VBoxWeb - Request handler class
+	
+"""
+class VBoxWeb:
+    
+	config = {}
+	initCOM = False
+	
+	# Fatal connection error number
+	VBWEB_ERRNO_FATAL = 32
+	
+	# Web session cookie
+	session_cookie = ''
+	
+	def __init__(self, ctx):
+        
+		print "VBoxWeb init ..."
+        
+		self.ctx = ctx
+		
+		self.initCOM = False
+		
+		if sys.platform == 'win32':
+			self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vbox'])
 
-    fileConfig = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'VBoxWeb.conf')
-    print "Using config file:", fileConfig
 
-    cherrypy.config.update(fileConfig)
-    cherrypy.config.update({
-        'tools.staticdir.root': os.path.abspath(os.path.dirname(__file__))
-    })
+		# Init JSON printer
+		self.jsonPrinter = None
+		if jsonType == 'simplejson':
+			self.jsonPrinter = simplejson.dumps
+		elif jsonType != 'internal':
+			if hasattr(json, "dumps"):
+				self.jsonPrinter = json.dumps
+			elif hasattr(json, "write"):
+				self.jsonPrinter = json.write
 
-    # Lookup our external IP
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("google.com", 80))
-    serverAdr, serverPort = s.getsockname()[:2]
-    s.close
 
-    # Init config
-    ctx = {'global':g_vboxManager,
-           'mgr':g_vboxManager.mgr,
-           'vb':g_vboxManager.vbox,
-           'ifaces':g_vboxManager.constants,
-           'remote':g_vboxManager.remote,
-           'type':g_vboxManager.type,
-           'serverAdr':serverAdr,
-           'serverPort':serverPort
-           }
 
-    # Download the RDP web control
-    vboxRDPWeb.checkForUpdate(
-        "http://download.virtualbox.org/virtualbox/rdpweb/",
-        os.path.abspath(os.path.dirname(__file__)) + "/www/static/",
-        None,
-        bRDPWebForceUpdate)
+		import VBoxWebConfig
+		c = VBoxWebConfig.VBoxWebConfig()
+        
+		self.ctx['config'] = {}
+		for v in inspect.getmembers(c):
+			self.ctx['config'][v[0]] = v[1]
+        
+		# Progress functions access to global progressOps var
+		self.ctx['progressOps'] = {'get':progressObjGet,'store':progressObjStore,'delete':progressObjDel}
+		
+		# generate session_cookie name. Not very secure, but better than a static / predictable key.
+		self.session_cookie = md5.md5(os.path.abspath(os.path.dirname(__file__))).hexdigest()
 
-    cherrypy.engine.subscribe('stop', onShutdown)
 
-    # Start the webserver thread
-    ws = WebServerThread(ctx)
-    ws.start()
+		print "started."
+		
+	"""
+		Setup win32 com object
+	"""		
+	def prepareCOM(self):
+		if self.initCOM is False:
+			if sys.platform == 'win32':
+				# Get the "real" VBox interface from the stream created in the class constructor above
+				i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
+				self.ctx['vbox'] = win32com.client.Dispatch(i)
+			self.initCOM = True
+	
+	
+	
+	"""
+		Check authentication
+	"""
+	def checkAuth(self, debug=False):
+		
+		# TODO: Implement outside of vbox for vboxwebsrv
+		return True
+	
+		# check cookie first
+		if cherrypy.session.get('authed'):
+			return True
 
-    # Events loop, wait for keyboard interrupt
-    global g_serverTerminated
-    try:
-      # Darwin-specific uglyness
-      if sys.platform == 'darwin':
-        while not g_serverTerminated:
-            # We have no timed waits on Darwin, and waitForEvents(-1)
-            # blocks signal delivery for some reasons, thus we cannot send
-            # wait interrupt notifcation.
-            # Instead we cheat a bit and just sleep() between events
-            g_vboxManager.waitForEvents(0)
-            time.sleep(0.3)
-      else:
-          while not g_serverTerminated:
-            g_vboxManager.waitForEvents(-1)
-    except KeyboardInterrupt:
-        pass
+		# check username / password
+		if cherrypy.request.params.get('username') and cherrypy.request.params.get('password'):
 
-    # Shut down
-    ws.finish()
+			username = str(cherrypy.request.params['username'])
+			password = str(cherrypy.request.params['password'])
+						
+			h = hashlib.new('sha1')
+			h.update(password)
+			password = h.hexdigest()
 
+			if str(password) == str(self.ctx['vbox'].getExtraData("vboxwebc/users/" + username)):
+				cherrypy.session['authed'] = True
+				return True
+
+		return False
+
+	"""
+        Return data as JSON data
+    """
+	def toJSON(self, data):
+		if jsonType == 'simplejson':
+			return self.jsonPrinter(data, cls=ConvertObjToJSONClass)
+		elif jsonType == 'internal':
+			return jsonEncode(data)
+		else:
+			return self.jsonPrinter(data, default=convertObjToJSON)
+        
+                       
+
+
+	"""
+		Return language data in JavaScript consumable format
+	"""
+	def getLangData(self):
+		exec("import " + self.ctx['config']['language'])
+		cherrypy.response.headers['Content-Type'] = 'text/javascript'
+		return "var vboxLangData = " + self.toJSON(en_us.trans) + ";"
+    
+	getLangData.exposed = True
+
+
+	"""
+		Return RDP file
+	"""
+	def rdpFile(self, **kw):
+
+		# Require authentication
+		if not self.checkAuth():
+			# Auth failed. Send 401.
+			raise cherrypy.HTTPError(401, "Authentication is required to access the requested resource on this server.")
+		
+		# Init win32 com
+		self.prepareCOM()
+
+		if re.match('[^\d]', cherrypy.request.params.get('port')):
+			response = {'errors':[],'data':{},'fn':'getVMDetails' }
+			try:
+				cherrypy.thread_data.vbox = vboxactions.vboxactions(self.ctx)
+				req = {'vm':cherrypy.request.params.get('vm')}
+				cherrypy.thread_data.vbox('getVMDetails',req,response)
+			finally:
+				if cherrypy.thread_data.vbox:
+					cherrypy.thread_data.vbox.shutdown()
+				del cherrypy.thread_data.vbox
+			port = response['data'].get('consolePort')
+		else:
+			port = cherrypy.request.params.get('port')
+
+		cherrypy.response.headers['Content-Type'] = "application/x-rdp"
+		cherrypy.response.headers['Content-Disposition'] = "attachment; filename=\""+ cherrypy.request.params.get('vm') +".rdp\""
+		
+		return str("auto connect:i:1\nfull address:s:"+cherrypy.request.params.get('host')+( str(port+":") if port else '')+"\ncompression:i:1\ndisplayconnectionbar:i:1\n")
+
+	rdpFile.exposed = True
+
+	
+	"""
+		Used by jquery FileTree plugin to browse files / folders
+	"""
+	def jqueryFileTree(self, **kw):
+
+		from jqueryFileTree import jqueryFileTree
+		
+		# Require authentication
+		if not self.checkAuth():
+			# Auth failed. Send 401.
+			raise cherrypy.HTTPError(401, "Authentication is required to access the requested resource on this server.")
+
+		# Init win32 com
+		self.prepareCOM()
+		
+		rstr = ''
+		
+		allowedFiles = {}
+		if self.ctx['config'].get('browserRestrictFiles'):
+			allowedList = self.ctx['config']['browserRestrictFiles'].lower().split(',')
+			for i in allowedList: allowedFiles[i] = i
+        
+		allowedFolders = {}
+		if self.ctx['config'].get('browserRestrictFolders'):
+			allowedList = self.ctx['config']['browserRestrictFolders'].lower().split(',')
+			for i in allowedList: allowedFolders[i] = i
+        
+		localBrowser = bool(self.ctx['config'].get('browserLocal') or g_vboxManager)
+
+		try:       
+			cherrypy.thread_data.vbox = vboxactions.vboxactions(self.ctx)
+            
+			cherrypy.thread_data.vbox.connect()
+            
+			if str(cherrypy.thread_data.vbox.vbox.host.operatingSystem).lower().find('windows') == -1:
+				strDSEP = '/'
+			else:
+				strDSEP = '\\'
+    		
+			ft = jqueryFileTree()
+    		
+			if localBrowser:
+				if cherrypy.thread_data.vbox:
+					cherrypy.thread_data.vbox.shutdown()
+					del cherrypy.thread_data.vbox
+				ft.mode = 'local'
+			else:
+				ft.mode = 'remote'
+				ft.vbox = cherrypy.thread_data.vbox.vbox
+    		
+    		
+			if cherrypy.request.params.get('fullpath'):
+				ft.fullpath = int(cherrypy.request.params.get('fullpath'))
+			if cherrypy.request.params.get('dirsOnly'):
+				ft.dirsOnly = int(cherrypy.request.params.get('dirsOnly'))
+			ft.strDSEP = strDSEP
+			ft.allowedFiles = allowedFiles
+			ft.allowedFolders = allowedFolders
+    		
+			rstr = ft.getdir(cherrypy.request.params.get('dir'))
+
+		except Exception, e:
+			print e
+			print traceback.format_exc()
+			
+		finally:
+			try:
+				if cherrypy.thread_data.vbox:
+					cherrypy.thread_data.vbox.shutdown()
+					del cherrypy.thread_data.vbox
+			except:
+				pass
+				
+		return rstr
+		
+		
+		
+	jqueryFileTree.exposed = True
+	
+	"""
+		Return screen shot
+	"""
+	def screen(self, **kw):
+    	
+    	# Require authentication
+		if not self.checkAuth():
+			# Auth failed. Send 401.
+			raise cherrypy.HTTPError(401, "Authentication is required to access the requested resource on this server.")
+
+		# Init win32 com
+		self.prepareCOM()
+    	
+		width = cherrypy.request.params.get('width')
+		vm = cherrypy.request.params.get('vm')
+		if not vm: return ''
+
+		try:
+			cherrypy.thread_data.vbox = vboxactions.vboxactions(self.ctx)
+    
+			machine = cherrypy.thread_data.vbox._getMachineRef(vm)
+			machineState = str(cherrypy.thread_data.vbox.vboxType('MachineState',machine.state))
+    		
+			if str(machineState) != 'Running' and str(machineState) != 'Saved':
+				machine.releaseRemote()
+				raise Exception('The specified virtual machine is not in a Running state.')
+            
+    		# Date last modified
+			dlm = math.floor(int(machine.lastStateChange)/1000)
+    
+    		# Running screen shot
+			if str(machineState) == 'Running':
+    
+				cherrypy.thread_data.vbox.session = cherrypy.thread_data.vbox.vboxMgr.platform.getSessionObject(cherrypy.thread_data.vbox.vbox)
+				machine.lockMachine(cherrypy.thread_data.vbox.session,cherrypy.thread_data.vbox.vboxType('LockType','Shared'))
+    
+				res = cherrypy.thread_data.vbox.session.console.display.getScreenResolution(0)
+    
+				screenWidth = int(res[0])
+				screenHeight = int(res[1])
+    
+				if width and int(width) > 0:
+					factor  = float(float(width) / float(screenWidth))
+					screenWidth = width
+					if factor > 0:screenHeight = factor * screenHeight
+					else:screenHeight = (screenWidth * 3.0/4.0)
+    			
+				cherrypy.response.headers["Expires"] = "Mon, 26 Jul 1997 05:00:00 GMT"
+				cherrypy.response.headers['Last-Modified'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())
+				cherrypy.response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
+				cherrypy.response.headers["Pragma"] = "no-cache"
+    
+				imageraw = [cherrypy.thread_data.vbox.session.console.display.takeScreenShotPNGToArray(0,int(screenWidth), int(screenHeight))]				
+				cherrypy.thread_data.vbox.session.unlockMachine()
+    			
+    
+			else:
+    
+    			# Set last modified header
+				cherrypy.response.headers['Last-Modified'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(dlm))
+    			
+    		  	# Let the browser cache images
+			  	if cherrypy.request.headers.get('If-Modified-Since') and time.mktime(parsedate_tz(cherrypy.request.headers.get('If-Modified-Since'))).time() >= dlm:
+			  		raise cherrypy.HTTPRedirect([], 304)
+          		
+				if cherrypy.request.params.get('full'):
+					imageraw = machine.readSavedScreenshotPNGToArray(0);
+				else:
+					imageraw = machine.readSavedThumbnailPNGToArray(0);
+    
+			cherrypy.response.headers['Content-Type'] = 'image/png'
+    		
+			imgdata = ''
+    
+    		# Non-web data is printed directly
+			if cherrypy.thread_data.vbox.vboxConnType != 'web':
+				for i in range(len(imageraw)):
+					if len(imageraw[i]):
+						imgdata = imageraw[i]
+						break
+			else:
+    			
+				for i in range(len(imageraw)):
+					if type(imageraw[i]) == types.InstanceType:
+						for b in imageraw[i]:
+							imgdata += chr(b)
+    		    		
+		finally:
+			if cherrypy.thread_data.vbox:
+				cherrypy.thread_data.vbox.shutdown()
+				del cherrypy.thread_data.vbox
+			
+		imgdata = StringIO.StringIO(imgdata)
+		return cherrypy.lib.file_generator(imgdata)
+	
+	screen.exposed = True
+        
+	"""
+    
+        
+        ALL ajax calls
+        
+         
+    """
+	def ajax(self,fn, **kw):
+
+		# Require authentication
+		if not self.checkAuth():
+			# Auth failed. Send 401.
+			raise cherrypy.HTTPError(401, "Authentication is required to access the requested resource on this server.")
+
+		# Init win32 com
+		self.prepareCOM()
+        
+		response = {'errors':[],'data':{},'fn':fn }
+        
+		cherrypy.thread_data.vbox = None
+		
+		try:
+			
+			##########################
+			#
+    		# Configuration request
+    		#
+    		#########################
+			if fn == 'getConfig':
+    
+				response['data'] = self.ctx['config']
+    
+
+				try:              
+				
+					cherrypy.thread_data.vbox = vboxactions.vboxactions(self.ctx)
+    				
+					response['data']['VBWEB_ERRNO_FATAL'] = self.VBWEB_ERRNO_FATAL
+    
+					response['data']['version'] = cherrypy.thread_data.vbox.vboxVersion()
+            		
+					response['data']['hostOS'] = str(cherrypy.thread_data.vbox.vbox.host.operatingSystem)
+					if response['data']['hostOS'].lower().find('windows') == -1:
+						response['data']['DSEP'] = '/'
+					else:
+						response['data']['DSEP'] = '\\'
+            				
+				except:
+					pass
+        		
+				if response['data'].get('username'): del response['data']['username']
+				if response['data'].get('password'): del response['data']['password']
+        		
+				# Get host
+				if response['data'].get('location'):
+					
+					try:
+						from urlparse import urlparse
+						url = urlparse(response['data'].get('location'))
+					except:
+						url = urllib.parse(response['data'].get('location'))
+					response['data']['host'] = url.hostname
+
+					if not response['data'].get('servers') or type(response['data']['servers']) != type(list()):
+						response['data']['servers'] = [
+    						{'name' : response['data']['host'],
+    						'location' : response['data']['location']
+    						}
+    					]
+					response['data']['servername'] = response['data']['servers'][0]['name']
+                
+				else:
+					response['data']['host'] = 'localhost'
+					response['data']['servers'] = []
+        
+				if not response['data'].get('consoleHost'):
+					response['data']['consoleHost'] = response['data']['host']
+
+
+			##############################
+			#
+			# Other AJAX requests
+			#
+			##############################
+			else:
+                
+				cherrypy.thread_data.vbox = vboxactions.vboxactions(self.ctx)
+    
+				cherrypy.thread_data.vbox(fn,cherrypy.request.params, response)
+				
+                
+			try:
+				if cherrypy.thread_data.vbox and len(cherrypy.thread_data.vbox.errors):
+					response['errors'] = cherrypy.thread_data.vbox.errors
+			except:
+				pass
+            
+		except Exception, e:
+			
+			errno = 0
+			error = str(e)
+			details = traceback.format_exc()
+			
+			try:
+				errno = self.VBWEB_ERRNO_FATAL if cherrypy.thread_data.vbox and not cherrypy.thread_data.vbox.connected else 0
+			except:
+				pass
+				
+			response['errors'].append(
+				{'errno':errno,
+				'error':error,
+				'details':details
+				}
+			)				
+		
+		
+		# make sure vbox.shutdown() is called
+		finally:
+			#response = self.toJSON(response)
+			try:
+				if cherrypy.thread_data.vbox:
+					cherrypy.thread_data.vbox.shutdown()
+    				del cherrypy.thread_data.vbox
+			except:pass
+        
+		# Debug output
+		if len(response['errors']):
+			print response['errors']
+		if len(g_progressOps):
+			print g_progressOps
+		        
+		cherrypy.response.headers['Content-Type'] = 'text/javascript'
+
+		return self.toJSON(response)
+	
+	ajax.exposed = True
+         
+	def index(self,**kw):
+
+		# Require authentication
+		if self.checkAuth():
+			if cherrypy.request.params.get('vbwlogin'):
+				raise cherrypy.HTTPRedirect('/')
+			file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/static/index.html')
+		else:
+			file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'www/static/login.html')
+			
+		cherrypy.response.headers["Expires"] = "Mon, 26 Jul 1997 05:00:00 GMT"
+		cherrypy.response.headers['Last-Modified'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())
+		cherrypy.response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
+		cherrypy.response.headers["Pragma"] = "no-cache"
+					
+		return serve_file(file, content_type='text/html')
+    
+	index.exposed = True
+
+
+"""
+	
+	Web Server Thread starts cherrypy
+	
+"""
 class WebServerThread(threading.Thread):
+	
     def __init__(self, ctx):
-        threading.Thread.__init__(self)
-        self.ctx = ctx
-        if sys.platform == 'win32':
-            self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vb'])
+    	
+		threading.Thread.__init__(self)
+		self.ctx = ctx
+        
+		if g_vboxManager:
+			self.ctx['vbox'] = g_vboxManager.vbox
+		
+		if sys.platform == 'win32':
+			self.vbox_stream = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self.ctx['vbox'])
 
     def finish(self):
         cherrypy.engine.exit()
 
     def run(self):
-        if sys.platform == 'win32':
-            i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
-            self.ctx['vb'] = win32com.client.Dispatch(i)
-        # Run web server
-        cherrypy.quickstart(VBoxPageRoot(self.ctx), '/', {
-                '/static': {
-                    'tools.staticdir.on': True,
-                    'tools.staticdir.dir': 'www/static'},
+
+		if sys.platform == 'win32':
+			i = pythoncom.CoGetInterfaceAndReleaseStream(self.vbox_stream, pythoncom.IID_IDispatch)
+			self.ctx['vbox'] = win32com.client.Dispatch(i)
+
+		cherrypy.quickstart(VBoxWeb(self.ctx), '/', {
+				'/rdpweb': {
+					'tools.staticdir.on': True,
+					'tools.staticdir.dir': 'www/static/rdpweb'},													
                 '/images': {
                     'tools.staticdir.on': True,
                     'tools.staticdir.dir': 'www/static/images'},
-                '/html': {
+                '/panes': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir': 'www/templates'}}
+                    'tools.staticdir.dir': 'www/static/panes'},
+                '/css': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir': 'www/css'},
+                '/js': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir': 'www/static/js'},                    
+                }
         )
 
+
+
+def main(argv = sys.argv):
+
+	global g_vboxManager
+	
+    # For proper UTF-8 encoding / decoding
+	reload(sys)
+	sys.setdefaultencoding('utf8')
+	
+	print "VBoxWebSrv Platform: %s"%sys.platform
+
+	# Load config file
+	import VBoxWebConfig
+	config = VBoxWebConfig.VBoxWebConfig()
+	
+	# Determine connection type
+	try:
+		if config.location or len(config.servers):
+			print "Connection type: vboxwebsrv"
+	except:
+		g_vboxManager = vboxapi.VirtualBoxManager(None, None)
+		print "Connection type: local; VirtualBox Version: %s" %g_vboxManager.vbox.version
+	
+
+    # Check command line args
+	if len(argv) > 1:
+		
+		if argv[1] == "adduser":
+			if len(argv) <> 4:
+				print "Syntax: " + argv[0] + " adduser <username> <password>"
+				print "\t\t(also used to change user's password)"
+				return
+			h = hashlib.new('sha1')
+			h.update(argv[3])
+			g_vboxManager.vbox.setExtraData(
+				"vboxwebc/users/" + argv[2], h.hexdigest())
+			return
+		elif argv[1] == "deluser":
+			if len(argv) <> 3:
+				print "Syntax: " + argv[0] + " deluser <username>"
+				return
+			g_vboxManager.vbox.setExtraData("vboxwebc/users/" + argv[2], "")
+			return
+		elif argv[1] == "help":
+			print """
+VBoxWeb Command Usage:
+
+    adduser <username> <password>
+        - Add a new user to VBoxWeb (also used to change <username's> password)
+
+    deluser <username>
+        - Delete an existing user
+
+    help
+        -Display this message
+"""
+			return
+		else:
+			print "\nUnknown command '%s'. See '%s help' for available commands" % (argv[1], argv[0])
+			return
+
+	cherrypy.engine.subscribe('start_thread', perThreadInit)
+	cherrypy.engine.subscribe('stop_thread',  perThreadDeinit)
+
+	cherrypy.config.update(VBoxWebConfig.WebServerConfig)
+	cherrypy.config.update({
+						'tools.sessions.storage_path' : os.path.abspath(os.path.dirname(__file__)) + '/.sessions',
+						'tools.staticdir.root': os.path.abspath(os.path.dirname(__file__))
+    })
+
+	ctx = {'global':g_vboxManager,'vbox':None}
+
+	cherrypy.engine.subscribe('stop', onShutdown)
+
+    # Start the webserver thread
+	ws = WebServerThread(ctx)
+	ws.start()
+
+    # Events loop, wait for keyboard interrupt
+	global g_serverTerminated
+
+    # Loop for local connections
+	if g_vboxManager:
+		try:
+          # Darwin-specific uglyness
+		  if sys.platform == 'darwin':
+		  	while not g_serverTerminated:
+                # We have no timed waits on Darwin, and waitForEvents(-1)
+                # blocks signal delivery for some reasons, thus we cannot send
+                # wait interrupt notifcation.
+                # Instead we cheat a bit and just sleep() between events
+				g_vboxManager.waitForEvents(0)
+				time.sleep(0.3)
+		  else:
+		  	while not g_serverTerminated:
+		  		g_vboxManager.waitForEvents(-1)
+  		except KeyboardInterrupt:
+  			pass
+
+	# Loop for vboxwebsrv connections
+	else:
+		try:
+			while not g_serverTerminated:
+				time.sleep(0.3)
+			print "Terminating..."
+		except KeyboardInterrupt:
+			print "Caught interrupt"
+			pass
+					
+    # Shut down
+	ws.finish()
+
+	
 if __name__ == '__main__':
     main(sys.argv)

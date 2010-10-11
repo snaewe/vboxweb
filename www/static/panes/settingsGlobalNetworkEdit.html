@@ -1,0 +1,54 @@
+<!--  Edit Host Networking Properties Dialog -->
+<div id='vboxSettingsGlobalNetEditDialog' style='display: none'>
+
+	<div id='vboxSettingsGlobalNetEdit' class='vboxTabbed'>
+		<ul>
+			<li><a href="#vboxSettingsGlobalNetEditAdapter"><span class='translate'>Adapter</span></a></li>
+			<li><a href="#vboxSettingsGlobalNetEditDHCP"><span class='translate'>DHCP Server</span></a></li>		
+		</ul>
+		<div id="vboxSettingsGlobalNetEditAdapter" class="vboxDialogContent vboxTabContent">
+			<table class="vboxSettingsTable">
+				<tr>
+					<th><span class='translate'>IPv4Addr</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetIPv4' /></td>
+				</tr>
+				<tr>
+					<th><span class='translate'>IPv4Mask</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetIPv4Mask' /></td>
+				</tr>
+				<tr>
+					<th><span class='translate'>IPv6Addr</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetIPv6' /></td>
+				</tr>
+				<tr>
+					<th><span class='translate'>IPv6Mask</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetIPv6Mask' /></td>
+				</tr>
+			</table>
+		</div>
+		<div id="vboxSettingsGlobalNetEditDHCP" class='vboxDialogContent vboxTabContent'>
+			<table class="vboxSettingsTable">
+				<tr>
+					<td colspan='2'><input type='checkbox' class='vboxCheckbox vboxEnablerCheckbox' id='vboxSettingsGlobalNetDHCPEnabled' /><span class='translate'>Enabled</span></td>
+				</tr>
+				<tr>
+					<th><span class='translate'>Server Address</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetServerAddress' /></td>
+				</tr>
+				<tr>
+					<th><span class='translate'>Server Mask</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetServerMask' /></td>
+				</tr>
+				<tr>
+					<th><span class='translate'>Lower Address Bound</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetLower' /></td>
+				</tr>
+				<tr>
+					<th><span class='translate'>Upper Address Bound</span>:</th>
+					<td><input type='text' class='vboxText' id='vboxSettingsGlobalNetUpper' /></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+
