@@ -133,7 +133,7 @@ def trans(str):
 
 """
 
-	Progress operations MUST persist accross requests
+	Progress operations MUST persist across requests
 	
 """
 def progressObjStore(progress,session):
@@ -206,7 +206,7 @@ class VBoxWeb:
 	
 	def __init__(self, ctx):
         
-		print "VBoxWeb init ..."
+		print "VBoxWebSrv started."
         
 		self.ctx = ctx
 		
@@ -241,8 +241,6 @@ class VBoxWeb:
 		# generate session_cookie name. Not very secure, but better than a static / predictable key.
 		self.session_cookie = md5.md5(os.path.abspath(os.path.dirname(__file__))).hexdigest()
 
-
-		print "started."
 		
 	"""
 		Setup win32 com object
@@ -262,11 +260,8 @@ class VBoxWeb:
 	"""
 	def checkAuth(self, debug=False):
 		
-		# TODO: Implement outside of vbox for vboxwebsrv
-		return True
-	
 		# check cookie first
-		if cherrypy.session.get('authed'):
+		if cherrypy.session.get('authed') == True:
 			return True
 
 		# check username / password
@@ -275,7 +270,7 @@ class VBoxWeb:
 			username = str(cherrypy.request.params['username'])
 			password = str(cherrypy.request.params['password'])
 						
-			h = hashlib.new('sha1')
+			h = hashlib.new('sha256')
 			h.update(password)
 			password = h.hexdigest()
 
@@ -649,15 +644,20 @@ class VBoxWeb:
 		# Debug output
 		if len(response['errors']):
 			print response['errors']
-		if len(g_progressOps):
-			print g_progressOps
 		        
 		cherrypy.response.headers['Content-Type'] = 'text/javascript'
 
 		return self.toJSON(response)
 	
 	ajax.exposed = True
-         
+    
+    # Log out of VboxWeb
+	def logout(self,**kw):
+		cherrypy.session['authed'] = False
+		raise cherrypy.HTTPRedirect('/')
+    
+	logout.exposed = True
+    
 	def index(self,**kw):
 
 		# Require authentication
@@ -757,8 +757,12 @@ def main(argv = sys.argv):
 				print "Syntax: " + argv[0] + " adduser <username> <password>"
 				print "\t\t(also used to change user's password)"
 				return
-			h = hashlib.new('sha1')
+			h = hashlib.new('sha256')
 			h.update(argv[3])
+			if str(g_vboxManager.vbox.getExtraData("vboxwebc/users/" + argv[2])):
+				print "Updating password for " + argv[2]
+			else:
+				print "Adding user " + argv[2]
 			g_vboxManager.vbox.setExtraData(
 				"vboxwebc/users/" + argv[2], h.hexdigest())
 			return
@@ -766,11 +770,12 @@ def main(argv = sys.argv):
 			if len(argv) <> 3:
 				print "Syntax: " + argv[0] + " deluser <username>"
 				return
+			print "Removing user " + argv[2]
 			g_vboxManager.vbox.setExtraData("vboxwebc/users/" + argv[2], "")
 			return
 		elif argv[1] == "help":
 			print """
-VBoxWeb Command Usage:
+VBoxWebSrv Command Usage:
 
     adduser <username> <password>
         - Add a new user to VBoxWeb (also used to change <username's> password)
@@ -798,7 +803,22 @@ VBoxWeb Command Usage:
 	ctx = {'global':g_vboxManager,'vbox':None}
 
 	cherrypy.engine.subscribe('stop', onShutdown)
+	
+	"""
+		Check for users
+	"""
+	users = g_vboxManager.vbox.getExtraDataKeys()
+	for u in users:
+		if str(u).find('vboxwebc/users/') == 0:
+			users = None
+			break
+		
+	if users != None:
+		print "No VboxWebSrv users found. See '%s help' for help on adding users." % (argv[0])
+		quit()
 
+	print "VboxWebSrv binding to %s:%s..." %(cherrypy.config['server.socket_host'], cherrypy.config['server.socket_port'])
+	
     # Start the webserver thread
 	ws = WebServerThread(ctx)
 	ws.start()

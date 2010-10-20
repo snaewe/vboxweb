@@ -45,13 +45,25 @@
 
 			$('#vboxIndex').data('vboxLangData',vboxLangData);
 
-			$('#vboxLoginForm').find("span.translate").html(function(i,h){return trans(h);}).removeClass('translate');
+			$('#vboxLoginFormDiv').find("span.translate").html(function(i,h){return trans(h);}).removeClass('translate');
 			
 			buttons = {}
 			buttons[trans('Log in')] = function() {
-				document.forms[0].submit()
+				$('#vboxLoginForm').submit()
 			}
-			$('#vboxLoginForm').dialog({'closeOnEscape':false,'width':'auto','height':145,'buttons':buttons,'resizable':false,'modal':true,'autoOpen':true,'stack':true,'dialogClass':'vboxDialogContent','title':'VirtualBox Web Console'});
+			$('#vboxLoginPassword').bind('keyup', function(e){
+				if((e.keyCode ? e.keyCode : e.which)==13)
+					document.forms[0].submit();
+			});
+
+			$('#vboxLoginForm').bind('submit',function(){
+				alert('here');
+				if(document.forms[0].elements['username'].value == '' || document.forms[0].elements['password'].value == '')
+					return false;
+				$('#vboxLoginFormDiv').hide();
+			});
+			
+			$('#vboxLoginFormDiv').dialog({'closeOnEscape':false,'width':'auto','height':145,'buttons':buttons,'resizable':false,'modal':true,'autoOpen':true,'stack':true,'dialogClass':'vboxDialogContent','title':'VirtualBox Web Console'});
 
 			// Check for message
 			var query = document.location.search.substr(1).split('&');
@@ -69,8 +81,8 @@
 </head>
 <body>
 <div id='vboxIndex'>
-<div id='vboxLoginForm' style='display: none'>
-<form method='post' action='/?vbwlogin=1'>
+<div id='vboxLoginFormDiv' style='display: none'>
+<form method='post' action='/?vbwlogin=1' id='vboxLoginForm'>
 <table style='width: 50%'>
 	<tr>
 		<th style='align: right'><span class='translate'>Username</span>:</th>
@@ -78,7 +90,7 @@
 	</tr>
 	<tr>
 		<th style='align: right'><span class='translate'>Password</span>:</th>
-		<td style='align: left'><input name='password' type='password' class='vboxText' /></td>
+		<td style='align: left'><input name='password' type='password' id='vboxLoginPassword' class='vboxText' /></td>
 	</tr>
 </table>
 </form>

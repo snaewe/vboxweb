@@ -3,37 +3,6 @@ class VBoxWebConfig:
 
 	# See languages folder for more language options
 	language = 'en_us'
-
-	"""
-	
-		vboxwebsrv style config. Only use if you are
-		connecting to VirtualBox through vboxwebsrv.
-		
-	"""
-	
-	""" Single vboxwebsrv server example. """
-	# Username / password for system user that runs VirutalBox 
-	location = 'http://127.0.0.1:18083/'
-	username = 'vbox'
-	password = 'pass'
-
-	""" Multiple vboxwebsrv server example. """
-	"""
-	servers = [
-		{
-			name : 'London',
-			username: 'user1',
-			password: 'password1',
-			location: 'http://192.168.0.1:18083'
-		},
-		{
-			name : 'New York',
-			username: 'user2',
-			password: 'password2',
-			location: 'http://192.168.33.1:18083'
-		},		
-	]
-	"""
 	
 	# Default host/ip to use for console
 	#consoleHost = '192.168.1.40'

@@ -4,7 +4,7 @@ VirtualBox Web Console is copyright (C) 2010 Ian Moore
 
 FREE, WITHOUT WARRANTY:
 
-All files of this program (phpVirtualBox) are distributed under the
+All files of this program (vboxweb) are distributed under the
 terms contained in the LICENSE.txt file in this folder unless otherwise
 specified in an individual source file. By using this software, you are
 agreeing to the terms contained therein. If you have not received and read
@@ -14,7 +14,7 @@ possession.
 
 INSTALLATION:
 
-Please see the wiki located at http://code.google.com/p/phpvirtualbox/ for
+Please see the wiki located at http://code.google.com/p/vboxweb/ for
 installation and configuration instructions.
 
 WARNING:

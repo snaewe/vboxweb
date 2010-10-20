@@ -406,7 +406,8 @@ class vboxactions(threading.local):
 			if args.get('VRDPServer[authType]'): m.VRDPServer.authType = args.get('VRDPServer[authType]')
 			else: m.VRDPServer.authType = int(self.vboxType('VRDPAuthType','Null'))
 			m.VRDPServer.authTimeout = int(args.get('VRDPServer[authTimeout]'))
-		
+			if args.get('VRDPServer[allowMultiConnection]'): m.VRDPServer.allowMultiConnection = 1
+			else: m.VRDPServer.allowMultiConnection = 0		
 
 		# Audio controller settings
 		if int(args.get('audioAdapter[enabled]')) > 0: m.audioAdapter.enabled = 1
@@ -2131,7 +2132,8 @@ class vboxactions(threading.local):
 				'ports' : str(m.VRDPServer.ports),
 				'netAddress' : str(m.VRDPServer.netAddress),
 				'authType' : str(m.VRDPServer.authType),
-				'authTimeout' : int(m.VRDPServer.authTimeout)
+				'authTimeout' : int(m.VRDPServer.authTimeout),
+				'allowMultiConnection' : int(m.VRDPServer.allowMultiConnection)
 			}
 
 		return {

@@ -44,7 +44,14 @@ var menu = {
 			'title':'Preferences',
 			'icon':'global_settings',
 			'click':function(){vboxPrefsInit();}					        
-        }
+        },
+        {
+			'name':'fileLogout',
+			'title':'Log out',
+			'icon':'logout',
+			'separator': true,
+			'click':function(){document.location='/logout';}					        
+        }        
 	]
 };
 

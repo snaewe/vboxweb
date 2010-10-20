@@ -189,6 +189,7 @@ trans = {
 	'Authentication Method' : 'Authentication Method',
 	'External' : 'External',
 	'Guest' : 'Guest',
+	'Allow Multiple Connections' : 'Allow Multiple Connections',
 	
 	'Storage' : 'Storage',
 	'Storage Tree' : 'Storage Tree',
