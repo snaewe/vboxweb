@@ -16,7 +16,7 @@
 	  	<p>
 	  		<input name=connectionButton type=button value="Connect" onclick="vboxRDPConnect()" />
 	 		<input name=cadButton type=button value="Ctrl-Alt-Del" onClick="return vboxRDPsendCAD()" />
-	 		<input id='vboxVRDPDetachBtn' style='display: none' name='detach' type='button' value='Detach' onClick="vboxRDPDetach();" />
+	 		<input id='vboxVRDEDetachBtn' style='display: none' name='detach' type='button' value='Detach' onClick="vboxRDPDetach();" />
 		   <span id='vboxRDPStatus'></span>
 	  	</p>
 	</form>
@@ -54,7 +54,7 @@ setLangContext('vboxVMConsole');
 $('#vboxTabVMConsole').find(".translate").html(function(i,h){return trans(h);}).removeClass('translate');
 $(document.vboxRDPForm.connectionButton).val(trans('Connect'));
 $(document.vboxRDPForm.cadButton).val(trans("Ctrl-Alt-Del"));
-$(document.vboxRDPForm.vboxVRDPDetachBtn).val(trans("Detach"));
+$(document.vboxRDPForm.vboxVRDEDetachBtn).val(trans("Detach"));
 unsetLangContext();
 $("#vboxRDPStatus").html(trans("Loading ..."));
 if(vboxConsoleDetached) window.status = $("#vboxRDPStatus").text();
@@ -67,7 +67,7 @@ $('#vboxTabVMConsole').parent().bind('vmloading',function(){
 
 $('#vboxTabVMConsole').bind('show',function(e,vm){
 
-	if(!vm || vm.id == 'host' || !vm.VRDPServer || !vm.consolePort || !vm.VRDPServer.enabled || vm.state != 'Running') {
+	if(!vm || vm.id == 'host' || !vm.VRDEServer || !vm.consolePort || !vm.VRDEServer.enabled || vm.state != 'Running') {
 		$('#vboxRDPFormContainer').css({'display':'none'});
 		$('#FlashRDPContainer').css({'visibility':'hidden'});
 		$('#vboxTabVMUnavailable').css({'display':''});
@@ -87,7 +87,7 @@ $('#vboxTabVMConsole').bind('show',function(e,vm){
 	$("#vboxRDPStatus").html('');
 	if(vboxConsoleDetached) window.status = $("#vboxRDPStatus").text();
 	
-	var chost = (vm.VRDPServer.netAddress ? vm.VRDPServer.netAddress : $('#vboxIndex').data('vboxConfig').consoleHost);
+	var chost = (vm.VRDEServer.netAddress ? vm.VRDEServer.netAddress : $('#vboxIndex').data('vboxConfig').consoleHost);
 	if(!chost) { chost = location.hostname;}
 	chost+=':'+vm.consolePort;
 	$(document.vboxRDPForm.serverAddress).val(chost);
@@ -198,7 +198,7 @@ function RDPWebEventConnected(flashId) {
 	$("#vboxRDPStatus").html(trans("Connected to") + " " + $(document.vboxRDPForm.serverAddress).val());
 	unsetLangContext();
 	if(vboxConsoleDetached) window.status = $("#vboxRDPStatus").text();
-	$('#vboxVRDPDetachBtn').show();
+	$('#vboxVRDEDetachBtn').show();
 }
 
 function RDPWebEventServerRedirect(flashId) {
@@ -213,7 +213,7 @@ function RDPWebEventDisconnected(flashId) {
 	$("#vboxRDPStatus").data('vmConnected',false);
 
    	$('#vboxRDPConnParams').css({'visibility':'visible'});
-   	$('#vboxVRDPDetachBtn').hide();
+   	$('#vboxVRDEDetachBtn').hide();
        
     /* RDP connection has been lost */
     setLangContext('vboxVMConsole');

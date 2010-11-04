@@ -57,10 +57,9 @@
 			});
 
 			$('#vboxLoginForm').bind('submit',function(){
-				alert('here');
 				if(document.forms[0].elements['username'].value == '' || document.forms[0].elements['password'].value == '')
 					return false;
-				$('#vboxLoginFormDiv').hide();
+				$('#vboxLoginFormDiv').dialog('close');
 			});
 			
 			$('#vboxLoginFormDiv').dialog({'closeOnEscape':false,'width':'auto','height':145,'buttons':buttons,'resizable':false,'modal':true,'autoOpen':true,'stack':true,'dialogClass':'vboxDialogContent','title':'VirtualBox Web Console'});

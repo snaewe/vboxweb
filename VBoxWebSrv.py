@@ -68,6 +68,7 @@ if sys.version_info < (2, 6):
 		jsonType = 'simplejson'
 	except:
 		print "Warning: using internal JSON encoder. Installing simplejson for python (usually a package named python-simplejson) will improve performance."
+		print "http://pypi.python.org/pypi/simplejson/"
 		jsonType = 'internal'
 else:
     import json
@@ -438,8 +439,9 @@ class VBoxWeb:
 
 		try:
 			cherrypy.thread_data.vbox = vboxactions.vboxactions(self.ctx)
-    
-			machine = cherrypy.thread_data.vbox._getMachineRef(vm)
+			cherrypy.thread_data.vbox.connect()
+    	
+			machine = cherrypy.thread_data.vbox.vbox.findMachine(vm)
 			machineState = str(cherrypy.thread_data.vbox.vboxType('MachineState',machine.state))
     		
 			if str(machineState) != 'Running' and str(machineState) != 'Saved':
@@ -755,7 +757,7 @@ def main(argv = sys.argv):
 		if argv[1] == "adduser":
 			if len(argv) <> 4:
 				print "Syntax: " + argv[0] + " adduser <username> <password>"
-				print "\t\t(also used to change user's password)"
+				print "\n\t(also used to change user's password)"
 				return
 			h = hashlib.new('sha256')
 			h.update(argv[3])
@@ -763,8 +765,7 @@ def main(argv = sys.argv):
 				print "Updating password for " + argv[2]
 			else:
 				print "Adding user " + argv[2]
-			g_vboxManager.vbox.setExtraData(
-				"vboxwebc/users/" + argv[2], h.hexdigest())
+			g_vboxManager.vbox.setExtraData("vboxwebc/users/" + argv[2], h.hexdigest())
 			return
 		elif argv[1] == "deluser":
 			if len(argv) <> 3:
@@ -788,7 +789,7 @@ VBoxWebSrv Command Usage:
 """
 			return
 		else:
-			print "\nUnknown command '%s'. See '%s help' for available commands" % (argv[1], argv[0])
+			print "\nUnknown command '%s'. See 'VBoxWebSrv help' for available commands" % (argv[1])
 			return
 
 	cherrypy.engine.subscribe('start_thread', perThreadInit)
@@ -814,7 +815,7 @@ VBoxWebSrv Command Usage:
 			break
 		
 	if users != None:
-		print "No VboxWebSrv users found. See '%s help' for help on adding users." % (argv[0])
+		print "No VboxWebSrv users found. See 'VBoxWebSrv help' for help on adding users."
 		quit()
 
 	print "VboxWebSrv binding to %s:%s..." %(cherrypy.config['server.socket_host'], cherrypy.config['server.socket_port'])

@@ -690,15 +690,26 @@ class IVirtualBox(IUnknown):
          self.__dict__[name] = val
 
    
-   def createMachine(self, _arg_name, _arg_osTypeId, _arg_baseFolder, _arg_id, _arg_override):
-       req=IVirtualBox_createMachineRequestMsg()
+   def composeMachineFilename(self, _arg_name, _arg_baseFolder):
+       req=IVirtualBox_composeMachineFilenameRequestMsg()
        req._this=self.handle
        
        req._name=_arg_name
-       req._osTypeId=_arg_osTypeId
        req._baseFolder=_arg_baseFolder
+       val=self.mgr.getPort().IVirtualBox_composeMachineFilename(req)
+       
+       return String(self.mgr,val._returnval)
+
+
+   def createMachine(self, _arg_settingsFile, _arg_name, _arg_osTypeId, _arg_id, _arg_forceOverwrite):
+       req=IVirtualBox_createMachineRequestMsg()
+       req._this=self.handle
+       
+       req._settingsFile=_arg_settingsFile
+       req._name=_arg_name
+       req._osTypeId=_arg_osTypeId
        req._id=_arg_id
-       req._override=_arg_override
+       req._forceOverwrite=_arg_forceOverwrite
        val=self.mgr.getPort().IVirtualBox_createMachine(req)
        
        return IMachine(self.mgr,val._returnval)
@@ -724,21 +735,11 @@ class IVirtualBox(IUnknown):
        return 
 
 
-   def getMachine(self, _arg_id):
-       req=IVirtualBox_getMachineRequestMsg()
-       req._this=self.handle
-       
-       req._id=_arg_id
-       val=self.mgr.getPort().IVirtualBox_getMachine(req)
-       
-       return IMachine(self.mgr,val._returnval)
-
-
-   def findMachine(self, _arg_name):
+   def findMachine(self, _arg_nameOrId):
        req=IVirtualBox_findMachineRequestMsg()
        req._this=self.handle
        
-       req._name=_arg_name
+       req._nameOrId=_arg_nameOrId
        val=self.mgr.getPort().IVirtualBox_findMachine(req)
        
        return IMachine(self.mgr,val._returnval)
@@ -850,17 +851,6 @@ class IVirtualBox(IUnknown):
        return 
 
 
-   def waitForPropertyChange(self, _arg_what, _arg_timeout):
-       req=IVirtualBox_waitForPropertyChangeRequestMsg()
-       req._this=self.handle
-       
-       req._what=_arg_what
-       req._timeout=_arg_timeout
-       val=self.mgr.getPort().IVirtualBox_waitForPropertyChange(req)
-       
-       return String(self.mgr,val._changed), String(self.mgr,val._values)
-
-
    def createDHCPServer(self, _arg_name):
        req=IVirtualBox_createDHCPServerRequestMsg()
        req._this=self.handle
@@ -900,6 +890,35 @@ class IVirtualBox(IUnknown):
        val=self.mgr.getPort().IVirtualBox_checkFirmwarePresent(req)
        
        return Boolean(self.mgr,val._returnval), String(self.mgr,val._url), String(self.mgr,val._file)
+
+
+   def VRDERegisterLibrary(self, _arg_name):
+       req=IVirtualBox_VRDERegisterLibraryRequestMsg()
+       req._this=self.handle
+       
+       req._name=_arg_name
+       val=self.mgr.getPort().IVirtualBox_VRDERegisterLibrary(req)
+       
+       return 
+
+
+   def VRDEUnregisterLibrary(self, _arg_name):
+       req=IVirtualBox_VRDEUnregisterLibraryRequestMsg()
+       req._this=self.handle
+       
+       req._name=_arg_name
+       val=self.mgr.getPort().IVirtualBox_VRDEUnregisterLibrary(req)
+       
+       return 
+
+
+   def VRDEListLibraries(self):
+       req=IVirtualBox_VRDEListLibrariesRequestMsg()
+       req._this=self.handle
+       
+       val=self.mgr.getPort().IVirtualBox_VRDEListLibraries(req)
+       
+       return String(self.mgr,val._returnval, True)
 
 
    def getVersion(self):
@@ -2030,44 +2049,25 @@ class IMachine(IUnknown):
        return IProgress(self.mgr,val._returnval)
 
 
-   def export(self, _arg_aAppliance):
+   def export(self, _arg_aAppliance, _arg_location):
        req=IMachine_exportRequestMsg()
        req._this=self.handle
        
        req._aAppliance=_arg_aAppliance
+       req._location=_arg_location
        val=self.mgr.getPort().IMachine_export(req)
        
        return IVirtualSystemDescription(self.mgr,val._returnval)
 
 
-   def getSnapshot(self, _arg_id):
-       req=IMachine_getSnapshotRequestMsg()
-       req._this=self.handle
-       
-       req._id=_arg_id
-       val=self.mgr.getPort().IMachine_getSnapshot(req)
-       
-       return ISnapshot(self.mgr,val._returnval)
-
-
-   def findSnapshot(self, _arg_name):
+   def findSnapshot(self, _arg_nameOrId):
        req=IMachine_findSnapshotRequestMsg()
        req._this=self.handle
        
-       req._name=_arg_name
+       req._nameOrId=_arg_nameOrId
        val=self.mgr.getPort().IMachine_findSnapshot(req)
        
        return ISnapshot(self.mgr,val._returnval)
-
-
-   def setCurrentSnapshot(self, _arg_id):
-       req=IMachine_setCurrentSnapshotRequestMsg()
-       req._this=self.handle
-       
-       req._id=_arg_id
-       val=self.mgr.getPort().IMachine_setCurrentSnapshot(req)
-       
-       return 
 
 
    def createSharedFolder(self, _arg_name, _arg_hostPath, _arg_writable, _arg_automount):
@@ -2405,19 +2405,19 @@ class IMachine(IUnknown):
             req._CPUHotPlugEnabled = value.handle
        self.mgr.getPort().IMachine_setCPUHotPlugEnabled(req)
 
-   def getCPUPriority(self):
-       req=IMachine_getCPUPriorityRequestMsg()
+   def getCPUExecutionCap(self):
+       req=IMachine_getCPUExecutionCapRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IMachine_getCPUPriority(req)
+       val=self.mgr.getPort().IMachine_getCPUExecutionCap(req)
        return  UnsignedInt(self.mgr,val._returnval)
-   def setCPUPriority(self, value):
-       req=IMachine_setCPUPriorityRequestMsg()
+   def setCPUExecutionCap(self, value):
+       req=IMachine_setCPUExecutionCapRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
-            req._CPUPriority = value
+            req._CPUExecutionCap = value
        else:
-            req._CPUPriority = value.handle
-       self.mgr.getPort().IMachine_setCPUPriority(req)
+            req._CPUExecutionCap = value.handle
+       self.mgr.getPort().IMachine_setCPUExecutionCap(req)
 
    def getMemorySize(self):
        req=IMachine_getMemorySizeRequestMsg()
@@ -2606,11 +2606,11 @@ class IMachine(IUnknown):
             req._snapshotFolder = value.handle
        self.mgr.getPort().IMachine_setSnapshotFolder(req)
 
-   def getVRDPServer(self):
-       req=IMachine_getVRDPServerRequestMsg()
+   def getVRDEServer(self):
+       req=IMachine_getVRDEServerRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IMachine_getVRDPServer(req)
-       return  IVRDPServer(self.mgr,val._returnval)
+       val=self.mgr.getPort().IMachine_getVRDEServer(req)
+       return  IVRDEServer(self.mgr,val._returnval)
    def getMediumAttachments(self):
        req=IMachine_getMediumAttachmentsRequestMsg()
        req._this=self.handle
@@ -2912,7 +2912,7 @@ class IMachine(IUnknown):
         ],
          'CPUHotPlugEnabled':[getCPUHotPlugEnabled,setCPUHotPlugEnabled,
         ],
-         'CPUPriority':[getCPUPriority,setCPUPriority,
+         'CPUExecutionCap':[getCPUExecutionCap,setCPUExecutionCap,
         ],
          'memorySize':[getMemorySize,setMemorySize,
         ],
@@ -2941,7 +2941,7 @@ class IMachine(IUnknown):
         ],
          'snapshotFolder':[getSnapshotFolder,setSnapshotFolder,
         ],
-         'VRDPServer':[getVRDPServer,None],
+         'VRDEServer':[getVRDEServer,None],
          'mediumAttachments':[getMediumAttachments,None],
          'USBController':[getUSBController,None],
          'audioAdapter':[getAudioAdapter,None],
@@ -3329,11 +3329,11 @@ class IConsole(IUnknown):
        req._this=self.handle
        val=self.mgr.getPort().IConsole_getSharedFolders(req)
        return  ISharedFolder(self.mgr,val._returnval, True)
-   def getRemoteDisplayInfo(self):
-       req=IConsole_getRemoteDisplayInfoRequestMsg()
+   def getVRDEServerInfo(self):
+       req=IConsole_getVRDEServerInfoRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IConsole_getRemoteDisplayInfo(req)
-       return  IRemoteDisplayInfo(self.mgr,val._returnval)
+       val=self.mgr.getPort().IConsole_getVRDEServerInfo(req)
+       return  IVRDEServerInfo(self.mgr,val._returnval)
    def getEventSource(self):
        req=IConsole_getEventSourceRequestMsg()
        req._this=self.handle
@@ -3350,7 +3350,7 @@ class IConsole(IUnknown):
          'USBDevices':[getUSBDevices,None],
          'remoteUSBDevices':[getRemoteUSBDevices,None],
          'sharedFolders':[getSharedFolders,None],
-         'remoteDisplayInfo':[getRemoteDisplayInfo,None],
+         'VRDEServerInfo':[getVRDEServerInfo,None],
          'eventSource':[getEventSource,None]}
 
 class IHostNetworkInterface(IUnknown):
@@ -4037,20 +4037,6 @@ class ISystemProperties(IUnknown):
             req._defaultMachineFolder = value.handle
        self.mgr.getPort().ISystemProperties_setDefaultMachineFolder(req)
 
-   def getDefaultHardDiskFolder(self):
-       req=ISystemProperties_getDefaultHardDiskFolderRequestMsg()
-       req._this=self.handle
-       val=self.mgr.getPort().ISystemProperties_getDefaultHardDiskFolder(req)
-       return  String(self.mgr,val._returnval)
-   def setDefaultHardDiskFolder(self, value):
-       req=ISystemProperties_setDefaultHardDiskFolderRequestMsg()
-       req._this=self.handle
-       if type(value) in [int, bool, basestring, str]:
-            req._defaultHardDiskFolder = value
-       else:
-            req._defaultHardDiskFolder = value.handle
-       self.mgr.getPort().ISystemProperties_setDefaultHardDiskFolder(req)
-
    def getMediumFormats(self):
        req=ISystemProperties_getMediumFormatsRequestMsg()
        req._this=self.handle
@@ -4126,19 +4112,19 @@ class ISystemProperties(IUnknown):
             req._freeDiskSpacePercentError = value.handle
        self.mgr.getPort().ISystemProperties_setFreeDiskSpacePercentError(req)
 
-   def getRemoteDisplayAuthLibrary(self):
-       req=ISystemProperties_getRemoteDisplayAuthLibraryRequestMsg()
+   def getVRDEAuthLibrary(self):
+       req=ISystemProperties_getVRDEAuthLibraryRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().ISystemProperties_getRemoteDisplayAuthLibrary(req)
+       val=self.mgr.getPort().ISystemProperties_getVRDEAuthLibrary(req)
        return  String(self.mgr,val._returnval)
-   def setRemoteDisplayAuthLibrary(self, value):
-       req=ISystemProperties_setRemoteDisplayAuthLibraryRequestMsg()
+   def setVRDEAuthLibrary(self, value):
+       req=ISystemProperties_setVRDEAuthLibraryRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
-            req._remoteDisplayAuthLibrary = value
+            req._VRDEAuthLibrary = value
        else:
-            req._remoteDisplayAuthLibrary = value.handle
-       self.mgr.getPort().ISystemProperties_setRemoteDisplayAuthLibrary(req)
+            req._VRDEAuthLibrary = value.handle
+       self.mgr.getPort().ISystemProperties_setVRDEAuthLibrary(req)
 
    def getWebServiceAuthLibrary(self):
        req=ISystemProperties_getWebServiceAuthLibraryRequestMsg()
@@ -4153,6 +4139,20 @@ class ISystemProperties(IUnknown):
        else:
             req._webServiceAuthLibrary = value.handle
        self.mgr.getPort().ISystemProperties_setWebServiceAuthLibrary(req)
+
+   def getDefaultVRDELibrary(self):
+       req=ISystemProperties_getDefaultVRDELibraryRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().ISystemProperties_getDefaultVRDELibrary(req)
+       return  String(self.mgr,val._returnval)
+   def setDefaultVRDELibrary(self, value):
+       req=ISystemProperties_setDefaultVRDELibraryRequestMsg()
+       req._this=self.handle
+       if type(value) in [int, bool, basestring, str]:
+            req._defaultVRDELibrary = value
+       else:
+            req._defaultVRDELibrary = value.handle
+       self.mgr.getPort().ISystemProperties_setDefaultVRDELibrary(req)
 
    def getLogHistoryCount(self):
        req=ISystemProperties_getLogHistoryCountRequestMsg()
@@ -4189,8 +4189,6 @@ class ISystemProperties(IUnknown):
          'maxBootPosition':[getMaxBootPosition,None],
          'defaultMachineFolder':[getDefaultMachineFolder,setDefaultMachineFolder,
         ],
-         'defaultHardDiskFolder':[getDefaultHardDiskFolder,setDefaultHardDiskFolder,
-        ],
          'mediumFormats':[getMediumFormats,None],
          'defaultHardDiskFormat':[getDefaultHardDiskFormat,setDefaultHardDiskFormat,
         ],
@@ -4202,9 +4200,11 @@ class ISystemProperties(IUnknown):
         ],
          'freeDiskSpacePercentError':[getFreeDiskSpacePercentError,setFreeDiskSpacePercentError,
         ],
-         'remoteDisplayAuthLibrary':[getRemoteDisplayAuthLibrary,setRemoteDisplayAuthLibrary,
+         'VRDEAuthLibrary':[getVRDEAuthLibrary,setVRDEAuthLibrary,
         ],
          'webServiceAuthLibrary':[getWebServiceAuthLibrary,setWebServiceAuthLibrary,
+        ],
+         'defaultVRDELibrary':[getDefaultVRDELibrary,setDefaultVRDELibrary,
         ],
          'LogHistoryCount':[getLogHistoryCount,setLogHistoryCount,
         ],
@@ -4339,6 +4339,32 @@ class IGuest(IUnknown):
        val=self.mgr.getPort().IGuest_getProcessStatus(req)
        
        return UnsignedInt(self.mgr,val._returnval), UnsignedInt(self.mgr,val._exitcode), UnsignedInt(self.mgr,val._flags)
+
+
+   def copyToGuest(self, _arg_source, _arg_dest, _arg_userName, _arg_password, _arg_flags):
+       req=IGuest_copyToGuestRequestMsg()
+       req._this=self.handle
+       
+       req._source=_arg_source
+       req._dest=_arg_dest
+       req._userName=_arg_userName
+       req._password=_arg_password
+       req._flags=_arg_flags
+       val=self.mgr.getPort().IGuest_copyToGuest(req)
+       
+       return IProgress(self.mgr,val._returnval)
+
+
+   def setProcessInput(self, _arg_pid, _arg_flags, _arg_data):
+       req=IGuest_setProcessInputRequestMsg()
+       req._this=self.handle
+       
+       req._pid=_arg_pid
+       req._flags=_arg_flags
+       req._data=_arg_data
+       val=self.mgr.getPort().IGuest_setProcessInput(req)
+       
+       return UnsignedInt(self.mgr,val._returnval)
 
 
    def getOSTypeId(self):
@@ -5365,9 +5391,14 @@ class IKeyboard(IUnknown):
        return 
 
 
+   def getEventSource(self):
+       req=IKeyboard_getEventSourceRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IKeyboard_getEventSource(req)
+       return  IEventSource(self.mgr,val._returnval)
 
 
-   _Attrs_={}
+   _Attrs_={         'eventSource':[getEventSource,None]}
 
 class IMouse(IUnknown):
    def __init__(self, mgr, handle, isarray = False):
@@ -5472,11 +5503,17 @@ class IMouse(IUnknown):
        req._this=self.handle
        val=self.mgr.getPort().IMouse_getNeedsHostCursor(req)
        return  Boolean(self.mgr,val._returnval)
+   def getEventSource(self):
+       req=IMouse_getEventSourceRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IMouse_getEventSource(req)
+       return  IEventSource(self.mgr,val._returnval)
 
 
    _Attrs_={         'absoluteSupported':[getAbsoluteSupported,None],
          'relativeSupported':[getRelativeSupported,None],
-         'needsHostCursor':[getNeedsHostCursor,None]}
+         'needsHostCursor':[getNeedsHostCursor,None],
+         'eventSource':[getEventSource,None]}
 
 class IDisplay(IUnknown):
    def __init__(self, mgr, handle, isarray = False):
@@ -7095,7 +7132,7 @@ class IAudioAdapter(IUnknown):
          'audioDriver':[getAudioDriver,setAudioDriver,
         ]}
 
-class IVRDPServer(IUnknown):
+class IVRDEServer(IUnknown):
    def __init__(self, mgr, handle, isarray = False):
        self.mgr = mgr
        if handle is None:
@@ -7128,7 +7165,7 @@ class IVRDPServer(IUnknown):
 
    def __getitem__(self, index):
       if self.isarray:
-          return IVRDPServer(self.mgr, self.handle[index])
+          return IVRDEServer(self.mgr, self.handle[index])
       raise TypeError, "iteration over non-sequence"
 
    def __str__(self):
@@ -7138,7 +7175,7 @@ class IVRDPServer(IUnknown):
         return self.handle != None and self.handle != ''
 
    def __getattr__(self,name):
-      hndl = IVRDPServer._Attrs_.get(name, None)
+      hndl = IVRDEServer._Attrs_.get(name, None)
       if hndl != None:
          if hndl[0] != None:
            return hndl[0](self)
@@ -7148,146 +7185,135 @@ class IVRDPServer(IUnknown):
          return IUnknown.__getattr__(self, name)
 
    def __setattr__(self, name, val):
-      hndl = IVRDPServer._Attrs_.get(name, None)
+      hndl = IVRDEServer._Attrs_.get(name, None)
       if (hndl != None and hndl[1] != None):
          hndl[1](self,val)
       else:
          self.__dict__[name] = val
 
    
-   def getEnabled(self):
-       req=IVRDPServer_getEnabledRequestMsg()
+   def setVRDEProperty(self, _arg_key, _arg_value):
+       req=IVRDEServer_setVRDEPropertyRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getEnabled(req)
+       
+       req._key=_arg_key
+       req._value=_arg_value
+       val=self.mgr.getPort().IVRDEServer_setVRDEProperty(req)
+       
+       return 
+
+
+   def getVRDEProperty(self, _arg_key):
+       req=IVRDEServer_getVRDEPropertyRequestMsg()
+       req._this=self.handle
+       
+       req._key=_arg_key
+       val=self.mgr.getPort().IVRDEServer_getVRDEProperty(req)
+       
+       return String(self.mgr,val._returnval)
+
+
+   def getEnabled(self):
+       req=IVRDEServer_getEnabledRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IVRDEServer_getEnabled(req)
        return  Boolean(self.mgr,val._returnval)
    def setEnabled(self, value):
-       req=IVRDPServer_setEnabledRequestMsg()
+       req=IVRDEServer_setEnabledRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
             req._enabled = value
        else:
             req._enabled = value.handle
-       self.mgr.getPort().IVRDPServer_setEnabled(req)
-
-   def getPorts(self):
-       req=IVRDPServer_getPortsRequestMsg()
-       req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getPorts(req)
-       return  String(self.mgr,val._returnval)
-   def setPorts(self, value):
-       req=IVRDPServer_setPortsRequestMsg()
-       req._this=self.handle
-       if type(value) in [int, bool, basestring, str]:
-            req._ports = value
-       else:
-            req._ports = value.handle
-       self.mgr.getPort().IVRDPServer_setPorts(req)
-
-   def getNetAddress(self):
-       req=IVRDPServer_getNetAddressRequestMsg()
-       req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getNetAddress(req)
-       return  String(self.mgr,val._returnval)
-   def setNetAddress(self, value):
-       req=IVRDPServer_setNetAddressRequestMsg()
-       req._this=self.handle
-       if type(value) in [int, bool, basestring, str]:
-            req._netAddress = value
-       else:
-            req._netAddress = value.handle
-       self.mgr.getPort().IVRDPServer_setNetAddress(req)
+       self.mgr.getPort().IVRDEServer_setEnabled(req)
 
    def getAuthType(self):
-       req=IVRDPServer_getAuthTypeRequestMsg()
+       req=IVRDEServer_getAuthTypeRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getAuthType(req)
-       return  VRDPAuthType(self.mgr,val._returnval)
+       val=self.mgr.getPort().IVRDEServer_getAuthType(req)
+       return  AuthType(self.mgr,val._returnval)
    def setAuthType(self, value):
-       req=IVRDPServer_setAuthTypeRequestMsg()
+       req=IVRDEServer_setAuthTypeRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
             req._authType = value
        else:
             req._authType = value.handle
-       self.mgr.getPort().IVRDPServer_setAuthType(req)
+       self.mgr.getPort().IVRDEServer_setAuthType(req)
 
    def getAuthTimeout(self):
-       req=IVRDPServer_getAuthTimeoutRequestMsg()
+       req=IVRDEServer_getAuthTimeoutRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getAuthTimeout(req)
+       val=self.mgr.getPort().IVRDEServer_getAuthTimeout(req)
        return  UnsignedInt(self.mgr,val._returnval)
    def setAuthTimeout(self, value):
-       req=IVRDPServer_setAuthTimeoutRequestMsg()
+       req=IVRDEServer_setAuthTimeoutRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
             req._authTimeout = value
        else:
             req._authTimeout = value.handle
-       self.mgr.getPort().IVRDPServer_setAuthTimeout(req)
+       self.mgr.getPort().IVRDEServer_setAuthTimeout(req)
 
    def getAllowMultiConnection(self):
-       req=IVRDPServer_getAllowMultiConnectionRequestMsg()
+       req=IVRDEServer_getAllowMultiConnectionRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getAllowMultiConnection(req)
+       val=self.mgr.getPort().IVRDEServer_getAllowMultiConnection(req)
        return  Boolean(self.mgr,val._returnval)
    def setAllowMultiConnection(self, value):
-       req=IVRDPServer_setAllowMultiConnectionRequestMsg()
+       req=IVRDEServer_setAllowMultiConnectionRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
             req._allowMultiConnection = value
        else:
             req._allowMultiConnection = value.handle
-       self.mgr.getPort().IVRDPServer_setAllowMultiConnection(req)
+       self.mgr.getPort().IVRDEServer_setAllowMultiConnection(req)
 
    def getReuseSingleConnection(self):
-       req=IVRDPServer_getReuseSingleConnectionRequestMsg()
+       req=IVRDEServer_getReuseSingleConnectionRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getReuseSingleConnection(req)
+       val=self.mgr.getPort().IVRDEServer_getReuseSingleConnection(req)
        return  Boolean(self.mgr,val._returnval)
    def setReuseSingleConnection(self, value):
-       req=IVRDPServer_setReuseSingleConnectionRequestMsg()
+       req=IVRDEServer_setReuseSingleConnectionRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
             req._reuseSingleConnection = value
        else:
             req._reuseSingleConnection = value.handle
-       self.mgr.getPort().IVRDPServer_setReuseSingleConnection(req)
+       self.mgr.getPort().IVRDEServer_setReuseSingleConnection(req)
 
    def getVideoChannel(self):
-       req=IVRDPServer_getVideoChannelRequestMsg()
+       req=IVRDEServer_getVideoChannelRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getVideoChannel(req)
+       val=self.mgr.getPort().IVRDEServer_getVideoChannel(req)
        return  Boolean(self.mgr,val._returnval)
    def setVideoChannel(self, value):
-       req=IVRDPServer_setVideoChannelRequestMsg()
+       req=IVRDEServer_setVideoChannelRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
             req._videoChannel = value
        else:
             req._videoChannel = value.handle
-       self.mgr.getPort().IVRDPServer_setVideoChannel(req)
+       self.mgr.getPort().IVRDEServer_setVideoChannel(req)
 
    def getVideoChannelQuality(self):
-       req=IVRDPServer_getVideoChannelQualityRequestMsg()
+       req=IVRDEServer_getVideoChannelQualityRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().IVRDPServer_getVideoChannelQuality(req)
+       val=self.mgr.getPort().IVRDEServer_getVideoChannelQuality(req)
        return  UnsignedInt(self.mgr,val._returnval)
    def setVideoChannelQuality(self, value):
-       req=IVRDPServer_setVideoChannelQualityRequestMsg()
+       req=IVRDEServer_setVideoChannelQualityRequestMsg()
        req._this=self.handle
        if type(value) in [int, bool, basestring, str]:
             req._videoChannelQuality = value
        else:
             req._videoChannelQuality = value.handle
-       self.mgr.getPort().IVRDPServer_setVideoChannelQuality(req)
+       self.mgr.getPort().IVRDEServer_setVideoChannelQuality(req)
 
 
 
    _Attrs_={         'enabled':[getEnabled,setEnabled,
-        ],
-         'ports':[getPorts,setPorts,
-        ],
-         'netAddress':[getNetAddress,setNetAddress,
         ],
          'authType':[getAuthType,setAuthType,
         ],
@@ -8318,6 +8344,16 @@ class IEventSource(IUnknown):
        val=self.mgr.getPort().IEventSource_createListener(req)
        
        return IEventListener(self.mgr,val._returnval)
+
+
+   def createAggregator(self, _arg_subordinates):
+       req=IEventSource_createAggregatorRequestMsg()
+       req._this=self.handle
+       
+       req._subordinates=_arg_subordinates
+       val=self.mgr.getPort().IEventSource_createAggregator(req)
+       
+       return IEventSource(self.mgr,val._returnval)
 
 
    def registerListener(self, _arg_listener, _arg_interesting, _arg_active):
@@ -10209,7 +10245,7 @@ class ICPUChangedEvent(IEvent):
    _Attrs_={         'cpu':[getCpu,None],
          'add':[getAdd,None]}
 
-class ICPUPriorityChangedEvent(IEvent):
+class ICPUExecutionCapChangedEvent(IEvent):
    def __init__(self, mgr, handle, isarray = False):
        self.mgr = mgr
        if handle is None:
@@ -10242,7 +10278,7 @@ class ICPUPriorityChangedEvent(IEvent):
 
    def __getitem__(self, index):
       if self.isarray:
-          return ICPUPriorityChangedEvent(self.mgr, self.handle[index])
+          return ICPUExecutionCapChangedEvent(self.mgr, self.handle[index])
       raise TypeError, "iteration over non-sequence"
 
    def __str__(self):
@@ -10252,7 +10288,7 @@ class ICPUPriorityChangedEvent(IEvent):
         return self.handle != None and self.handle != ''
 
    def __getattr__(self,name):
-      hndl = ICPUPriorityChangedEvent._Attrs_.get(name, None)
+      hndl = ICPUExecutionCapChangedEvent._Attrs_.get(name, None)
       if hndl != None:
          if hndl[0] != None:
            return hndl[0](self)
@@ -10262,23 +10298,23 @@ class ICPUPriorityChangedEvent(IEvent):
          return IEvent.__getattr__(self, name)
 
    def __setattr__(self, name, val):
-      hndl = ICPUPriorityChangedEvent._Attrs_.get(name, None)
+      hndl = ICPUExecutionCapChangedEvent._Attrs_.get(name, None)
       if (hndl != None and hndl[1] != None):
          hndl[1](self,val)
       else:
          self.__dict__[name] = val
 
    
-   def getPriority(self):
-       req=ICPUPriorityChangedEvent_getPriorityRequestMsg()
+   def getExecutionCap(self):
+       req=ICPUExecutionCapChangedEvent_getExecutionCapRequestMsg()
        req._this=self.handle
-       val=self.mgr.getPort().ICPUPriorityChangedEvent_getPriority(req)
+       val=self.mgr.getPort().ICPUExecutionCapChangedEvent_getExecutionCap(req)
        return  UnsignedInt(self.mgr,val._returnval)
 
 
-   _Attrs_={         'priority':[getPriority,None]}
+   _Attrs_={         'executionCap':[getExecutionCap,None]}
 
-class IVRDPServerChangedEvent(IEvent):
+class IGuestKeyboardEvent(IEvent):
    def __init__(self, mgr, handle, isarray = False):
        self.mgr = mgr
        if handle is None:
@@ -10311,7 +10347,7 @@ class IVRDPServerChangedEvent(IEvent):
 
    def __getitem__(self, index):
       if self.isarray:
-          return IVRDPServerChangedEvent(self.mgr, self.handle[index])
+          return IGuestKeyboardEvent(self.mgr, self.handle[index])
       raise TypeError, "iteration over non-sequence"
 
    def __str__(self):
@@ -10321,7 +10357,7 @@ class IVRDPServerChangedEvent(IEvent):
         return self.handle != None and self.handle != ''
 
    def __getattr__(self,name):
-      hndl = IVRDPServerChangedEvent._Attrs_.get(name, None)
+      hndl = IGuestKeyboardEvent._Attrs_.get(name, None)
       if hndl != None:
          if hndl[0] != None:
            return hndl[0](self)
@@ -10331,7 +10367,175 @@ class IVRDPServerChangedEvent(IEvent):
          return IEvent.__getattr__(self, name)
 
    def __setattr__(self, name, val):
-      hndl = IVRDPServerChangedEvent._Attrs_.get(name, None)
+      hndl = IGuestKeyboardEvent._Attrs_.get(name, None)
+      if (hndl != None and hndl[1] != None):
+         hndl[1](self,val)
+      else:
+         self.__dict__[name] = val
+
+   
+   def getScancodes(self):
+       req=IGuestKeyboardEvent_getScancodesRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IGuestKeyboardEvent_getScancodes(req)
+       return  Int(self.mgr,val._returnval, True)
+
+
+   _Attrs_={         'scancodes':[getScancodes,None]}
+
+class IGuestMouseEvent(IReusableEvent):
+   def __init__(self, mgr, handle, isarray = False):
+       self.mgr = mgr
+       if handle is None:
+           raise Exception("bad handle: "+str(handle))
+       self.handle = handle
+       self.isarray = isarray
+
+   def releaseRemote(self):
+        try:
+            req=IManagedObjectRef_releaseRequestMsg()
+            req._this=handle
+            self.mgr.getPort().IManagedObjectRef_release(req)
+        except:
+            pass
+
+   def __next(self):
+      if self.isarray:
+          return self.handle.__next()
+      raise TypeError, "iteration over non-sequence"
+
+   def __size(self):
+      if self.isarray:
+          return self.handle.__size()
+      raise TypeError, "iteration over non-sequence"
+
+   def __len__(self):
+      if self.isarray:
+          return self.handle.__len__()
+      raise TypeError, "iteration over non-sequence"
+
+   def __getitem__(self, index):
+      if self.isarray:
+          return IGuestMouseEvent(self.mgr, self.handle[index])
+      raise TypeError, "iteration over non-sequence"
+
+   def __str__(self):
+        return self.handle
+
+   def isValid(self):
+        return self.handle != None and self.handle != ''
+
+   def __getattr__(self,name):
+      hndl = IGuestMouseEvent._Attrs_.get(name, None)
+      if hndl != None:
+         if hndl[0] != None:
+           return hndl[0](self)
+         else:
+          raise AttributeError
+      else:
+         return IReusableEvent.__getattr__(self, name)
+
+   def __setattr__(self, name, val):
+      hndl = IGuestMouseEvent._Attrs_.get(name, None)
+      if (hndl != None and hndl[1] != None):
+         hndl[1](self,val)
+      else:
+         self.__dict__[name] = val
+
+   
+   def getAbsolute(self):
+       req=IGuestMouseEvent_getAbsoluteRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IGuestMouseEvent_getAbsolute(req)
+       return  Boolean(self.mgr,val._returnval)
+   def getX(self):
+       req=IGuestMouseEvent_getXRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IGuestMouseEvent_getX(req)
+       return  Int(self.mgr,val._returnval)
+   def getY(self):
+       req=IGuestMouseEvent_getYRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IGuestMouseEvent_getY(req)
+       return  Int(self.mgr,val._returnval)
+   def getZ(self):
+       req=IGuestMouseEvent_getZRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IGuestMouseEvent_getZ(req)
+       return  Int(self.mgr,val._returnval)
+   def getW(self):
+       req=IGuestMouseEvent_getWRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IGuestMouseEvent_getW(req)
+       return  Int(self.mgr,val._returnval)
+   def getButtons(self):
+       req=IGuestMouseEvent_getButtonsRequestMsg()
+       req._this=self.handle
+       val=self.mgr.getPort().IGuestMouseEvent_getButtons(req)
+       return  Int(self.mgr,val._returnval)
+
+
+   _Attrs_={         'absolute':[getAbsolute,None],
+         'x':[getX,None],
+         'y':[getY,None],
+         'z':[getZ,None],
+         'w':[getW,None],
+         'buttons':[getButtons,None]}
+
+class IVRDEServerChangedEvent(IEvent):
+   def __init__(self, mgr, handle, isarray = False):
+       self.mgr = mgr
+       if handle is None:
+           raise Exception("bad handle: "+str(handle))
+       self.handle = handle
+       self.isarray = isarray
+
+   def releaseRemote(self):
+        try:
+            req=IManagedObjectRef_releaseRequestMsg()
+            req._this=handle
+            self.mgr.getPort().IManagedObjectRef_release(req)
+        except:
+            pass
+
+   def __next(self):
+      if self.isarray:
+          return self.handle.__next()
+      raise TypeError, "iteration over non-sequence"
+
+   def __size(self):
+      if self.isarray:
+          return self.handle.__size()
+      raise TypeError, "iteration over non-sequence"
+
+   def __len__(self):
+      if self.isarray:
+          return self.handle.__len__()
+      raise TypeError, "iteration over non-sequence"
+
+   def __getitem__(self, index):
+      if self.isarray:
+          return IVRDEServerChangedEvent(self.mgr, self.handle[index])
+      raise TypeError, "iteration over non-sequence"
+
+   def __str__(self):
+        return self.handle
+
+   def isValid(self):
+        return self.handle != None and self.handle != ''
+
+   def __getattr__(self,name):
+      hndl = IVRDEServerChangedEvent._Attrs_.get(name, None)
+      if hndl != None:
+         if hndl[0] != None:
+           return hndl[0](self)
+         else:
+          raise AttributeError
+      else:
+         return IEvent.__getattr__(self, name)
+
+   def __setattr__(self, name, val):
+      hndl = IVRDEServerChangedEvent._Attrs_.get(name, None)
       if (hndl != None and hndl[1] != None):
          hndl[1](self,val)
       else:
@@ -10342,7 +10546,7 @@ class IVRDPServerChangedEvent(IEvent):
 
    _Attrs_={}
 
-class IRemoteDisplayInfoChangedEvent(IEvent):
+class IVRDEServerInfoChangedEvent(IEvent):
    def __init__(self, mgr, handle, isarray = False):
        self.mgr = mgr
        if handle is None:
@@ -10375,7 +10579,7 @@ class IRemoteDisplayInfoChangedEvent(IEvent):
 
    def __getitem__(self, index):
       if self.isarray:
-          return IRemoteDisplayInfoChangedEvent(self.mgr, self.handle[index])
+          return IVRDEServerInfoChangedEvent(self.mgr, self.handle[index])
       raise TypeError, "iteration over non-sequence"
 
    def __str__(self):
@@ -10385,7 +10589,7 @@ class IRemoteDisplayInfoChangedEvent(IEvent):
         return self.handle != None and self.handle != ''
 
    def __getattr__(self,name):
-      hndl = IRemoteDisplayInfoChangedEvent._Attrs_.get(name, None)
+      hndl = IVRDEServerInfoChangedEvent._Attrs_.get(name, None)
       if hndl != None:
          if hndl[0] != None:
            return hndl[0](self)
@@ -10395,7 +10599,7 @@ class IRemoteDisplayInfoChangedEvent(IEvent):
          return IEvent.__getattr__(self, name)
 
    def __setattr__(self, name, val):
-      hndl = IRemoteDisplayInfoChangedEvent._Attrs_.get(name, None)
+      hndl = IVRDEServerInfoChangedEvent._Attrs_.get(name, None)
       if (hndl != None and hndl[1] != None):
          hndl[1](self,val)
       else:
@@ -11172,7 +11376,7 @@ class IShowWindowEvent(IEvent):
 
    _Attrs_={         'winId':[getWinId,setWinId,
         ]}
-class IRemoteDisplayInfo:
+class IVRDEServerInfo:
     def __init__(self, mgr, handle, isarray = False):
        self.mgr = mgr
        self.isarray = isarray
@@ -11321,7 +11525,7 @@ class IRemoteDisplayInfo:
 
     def __getitem__(self, index):
       if self.isarray:
-          return IRemoteDisplayInfo(self.mgr, self.handle[index])
+          return IVRDEServerInfo(self.mgr, self.handle[index])
       raise TypeError, "iteration over non-sequence"
 
 
@@ -11376,6 +11580,8 @@ class IGuestOSType:
           self.recommendedRtcUseUtc = Boolean(self.mgr, handle._recommendedRtcUseUtc)
        
           self.recommendedChipset = ChipsetType(self.mgr, handle._recommendedChipset)
+       
+          self.recommendedAudioController = AudioControllerType(self.mgr, handle._recommendedAudioController)
        
           pass
 
@@ -11510,6 +11716,12 @@ class IGuestOSType:
        return self.recommendedChipset
 
     def setRecommendedChipset(self):
+       raise Error, 'setters not supported'
+    
+    def getRecommendedAudioController(self):
+       return self.recommendedAudioController
+
+    def setRecommendedAudioController(self):
        raise Error, 'setters not supported'
     
 
@@ -11842,7 +12054,7 @@ class MachineState:
    def __int__(self):
         return self.handle
 
-   _NameMap={0:'Null',1:'PoweredOff',2:'Saved',3:'Teleported',4:'Aborted',5:'Running',6:'Paused',7:'Stuck',8:'Teleporting',9:'LiveSnapshotting',10:'Starting',11:'Stopping',12:'Saving',13:'Restoring',14:'TeleportingPausedVM',15:'TeleportingIn',16:'FaultTolerantSyncing',17:'DeletingSnapshotOnline',18:'DeletingSnapshotPaused',19:'RestoringSnapshot',20:'DeletingSnapshot',21:'SettingUp'}
+   _NameMap={0:'Null',1:'PoweredOff',2:'Saved',3:'Teleported',4:'Aborted',5:'Running',6:'Paused',7:'Stuck',8:'Teleporting',9:'LiveSnapshotting',10:'Starting',11:'Stopping',12:'Saving',13:'Restoring',14:'TeleportingPausedVM',15:'TeleportingIn',16:'FaultTolerantSyncing',17:'DeletingSnapshotOnline',18:'DeletingSnapshotPaused',19:'RestoringSnapshot',20:'DeletingSnapshot',21:'SettingUp',8:'FirstTransient',21:'LastTransient'}
    _ValueMap={
               'Null':0,
               'PoweredOff':1,
@@ -12663,7 +12875,7 @@ class VFSFileType:
    WhiteOut=9
 
 class VirtualSystemDescriptionType:
-	
+
    def __init__(self,mgr,handle,isarray=False):
        self.mgr=mgr
        self.isarray = isarray
@@ -13004,6 +13216,130 @@ class AdditionsRunLevelType:
    Userland=2
    Desktop=3
 
+class ExecuteProcessFlag:
+   def __init__(self,mgr,handle):
+       self.mgr=mgr
+       if isinstance(handle,basestring):
+           self.handle=ExecuteProcessFlag._ValueMap[handle]
+       else:
+           self.handle=handle
+
+   def __eq__(self,other):
+      if isinstance(other,ExecuteProcessFlag):
+         return self.handle == other.handle
+      if isinstance(other,int):
+         return self.handle == other
+      if isinstance(other,basestring):
+         return str(self) == other
+      return False
+
+   def __ne__(self,other):
+      if isinstance(other,ExecuteProcessFlag):
+         return self.handle != other.handle
+      if isinstance(other,int):
+         return self.handle != other
+      if isinstance(other,basestring):
+         return str(self) != other
+      return True
+
+   def __str__(self):
+        return ExecuteProcessFlag._NameMap[self.handle]
+
+   def __int__(self):
+        return self.handle
+
+   _NameMap={0:'None',2:'IgnoreOrphanedProcesses'}
+   _ValueMap={
+              'None':0,
+              'IgnoreOrphanedProcesses':2}
+
+   _None=0
+   IgnoreOrphanedProcesses=2
+
+class ProcessInputFlag:
+   def __init__(self,mgr,handle):
+       self.mgr=mgr
+       if isinstance(handle,basestring):
+           self.handle=ProcessInputFlag._ValueMap[handle]
+       else:
+           self.handle=handle
+
+   def __eq__(self,other):
+      if isinstance(other,ProcessInputFlag):
+         return self.handle == other.handle
+      if isinstance(other,int):
+         return self.handle == other
+      if isinstance(other,basestring):
+         return str(self) == other
+      return False
+
+   def __ne__(self,other):
+      if isinstance(other,ProcessInputFlag):
+         return self.handle != other.handle
+      if isinstance(other,int):
+         return self.handle != other
+      if isinstance(other,basestring):
+         return str(self) != other
+      return True
+
+   def __str__(self):
+        return ProcessInputFlag._NameMap[self.handle]
+
+   def __int__(self):
+        return self.handle
+
+   _NameMap={0:'None',1:'EndOfFile'}
+   _ValueMap={
+              'None':0,
+              'EndOfFile':1}
+
+   _None=0
+   EndOfFile=1
+
+class CopyFileFlag:
+   def __init__(self,mgr,handle):
+       self.mgr=mgr
+       if isinstance(handle,basestring):
+           self.handle=CopyFileFlag._ValueMap[handle]
+       else:
+           self.handle=handle
+
+   def __eq__(self,other):
+      if isinstance(other,CopyFileFlag):
+         return self.handle == other.handle
+      if isinstance(other,int):
+         return self.handle == other
+      if isinstance(other,basestring):
+         return str(self) == other
+      return False
+
+   def __ne__(self,other):
+      if isinstance(other,CopyFileFlag):
+         return self.handle != other.handle
+      if isinstance(other,int):
+         return self.handle != other
+      if isinstance(other,basestring):
+         return str(self) != other
+      return True
+
+   def __str__(self):
+        return CopyFileFlag._NameMap[self.handle]
+
+   def __int__(self):
+        return self.handle
+
+   _NameMap={0:'None',1:'Recursive',2:'Update',4:'FollowLinks'}
+   _ValueMap={
+              'None':0,
+              'Recursive':1,
+              'Update':2,
+              'FollowLinks':4}
+
+   _None=0
+   Recursive=1
+   Update=2
+   FollowLinks=4
+
 class MediumState:
    def __init__(self,mgr,handle):
        self.mgr=mgr
@@ -13086,17 +13422,19 @@ class MediumType:
    def __int__(self):
         return self.handle
 
-   _NameMap={0:'Normal',1:'Immutable',2:'Writethrough',3:'Shareable'}
+   _NameMap={0:'Normal',1:'Immutable',2:'Writethrough',3:'Shareable',4:'Readonly'}
    _ValueMap={
               'Normal':0,
               'Immutable':1,
               'Writethrough':2,
-              'Shareable':3}
+              'Shareable':3,
+              'Readonly':4}
 
    Normal=0
    Immutable=1
    Writethrough=2
    Shareable=3
+   Readonly=4
 
 class MediumVariant:
    def __init__(self,mgr,handle):
@@ -13712,16 +14050,16 @@ class AudioControllerType:
    SB16=1
    HDA=2
 
-class VRDPAuthType:
+class AuthType:
    def __init__(self,mgr,handle):
        self.mgr=mgr
        if isinstance(handle,basestring):
-           self.handle=VRDPAuthType._ValueMap[handle]
+           self.handle=AuthType._ValueMap[handle]
        else:
            self.handle=handle
 
    def __eq__(self,other):
-      if isinstance(other,VRDPAuthType):
+      if isinstance(other,AuthType):
          return self.handle == other.handle
       if isinstance(other,int):
          return self.handle == other
@@ -13730,7 +14068,7 @@ class VRDPAuthType:
       return False
 
    def __ne__(self,other):
-      if isinstance(other,VRDPAuthType):
+      if isinstance(other,AuthType):
          return self.handle != other.handle
       if isinstance(other,int):
          return self.handle != other
@@ -13739,7 +14077,7 @@ class VRDPAuthType:
       return True
 
    def __str__(self):
-        return VRDPAuthType._NameMap[self.handle]
+        return AuthType._NameMap[self.handle]
 
    def __int__(self):
         return self.handle
@@ -14012,7 +14350,7 @@ class VBoxEventType:
    def __int__(self):
         return self.handle
 
-   _NameMap={0:'Invalid',1:'Any',2:'Vetoable',3:'MachineEvent',4:'SnapshotEvent',5:'InputEvent',31:'LastWildcard',32:'OnMachineStateChanged',33:'OnMachineDataChanged',34:'OnExtraDataChanged',35:'OnExtraDataCanChange',36:'OnMediumRegistered',37:'OnMachineRegistered',38:'OnSessionStateChanged',39:'OnSnapshotTaken',40:'OnSnapshotDeleted',41:'OnSnapshotChanged',42:'OnGuestPropertyChanged',43:'OnMousePointerShapeChanged',44:'OnMouseCapabilityChanged',45:'OnKeyboardLedsChanged',46:'OnStateChanged',47:'OnAdditionsStateChanged',48:'OnNetworkAdapterChanged',49:'OnSerialPortChanged',50:'OnParallelPortChanged',51:'OnStorageControllerChanged',52:'OnMediumChanged',53:'OnVRDPServerChanged',54:'OnUSBControllerChanged',55:'OnUSBDeviceStateChanged',56:'OnSharedFolderChanged',57:'OnRuntimeError',58:'OnCanShowWindow',59:'OnShowWindow',60:'OnCPUChanged',61:'OnRemoteDisplayInfoChanged',62:'OnEventSourceChanged',63:'OnCPUPriorityChanged',64:'Last'}
+   _NameMap={0:'Invalid',1:'Any',2:'Vetoable',3:'MachineEvent',4:'SnapshotEvent',5:'InputEvent',31:'LastWildcard',32:'OnMachineStateChanged',33:'OnMachineDataChanged',34:'OnExtraDataChanged',35:'OnExtraDataCanChange',36:'OnMediumRegistered',37:'OnMachineRegistered',38:'OnSessionStateChanged',39:'OnSnapshotTaken',40:'OnSnapshotDeleted',41:'OnSnapshotChanged',42:'OnGuestPropertyChanged',43:'OnMousePointerShapeChanged',44:'OnMouseCapabilityChanged',45:'OnKeyboardLedsChanged',46:'OnStateChanged',47:'OnAdditionsStateChanged',48:'OnNetworkAdapterChanged',49:'OnSerialPortChanged',50:'OnParallelPortChanged',51:'OnStorageControllerChanged',52:'OnMediumChanged',53:'OnVRDEServerChanged',54:'OnUSBControllerChanged',55:'OnUSBDeviceStateChanged',56:'OnSharedFolderChanged',57:'OnRuntimeError',58:'OnCanShowWindow',59:'OnShowWindow',60:'OnCPUChanged',61:'OnVRDEServerInfoChanged',62:'OnEventSourceChanged',63:'OnCPUExecutionCapChanged',64:'OnGuestKeyboardEvent',65:'OnGuestMouseEvent',66:'Last'}
    _ValueMap={
               'Invalid':0,
               'Any':1,
@@ -14042,7 +14380,7 @@ class VBoxEventType:
               'OnParallelPortChanged':50,
               'OnStorageControllerChanged':51,
               'OnMediumChanged':52,
-              'OnVRDPServerChanged':53,
+              'OnVRDEServerChanged':53,
               'OnUSBControllerChanged':54,
               'OnUSBDeviceStateChanged':55,
               'OnSharedFolderChanged':56,
@@ -14050,10 +14388,12 @@ class VBoxEventType:
               'OnCanShowWindow':58,
               'OnShowWindow':59,
               'OnCPUChanged':60,
-              'OnRemoteDisplayInfoChanged':61,
+              'OnVRDEServerInfoChanged':61,
               'OnEventSourceChanged':62,
-              'OnCPUPriorityChanged':63,
-              'Last':64}
+              'OnCPUExecutionCapChanged':63,
+              'OnGuestKeyboardEvent':64,
+              'OnGuestMouseEvent':65,
+              'Last':66}
 
    Invalid=0
    Any=1
@@ -14083,7 +14423,7 @@ class VBoxEventType:
    OnParallelPortChanged=50
    OnStorageControllerChanged=51
    OnMediumChanged=52
-   OnVRDPServerChanged=53
+   OnVRDEServerChanged=53
    OnUSBControllerChanged=54
    OnUSBDeviceStateChanged=55
    OnSharedFolderChanged=56
@@ -14091,10 +14431,12 @@ class VBoxEventType:
    OnCanShowWindow=58
    OnShowWindow=59
    OnCPUChanged=60
-   OnRemoteDisplayInfoChanged=61
+   OnVRDEServerInfoChanged=61
    OnEventSourceChanged=62
-   OnCPUPriorityChanged=63
-   Last=64
+   OnCPUExecutionCapChanged=63
+   OnGuestKeyboardEvent=64
+   OnGuestMouseEvent=65
+   Last=66
 
 
 class IWebsessionManager2(IWebsessionManager):
@@ -14114,12 +14456,13 @@ class IWebsessionManager2(IWebsessionManager):
 
   def logoff(self, _arg_refIVirtualBox):
 
-		req=IWebsessionManager_logoffRequestMsg()
-		req._this=self.handle
-       
-		req._refIVirtualBox=_arg_refIVirtualBox
-		val=self.mgr.getPort().IWebsessionManager_logoff(req)
-  
-  		""" Important!!! """
-		self.port.binding.h.close()     
-		return 
+	req=IWebsessionManager_logoffRequestMsg()
+	req._this=self.handle
+     
+	req._refIVirtualBox=_arg_refIVirtualBox
+	val=self.mgr.getPort().IWebsessionManager_logoff(req)
+
+	""" Important!!! """
+	self.port.binding.h.close()     
+	return 
+

@@ -41,11 +41,11 @@ class vboxactions(threading.local):
 	 Caching settings. Function : time in seconds. 0 == do not cache
 	"""
 	cacheSettings = {
-			'getHostDetails' : 86400, # "never" changes. 1 day
+			'getHostDetails' : 86400,
 			'getGuestOSTypes' : 86400,
 			'getSystemProperties' : 86400,
-			'getHostNetworking' : 86400,
-			'getMediums' : 600, # 10 minutes
+			'getHostNetworking' : 300,
+			'getMediums' : 300, # 10 minutes
 			'getVMs' : 2,
 			'_getMachine' : 7200, # 2 hours
 			'_getNetworkAdapters' : 7200,
@@ -305,7 +305,7 @@ class vboxactions(threading.local):
 
 		self.connect()
 
-		m = self._getMachineRef(args['vm'])
+		m = self.vbox.findMachine(args['vm'])
 
 		response['data'] = m.enumerateGuestProperties(args['pattern'])
 
@@ -336,7 +336,7 @@ class vboxactions(threading.local):
 		self.connect()
 				
 		# create session and lock machine
-		machine = self._getMachineRef(args['id'])
+		machine = self.vbox.findMachine(args['id'])
 		self.session = self.vboxMgr.platform.getSessionObject(self.vbox)
 		machine.lockMachine(self.session, self.vboxType('LockType','Write'))
 
@@ -398,16 +398,16 @@ class vboxactions(threading.local):
 		if int(args.get('BIOSSettings[IOAPICEnabled]')): m.BIOSSettings.IOAPICEnabled = 1
 		else: m.BIOSSettings.IOAPICEnabled = 0
 
-		# VRDP settings
+		# VRDE settings
 		if(not version['ose']):
-			if args.get('VRDPServer[enabled]'): m.VRDPServer.enabled = 1
-			else: m.VRDPServer.enabled = 0
-			m.VRDPServer.ports = args.get('VRDPServer[ports]')
-			if args.get('VRDPServer[authType]'): m.VRDPServer.authType = args.get('VRDPServer[authType]')
-			else: m.VRDPServer.authType = int(self.vboxType('VRDPAuthType','Null'))
-			m.VRDPServer.authTimeout = int(args.get('VRDPServer[authTimeout]'))
-			if args.get('VRDPServer[allowMultiConnection]'): m.VRDPServer.allowMultiConnection = 1
-			else: m.VRDPServer.allowMultiConnection = 0		
+			if args.get('VRDEServer[enabled]'): m.VRDEServer.enabled = 1
+			else: m.VRDEServer.enabled = 0
+			m.VRDEServer.setVRDEProperty('TCP/Ports',str(args.get('VRDEServer[ports]')))
+			if args.get('VRDEServer[authType]'): m.VRDEServer.authType = args.get('VRDEServer[authType]')
+			else: m.VRDEServer.authType = int(self.vboxType('AuthType','Null'))
+			m.VRDEServer.authTimeout = int(args.get('VRDEServer[authTimeout]'))
+			if args.get('VRDEServer[allowMultiConnection]'): m.VRDEServer.allowMultiConnection = 1
+			else: m.VRDEServer.allowMultiConnection = 0		
 
 		# Audio controller settings
 		if int(args.get('audioAdapter[enabled]')) > 0: m.audioAdapter.enabled = 1
@@ -966,8 +966,7 @@ class vboxactions(threading.local):
 		self.connect()
 
 		self.vbox.systemProperties.defaultMachineFolder = str(args['SystemProperties[defaultMachineFolder]'])
-		self.vbox.systemProperties.defaultHardDiskFolder = str(args['SystemProperties[defaultHardDiskFolder]'])
-		self.vbox.systemProperties.remoteDisplayAuthLibrary = str(args['SystemProperties[remoteDisplayAuthLibrary]'])
+		self.vbox.systemProperties.VRDEAuthLibrary = str(args['SystemProperties[VRDEAuthLibrary]'])
 
 		self.cache.expire('getSystemProperties')
 
@@ -1144,7 +1143,7 @@ class vboxactions(threading.local):
 			if not vm: continue
 			
 			# Get VM
-			m = self.vbox.getMachine(str(vm))
+			m = self.vbox.findMachine(str(vm))
 			desc = m.export(app)
 			descItems = desc.getDescription()
 			
@@ -1439,7 +1438,7 @@ class vboxactions(threading.local):
 		self.connect()
 
 		# Machine state
-		machine = self._getMachineRef(vm)
+		machine = self.vbox.findMachine(vm)
 		mstate = str(self.vboxType('MachineState',machine.state))
 
 		# If state has an expected result, check
@@ -1528,7 +1527,7 @@ class vboxactions(threading.local):
 		# Try opening session for VM
 		self.session = self.vboxMgr.platform.getSessionObject(self.vbox)
 
-		# VRDP is not supported in OSE
+		# VRDE is not (currently) supported in OSE
 		version = self.vboxVersion()
 		if(version['ose']): sessionType = 'headless'
 		else: sessionType = 'vrdp'
@@ -1682,7 +1681,7 @@ class vboxactions(threading.local):
 
 		else:
 
-			machine = self._getMachineRef(args.get('vm'))
+			machine = self.vbox.findMachine(args.get('vm'))
 
 			# For correct caching, always use id
 			args['vm'] = str(machine.id)
@@ -1747,7 +1746,7 @@ class vboxactions(threading.local):
 				if(console == False or console['lastStateChange'] < mdlm):
 					self.session = self.vboxMgr.platform.getSessionObject(self.vbox)
 					machine.lockMachine(self.session, self.vboxType('LockType','Shared'))
-					data['consolePort'] = int(self.session.console.remoteDisplayInfo.port)
+					data['consolePort'] = int(self.session.console.VRDEServerInfo.port)
 					self.session.unlockMachine()
 					self.session = None
 					console = {
@@ -1793,7 +1792,7 @@ class vboxactions(threading.local):
 		# Connect to vboxwebsrv
 		self.connect()
 
-		machine = self._getMachineRef(args['vm'])
+		machine = self.vbox.findMachine(args['vm'])
 
 		cache = ['__consolePort'+args['vm'],'_getMachine'+args['vm'],'_getNetworkAdapters'+args['vm'],'_getStorageControllers'+args['vm'],
 			'_getSharedFolders'+args['vm'],'_getUSBController'+args['vm'],'getMediums']
@@ -1863,7 +1862,7 @@ class vboxactions(threading.local):
 			self.session = self.vboxMgr.platform.getSessionObject(self.vbox)
 
 			# Lock VM
-			machine = self._getMachineRef(vm)
+			machine = self.vbox.findMachine(vm)
 			machine.lockMachine(self.session,self.vboxType('LockType','Write'))
 
 			# OS defaults
@@ -1875,7 +1874,7 @@ class vboxactions(threading.local):
 			self.session.machine.USBController.enabled = True
 			self.session.machine.USBController.enabledEhci = True
 			if(not version['ose']):
-				self.session.machine.VRDPServer.authTimeout = 5000
+				self.session.machine.VRDEServer.authTimeout = 5000
 
 			# Other defaults
 			self.session.machine.BIOSSettings.IOAPICEnabled = defaults.recommendedIOAPIC
@@ -2125,15 +2124,15 @@ class vboxactions(threading.local):
 
 		version = self.vboxVersion()
 		
-		if(version['ose']): VRDPServer = None
+		if(version['ose']): VRDEServer = None
 		else:
-			VRDPServer = {
-				'enabled' : bool(m.VRDPServer.enabled),
-				'ports' : str(m.VRDPServer.ports),
-				'netAddress' : str(m.VRDPServer.netAddress),
-				'authType' : str(m.VRDPServer.authType),
-				'authTimeout' : int(m.VRDPServer.authTimeout),
-				'allowMultiConnection' : int(m.VRDPServer.allowMultiConnection)
+			VRDEServer = {
+				'enabled' : bool(m.VRDEServer.enabled),
+				'ports' : str(m.VRDEServer.getVRDEProperty('TCP/Ports')),
+				'netAddress' : str(m.VRDEServer.getVRDEProperty("TCP/Address")),
+				'authType' : str(m.VRDEServer.authType),
+				'authTimeout' : int(m.VRDEServer.authTimeout),
+				'allowMultiConnection' : int(m.VRDEServer.allowMultiConnection)
 			}
 
 		return {
@@ -2153,7 +2152,7 @@ class vboxactions(threading.local):
 			'firmwareType' : str(self.vboxType('FirmwareType',m.firmwareType)),
 			'snapshotFolder' : str(m.snapshotFolder),
 			'monitorCount' : int(m.monitorCount),
-			'VRDPServer' : VRDPServer,
+			'VRDEServer' : VRDEServer,
 			'audioAdapter' : {
 				'enabled' : bool(m.audioAdapter.enabled),
 				'audioController' : str(self.vboxType('AudioControllerType',m.audioAdapter.audioController)),
@@ -2240,9 +2239,9 @@ class vboxactions(threading.local):
 		# Connect to vboxwebsrv
 		self.connect()
 
-		vm = self._getMachineRef(args['vm'])
+		vm = self.vbox.findMachine(args['vm'])
 
-		snapshot = vm.getSnapshot(args['snapshot'])
+		snapshot = vm.findSnapshot(args['snapshot'])
 		snapshot.name = str(args['name'])
 		snapshot.description = str(args['description'])
 
@@ -2258,8 +2257,8 @@ class vboxactions(threading.local):
 		# Connect to vboxwebsrv
 		self.connect()
 
-		vm = self._getMachineRef(args['vm'])
-		snapshot = vm.getSnapshot(args['snapshot'])
+		vm = self.vbox.findMachine(args['vm'])
+		snapshot = vm.findSnapshot(args['snapshot'])
 		machine = {}
 		self.getVMDetails({},machine,snapshot.machine)
 
@@ -2286,10 +2285,10 @@ class vboxactions(threading.local):
 			# Open session to machine
 			self.session = self.vboxMgr.platform.getSessionObject(self.vbox)
 
-			machine = self._getMachineRef(args['vm'])
+			machine = self.vbox.findMachine(args['vm'])
 			machine.lockMachine(self.session,self.vboxType('LockType','Write'))
 
-			snapshot = self.session.machine.getSnapshot(str(args['snapshot']))
+			snapshot = self.session.machine.findSnapshot(str(args['snapshot']))
 
 			progress = self.session.console.restoreSnapshot(snapshot)
 			
@@ -2336,7 +2335,7 @@ class vboxactions(threading.local):
 			# Open session to machine
 			self.session = self.vboxMgr.platform.getSessionObject(self.vbox)
 
-			machine = self._getMachineRef(args['vm'])
+			machine = self.vbox.findMachine(args['vm'])
 			machine.lockMachine(self.session, self.vboxType('LockType','Write'))
 
 			progress = self.session.console.deleteSnapshot(args['snapshot'])
@@ -2378,7 +2377,7 @@ class vboxactions(threading.local):
 		# Connect to vboxwebsrv
 		self.connect()
 
-		machine = self._getMachineRef(args['vm'])
+		machine = self.vbox.findMachine(args['vm'])
 
 		progress = self.session = None
 
@@ -2437,13 +2436,13 @@ class vboxactions(threading.local):
 		# Connect to vboxwebsrv
 		self.connect()
 
-		machine = self._getMachineRef(args['vm'])
+		machine = self.vbox.findMachine(args['vm'])
 
 		""" No snapshots? Empty array """
 		if(int(machine.snapshotCount) < 1):
 			response['data'] = []
 		else:
-			s = machine.getSnapshot(('' if self.vboxConnType == 'web' else None))
+			s = machine.findSnapshot(('' if self.vboxConnType == 'web' else None))
 			response['data'] = self._getSnapshot(s,True)
 		
 		return True
@@ -2609,7 +2608,7 @@ class vboxactions(threading.local):
 
 			# Find medium attachment
 			try:
-				mach = self.vbox.getMachine(uuid)
+				mach = self.vbox.findMachine(uuid)
 			except:
 				# TODO: error message indicating machine no longer exists?
 				continue
@@ -2697,7 +2696,7 @@ class vboxactions(threading.local):
 		self.connect()
 
 		# Find medium attachment
-		machine = self._getMachineRef(args['vm'])
+		machine = self.vbox.findMachine(args['vm'])
 		state = str(self.vboxType('SessionState',machine.sessionState))
 		save = (save or machine.getExtraData('GUI/SaveMountedAtRuntime'))
 
@@ -2745,7 +2744,7 @@ class vboxactions(threading.local):
 			
 			sids = m.getSnapshotIds(mid)
 						
-			mid = self.vbox.getMachine(mid)
+			mid = self.vbox.findMachine(mid)
 			
 			c = len(sids)
 			
@@ -2753,7 +2752,7 @@ class vboxactions(threading.local):
 			snapshots = []
 			for i in range(c):
 				if str(mid.id) != str(sids[i]):
-					snapshots.append(str(mid.getSnapshot(str(sids[i])).name))
+					snapshots.append(str(mid.findSnapshot(str(sids[i])).name))
 
 			if(len(snapshots)): hasSnapshots = 1
 			else: hasSnapshots = 0
@@ -2861,9 +2860,9 @@ class vboxactions(threading.local):
 			'networkAdapterCount' : int(self.vbox.systemProperties.networkAdapterCount),
 			'maxBootPosition' : str(self.vbox.systemProperties.maxBootPosition),
 			'defaultMachineFolder' : str(self.vbox.systemProperties.defaultMachineFolder),
-			'defaultHardDiskFolder' : str(self.vbox.systemProperties.defaultHardDiskFolder),
+			'homeFolder' : str(self.vbox.homeFolder),
 			'defaultHardDiskFormat' : str(self.vbox.systemProperties.defaultHardDiskFormat),
-			'remoteDisplayAuthLibrary' : str(self.vbox.systemProperties.remoteDisplayAuthLibrary),
+			'VRDEAuthLibrary' : str(self.vbox.systemProperties.VRDEAuthLibrary),
 			'defaultAudioDriver' : str(self.vbox.systemProperties.defaultAudioDriver),
 			'maxGuestMonitors' : str(self.vbox.systemProperties.maxGuestMonitors)
 		}
@@ -2880,7 +2879,7 @@ class vboxactions(threading.local):
 		# Connect to vboxwebsrv
 		self.connect()
 
-		m = self._getMachineRef(args['vm'])
+		m = self.vbox.findMachine(args['vm'])
 		logs = []
 		i = 0
 		l = 'True'
@@ -2905,7 +2904,7 @@ class vboxactions(threading.local):
 		# Connect to vboxwebsrv
 		self.connect()
 
-		m = self._getMachineRef(args['vm'])
+		m = self.vbox.findMachine(args['vm'])
 		
 		try:
 			o = 0
@@ -2921,26 +2920,6 @@ class vboxactions(threading.local):
 		
 		return True
 
-
-	"""
-	 *
-	 * Return ref to vbox machine object
-	 *
-	 """
-	def _getMachineRef(self,id):
-		
-		# Connect to vboxwebsrv
-		self.connect()
-
-		# Simple UUID passed
-		if not id or (id.find('-') > 0):
-			return self.vbox.getMachine(id)
-		
-		# VM name passed. Update ID after getting vm
-		res = self.vbox.findMachine(id)
-		id = res.id
-		
-		return res
 
 	"""
 	 *

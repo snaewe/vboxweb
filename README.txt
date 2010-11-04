@@ -1,4 +1,3 @@
-
 VirtualBox Web Console is copyright (C) 2010 Ian Moore
 	(imoore76 at yahoo dot com)
 
@@ -16,10 +15,3 @@ INSTALLATION:
 
 Please see the wiki located at http://code.google.com/p/vboxweb/ for
 installation and configuration instructions.
-
-WARNING:
-
-This is intended to be run on a local network or intranet where access to the
-phpVirtualBox script is limited by network connectivity. The script performs no
-front-end user authentication of any kind. In other words, anyone who has access
-to this script on your web server may administer your VirtualBox installation.
