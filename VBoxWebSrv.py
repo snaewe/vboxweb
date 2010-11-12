@@ -18,7 +18,6 @@ import traceback
 import re
 import StringIO
 import types
-import md5
 import random
 import uuid
 import gc
@@ -26,7 +25,6 @@ from email.utils import parsedate_tz
 
 # Enable garbage collection
 gc.enable()
-gc.set_debug(gc.DEBUG_UNCOLLECTABLE)
 
 if sys.platform == 'win32':
 	try:
@@ -48,9 +46,11 @@ if sys.platform == 'win32':
 else:
 	import vboxapi # Main VirtualBox API
 
+from vboxapi.VirtualBox_constants import VirtualBoxReflectionInfo
+
 # VBoxWeb modules
-sys.path.insert(0,'lib')
-sys.path.insert(0,'languages')
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__))+'/lib')
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__))+'/languages')
 
 # Load vbox connector
 import vboxactions
@@ -240,7 +240,7 @@ class VBoxWeb:
 		self.ctx['progressOps'] = {'get':progressObjGet,'store':progressObjStore,'delete':progressObjDel}
 		
 		# generate session_cookie name. Not very secure, but better than a static / predictable key.
-		self.session_cookie = md5.md5(os.path.abspath(os.path.dirname(__file__))).hexdigest()
+		self.session_cookie = hashlib.md5(os.path.abspath(os.path.dirname(__file__))).hexdigest()
 
 		
 	"""
@@ -801,7 +801,7 @@ VBoxWebSrv Command Usage:
 						'tools.staticdir.root': os.path.abspath(os.path.dirname(__file__))
     })
 
-	ctx = {'global':g_vboxManager,'vbox':None}
+	ctx = {'global':g_vboxManager,'vbox':None, 'vboxTypes':VirtualBoxReflectionInfo(True)}
 
 	cherrypy.engine.subscribe('stop', onShutdown)
 	

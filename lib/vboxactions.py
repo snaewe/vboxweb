@@ -12,7 +12,7 @@ import math
 import time
 import types
 import traceback
-import md5
+import hashlib
 import os
 from VBoxWebSrv import trans
 from vboxapi import VirtualBoxManager
@@ -115,10 +115,10 @@ class vboxactions(threading.local):
 		self.cache.prefix = 'vbwc-'
 		
 		if self.settings.get('location'):
-			self.cache.prefix = self.cache.prefix + str(md5.md5(self.settings.get('location')).hexdigest())
+			self.cache.prefix = self.cache.prefix + str(hashlib.md5(self.settings.get('location')).hexdigest())
 		else:
 			# Handle both Win* And *nix
-			self.cache.prefix = self.cache.prefix + str(md5.md5(str(os.environ.get('USERNAME',''))+str(os.environ.get('USER',''))).hexdigest())
+			self.cache.prefix = self.cache.prefix + str(hashlib.md5(str(os.environ.get('USERNAME',''))+str(os.environ.get('USER',''))).hexdigest())
 		
 		# Progress operation handling
 		self.progressOps = ctx['progressOps']
@@ -196,7 +196,12 @@ class vboxactions(threading.local):
 		Return vbox type for setting values
 	"""
 	def vboxTypeSet(self,vbtype,conv):
-		return int(self.vboxType(vbtype,conv))
+		i = 0
+		try:
+			i = self.vboxType(vbtype,conv)
+		except:
+			pass
+		return int(i)
 	
 	"""
 		Return array of vbox items

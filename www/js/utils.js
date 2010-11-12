@@ -716,10 +716,10 @@ function vboxParseCookies() {
 /* Check version against supported versions */
 function vboxVersionCheck(ver) {
 	
-	var supported = {'3':{'2':1}};
+	var supported = {'4':{'0':1}};
 	
 	// No ver passed?
-	if(ver && !supported[ver.major][ver.minor]) {
+	if(ver && !(supported[ver.major] && supported[ver.major][ver.minor])) {
 		
 		vboxParseCookies();
 		
